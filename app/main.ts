@@ -1,4 +1,4 @@
-import {app, BrowserWindow, screen} from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -17,16 +17,16 @@ function createWindow(): BrowserWindow {
     width: size.width,
     height: size.height,
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration: false,
+      contextIsolation: true,
       allowRunningInsecureContent: serve,
-      contextIsolation: false,
-      webSecurity: !serve
+      preload: path.join(__dirname, 'preload.js')
     },
   });
 
   if (serve) {
     import('electron-debug').then(debug => {
-      debug.default({isEnabled: true, showDevTools: true});
+      debug.default({ isEnabled: true, showDevTools: true });
     });
 
     import('electron-reloader').then(reloader => {
@@ -39,7 +39,7 @@ function createWindow(): BrowserWindow {
     let pathIndex = './browser/index.html';
 
     if (fs.existsSync(path.join(__dirname, '../dist/browser/index.html'))) {
-       // Path when running electron in local folder
+      // Path when running electron in local folder
       pathIndex = '../dist/browser/index.html';
     }
 

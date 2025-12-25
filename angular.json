@@ -30,15 +30,25 @@
             },
             "index": "src/index.html",
             "polyfills": [
-              "zone.js"
+              "zone.js",
+              "src/polyfills.ts"
             ],
             "tsConfig": "src/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "node_modules/font-awesome/fonts",
+                "output": "/fonts"
+              }
             ],
             "styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/font-awesome/css/font-awesome.min.css",
+              "node_modules/animate.css/animate.min.css",
+              "src/assets/themes/dark.css",
               "src/styles.scss"
             ],
             "scripts": [],
@@ -72,7 +82,7 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ]
-            }
+            },
             "testing": {
               "polyfills": [
                 "zone.js",
@@ -116,7 +126,12 @@
               "lcovonly"
             ],
             "reporters": [
-              ["default", { "summary": true }],
+              [
+                "default",
+                {
+                  "summary": true
+                }
+              ],
               [
                 "html",
                 {
