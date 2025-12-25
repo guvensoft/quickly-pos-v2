@@ -85,7 +85,7 @@ export class EndofthedayComponent implements OnInit {
       return false;
     } else {
       clearInterval(this.conflictService.conflictListener());
-      let dateData = { started: true, day: new Date().getDay(), time: Date.now() };
+      const dateData = { started: true, day: new Date().getDay(), time: Date.now() };
 
       this.mainService.getAllBy('reports', { type: 'Activity' }).then((res: { docs: any[] }) => {
         res.docs.forEach((element: any) => {
@@ -102,7 +102,7 @@ export class EndofthedayComponent implements OnInit {
 
       if (this.day == 1) {
         this.mainService.getAllBy('reports', {}).then(res => {
-          let reports = res.docs.filter((obj: any) => obj.type !== 'Activity');
+          const reports = res.docs.filter((obj: any) => obj.type !== 'Activity');
           reports.forEach((element: any) => {
             this.mainService.changeData('reports', element._id, (doc: any) => {
               doc.weekly = [0, 0, 0, 0, 0, 0, 0];
@@ -147,7 +147,7 @@ export class EndofthedayComponent implements OnInit {
 
 
   StoreSalesReport = (checks: Array<ClosedCheck>) => {
-    let SalesReport = { cash: 0, card: 0, coupon: 0, free: 0, canceled: 0, discount: 0, checks: checks.length, customers: { male: 0, female: 0 } };
+    const SalesReport = { cash: 0, card: 0, coupon: 0, free: 0, canceled: 0, discount: 0, checks: checks.length, customers: { male: 0, female: 0 } };
     SalesReport.cash = checks.filter(obj => obj.payment_method == 'Nakit').map(obj => obj.total_price).reduce((a, b) => a + b, 0);
     SalesReport.card = checks.filter(obj => obj.payment_method == 'Kart').map(obj => obj.total_price).reduce((a, b) => a + b, 0);
     SalesReport.coupon = checks.filter(obj => obj.payment_method == 'Kupon').map(obj => obj.total_price).reduce((a, b) => a + b, 0);
@@ -258,7 +258,7 @@ export class EndofthedayComponent implements OnInit {
       });
 
       activities.forEach((element: any) => {
-        this.mainService.changeData('reports', element._id!, (doc: any) => {
+        this.mainService.changeData('reports', element._id, (doc: any) => {
           doc.activity = [];
           doc.activity_count = [];
           doc.activity_time = [];
@@ -332,13 +332,13 @@ export class EndofthedayComponent implements OnInit {
   }
 
   stepFinal() {
-    let finalDate = Date.now();
+    const finalDate = Date.now();
     this.endDayReport.data_file = finalDate.toString();
     this.progress = 'Yerel Süreç Tamamlanıyor...';
     this.mainService.addData('endday', this.endDayReport).then(() => {
       this.electronService.backupData(this.backupData, String(finalDate));
       this.printerService.printEndDay(this.printers[0], this.endDayReport);
-      let dateData = { started: false, day: this.day, time: Date.now() };
+      const dateData = { started: false, day: this.day, time: Date.now() };
       this.settingsService.setAppSettings('DateSettings', dateData).then((res) => {
         if (res.ok) {
           this.fillData();
@@ -394,10 +394,10 @@ export class EndofthedayComponent implements OnInit {
     this.httpService.post('/store/refresh', null, this.token).subscribe(res => {
       if (res.ok) {
         let data = res; // Angular 21 returns parsed JSON by default
-        if (typeof (res as any).json === 'function') {
-          data = (res as any).json();
+        if (typeof (res).json === 'function') {
+          data = (res).json();
         }
-        const token = (data as any).token;
+        const token = (data).token;
         localStorage.setItem('AccessToken', token);
         this.purgeData(token);
       }
@@ -416,7 +416,7 @@ export class EndofthedayComponent implements OnInit {
       this.httpService.post(`/store/endday`, { docs: res.docs }, token).subscribe(res => {
         if (res.ok) {
           this.progress = 'Uzak Sunucu İsteği Onaylandı!';
-          let databasesArray = Object.keys(this.mainService.LocalDB).filter(obj => obj !== 'settings')
+          const databasesArray = Object.keys(this.mainService.LocalDB).filter(obj => obj !== 'settings')
           this.mainService.destroyDB(databasesArray).then(res => {
             if (res.ok) {
               setTimeout(() => {

@@ -132,8 +132,8 @@ export class ReportsComponent implements OnInit {
       tooltips: {
         callbacks: {
           label: function (tooltipItem: any, data: any) {
-            var dataLabel = data.labels[tooltipItem.index];
-            var value = ': ' + Number(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+            const dataLabel = data.labels[tooltipItem.index];
+            const value = ': ' + Number(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
             return dataLabel + value;
           }
         }
@@ -147,9 +147,9 @@ export class ReportsComponent implements OnInit {
   }
 
   normalWeekOrder(array: Array<any>) {
-    var arrayLength = array.length
-    for (var i = 0; i < arrayLength - 1; i++) {
-      var temp = array[i];
+    const arrayLength = array.length
+    for (let i = 0; i < arrayLength - 1; i++) {
+      const temp = array[i];
       array[i] = array[i + 1];
       array[i + 1] = temp;
     }
@@ -162,23 +162,23 @@ export class ReportsComponent implements OnInit {
     if (!year) {
       year = new Date(Date.now()).getFullYear();
     }
-    let Days: any[] = [];
-    let Months: any[] = [];
+    const Days: any[] = [];
+    const Months: any[] = [];
     this.mainService.getAllBy('endday', {}).then((res: any) => {
       let endDayData = res.docs;
       endDayData = endDayData.filter((obj: any) => new Date(obj.timestamp).getFullYear() == year);
       if (endDayData.length > 0) {
         endDayData.forEach((obj: any, index: number) => {
-          let Schema = { cash: obj.cash_total, card: obj.card_total, coupon: obj.coupon_total, free: obj.free_total, total: obj.total_income, checks: obj.check_count, outcome: obj.outcomes, income: obj.incomes, month: new Date(obj.timestamp).getMonth(), year: new Date(obj.timestamp).getFullYear() };
+          const Schema = { cash: obj.cash_total, card: obj.card_total, coupon: obj.coupon_total, free: obj.free_total, total: obj.total_income, checks: obj.check_count, outcome: obj.outcomes, income: obj.incomes, month: new Date(obj.timestamp).getMonth(), year: new Date(obj.timestamp).getFullYear() };
           Days.push(Schema);
           if (index == endDayData.length - 1) {
-            let cash: any = { label: 'Nakit', data: [] };
-            let coupon: any = { label: 'Kupon', data: [] };
-            let card: any = { label: 'Kart', data: [] };
-            let free: any = { label: 'İkram', data: [] };
-            let total: any = { label: 'Toplam', data: [] };
+            const cash: any = { label: 'Nakit', data: [] };
+            const coupon: any = { label: 'Kupon', data: [] };
+            const card: any = { label: 'Kart', data: [] };
+            const free: any = { label: 'İkram', data: [] };
+            const total: any = { label: 'Toplam', data: [] };
             this.monthlyLabels.forEach((monthName: string, index2: number) => {
-              let monthWillProcess = Days.filter((obj: any) => obj.month == index2);
+              const monthWillProcess = Days.filter((obj: any) => obj.month == index2);
               if (monthWillProcess.length > 1) {
                 cash.data[index2] = monthWillProcess.map((obj: any) => obj.cash).reduce((a: number, b: number) => a + b, 0);
                 card.data[index2] = monthWillProcess.map((obj: any) => obj.card).reduce((a: number, b: number) => a + b);
@@ -227,7 +227,7 @@ export class ReportsComponent implements OnInit {
       report = report.filter(obj => obj.connection_id !== 'Genel').sort((a, b) => b.connection_id.localeCompare(a.connection_id));
       report.forEach((element: any, index: number) => {
         element.weekly = this.normalWeekOrder(element.weekly);
-        let chartObj = { data: element.weekly, label: element.connection_id };
+        const chartObj = { data: element.weekly, label: element.connection_id };
         this.ChartData.push(chartObj);
         if (report.length - 1 == index) {
           this.ChartLoaded = true;

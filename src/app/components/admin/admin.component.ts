@@ -54,14 +54,14 @@ export class AdminComponent implements OnInit {
   }
 
   editDocument(document: any) {
-    let newDocument = JSON.parse(document);
+    const newDocument = JSON.parse(document);
     let db_name: string;
     if (this.selectedDB == 'allData') {
       db_name = document.db_name;
     } else {
       db_name = this.selectedDB;
     }
-    this.mainService.updateData(db_name, newDocument._id!, newDocument).then((res: any) => {
+    this.mainService.updateData(db_name, newDocument._id, newDocument).then((res: any) => {
       (window as any).$('#docModal').modal('hide');
       console.log('Döküman Güncellendi');
       this.editArea.nativeElement.value = '';
@@ -72,7 +72,7 @@ export class AdminComponent implements OnInit {
 
 
   createDocument(document: any) {
-    let newDocument = JSON.parse(document);
+    const newDocument = JSON.parse(document);
     this.mainService.addData(this.selectedDB, newDocument).then((res: any) => {
       if (res.ok) {
         (window as any).$('#docModal').modal('hide');
@@ -85,7 +85,7 @@ export class AdminComponent implements OnInit {
   }
 
   getByFilter(key: string, value: any) {
-    let filter = new Object() as any;
+    const filter = new Object() as any;
     filter[key] = value;
     if (this.selectedDB) {
       this.mainService.getAllBy(this.selectedDB, filter).then((res: any) => {
@@ -106,7 +106,7 @@ export class AdminComponent implements OnInit {
   resetReports() {
     this.mainService.getAllBy('reports', {}).then((res: any) => {
       console.warn(res.docs.length);
-      let reports = (res.docs as any[]).filter(obj => obj.type !== 'Activity');
+      const reports = (res.docs as any[]).filter(obj => obj.type !== 'Activity');
       reports.forEach((element, index) => {
         this.mainService.changeData('reports', element._id, (doc: any) => {
           doc.amount = 0;
@@ -141,12 +141,12 @@ export class AdminComponent implements OnInit {
     // let username = prompt('username');
     // let password = prompt('password');
 
-    let oldToken = localStorage['AccessToken'];
+    const oldToken = localStorage['AccessToken'];
     this.httpService.post('/store/refresh', null, oldToken).toPromise().then((res: any) => {
       if (res.ok) {
         let data = res;
-        if ((res as any).json && typeof (res as any).json === 'function') {
-          data = (res as any).json();
+        if ((res).json && typeof (res).json === 'function') {
+          data = (res).json();
         }
         const token = data.token;
         localStorage.setItem('AccessToken', token);
@@ -156,8 +156,8 @@ export class AdminComponent implements OnInit {
       this.httpService.post('/store/login', { username: 'quickly', password: 'asdtd155+1' }).toPromise().then((res: any) => {
         if (res.ok) {
           let data = res;
-          if ((res as any).json && typeof (res as any).json === 'function') {
-            data = (res as any).json();
+          if ((res).json && typeof (res).json === 'function') {
+            data = (res).json();
           }
           const token = data.token;
           localStorage.setItem('AccessToken', token);
@@ -171,7 +171,7 @@ export class AdminComponent implements OnInit {
 
   resolveDB() {
     this.mainService.LocalDB[this.selectedDB].allDocs({ include_docs: true, conflicts: true }).then((res: any) => {
-      let test = res.rows.map((obj: any) => { return obj.doc });
+      const test = res.rows.map((obj: any) => { return obj.doc });
       test.forEach((element: any) => {
         if (element.hasOwnProperty('_conflicts')) {
           console.log(element);
@@ -391,8 +391,8 @@ export class AdminComponent implements OnInit {
   }
 
   testEndDay() {
-    let token = localStorage.getItem("AccessToken") || '';
-    let restaurantID = JSON.parse(localStorage['RestaurantInfo']).id;
+    const token = localStorage.getItem("AccessToken") || '';
+    const restaurantID = JSON.parse(localStorage['RestaurantInfo']).id;
     this.httpService.post(`v1/management/restaurants/${restaurantID}/report_generator/`, { timestamp: Date.now(), data: { hello: 'test' } }, token).subscribe((res: any) => {
       console.log(res);
     });

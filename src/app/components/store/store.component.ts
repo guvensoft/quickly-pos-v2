@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef } from '@angular/core';
+import { Component, OnInit, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PricePipe } from '../../shared/pipes/price.pipe';
@@ -28,7 +28,7 @@ import { TimeAgoPipe } from '../../shared/pipes/time-ago.pipe';
   styleUrls: ['./store.component.scss']
 })
 
-export class StoreComponent implements OnInit {
+export class StoreComponent implements OnInit, OnDestroy {
   floors: Array<Floor> = [];
   tables: Array<Table> = [];
   tableViews: Array<Table> = [];
@@ -68,7 +68,7 @@ export class StoreComponent implements OnInit {
 
     this.fillData();
     if (localStorage.getItem('selectedSection')) {
-      let selectedSection = localStorage['selectedSection'];
+      const selectedSection = localStorage['selectedSection'];
       this.section = selectedSection;
     } else {
       this.section = 'Masalar';
@@ -80,7 +80,7 @@ export class StoreComponent implements OnInit {
       this.mainService.getAllBy('checks', {}).then((result: any) => {
         this.checks = result.docs;
         if (localStorage.getItem('selectedFloor')) {
-          let selectedID = JSON.parse(localStorage.getItem('selectedFloor')!);
+          const selectedID = JSON.parse(localStorage.getItem('selectedFloor')!);
           this.getTablesBy(selectedID);
         }
       });
@@ -105,7 +105,7 @@ export class StoreComponent implements OnInit {
         this.tables = this.tables.sort((a: any, b: any) => a.name.localeCompare(b.name, 'tr', { numeric: true, sensitivity: 'base' }));
         this.tableViews = this.tables;
         if (localStorage.getItem('selectedFloor')) {
-          let selectedID = JSON.parse(localStorage.getItem('selectedFloor')!);
+          const selectedID = JSON.parse(localStorage.getItem('selectedFloor')!);
           this.getTablesBy(selectedID);
         }
       });
@@ -143,7 +143,7 @@ export class StoreComponent implements OnInit {
   }
 
   getTableTotal(table_id: string): number {
-    let thatCheck = this.checks.find(check => check.table_id == table_id);
+    const thatCheck = this.checks.find(check => check.table_id == table_id);
     if (thatCheck) {
       return thatCheck.total_price;
     } else {
@@ -170,7 +170,7 @@ export class StoreComponent implements OnInit {
   }
 
   filterTables(value: string) {
-    let regexp = new RegExp(value, 'i');
+    const regexp = new RegExp(value, 'i');
     this.tableViews = this.tables.filter(({ name }) => name.match(regexp));
     this.checksView = this.checks.filter(({ table_id }) => this.tableViews.some(table => table._id == table_id));
     this.ordersView = this.orders.sort((a, b) => b.timestamp - a.timestamp).filter(order => order.status == OrderStatus.WAITING || order.status == OrderStatus.PREPARING).filter(({ check }) => this.checksView.some(obj => obj._id == check));
@@ -205,13 +205,13 @@ export class StoreComponent implements OnInit {
 
   approoveOrder(order: Order) {
     order.status = OrderStatus.APPROVED;
-    let approveTime = Date.now();
-    let CountData: Array<CountData> = [];
+    const approveTime = Date.now();
+    const CountData: Array<CountData> = [];
     this.mainService.changeData('checks', order.check, (check: Check) => {
       order.items.forEach((orderItem: any) => {
-        let mappedProduct = this.products.find(product => product._id == orderItem.product_id || product.name == orderItem.name);
+        const mappedProduct = this.products.find(product => product._id == orderItem.product_id || product.name == orderItem.name);
         if (mappedProduct) {
-          let newProduct = new CheckProduct(mappedProduct._id!, mappedProduct.cat_id!, mappedProduct.name! + (orderItem.type ? ' ' + orderItem.type : ''), orderItem.price, orderItem.note, 2, this.ownerId, approveTime, mappedProduct.tax_value!, mappedProduct.barcode!);
+          const newProduct = new CheckProduct(mappedProduct._id!, mappedProduct.cat_id, mappedProduct.name + (orderItem.type ? ' ' + orderItem.type : ''), orderItem.price, orderItem.note, 2, this.ownerId, approveTime, mappedProduct.tax_value, mappedProduct.barcode);
           this.countProductsData(CountData, newProduct.id, newProduct.price)
           check.total_price = check.total_price + newProduct.price;
           check.products.push(newProduct);
@@ -253,18 +253,18 @@ export class StoreComponent implements OnInit {
     // const orderRequestType: any = this.checks.find(check => check._id == receipt.check);
     // switch (receipt.type == ReceiptType.) {
     // case 'checks':
-    let Check: Check = this.checks.find(check => check._id == receipt.check) as Check;
-    let User: User = receipt.user;
-    let userItems = receipt.orders.filter(order => order.status == OrderStatus.APPROVED);
+    const Check: Check = this.checks.find(check => check._id == receipt.check) as Check;
+    const User: User = receipt.user;
+    const userItems = receipt.orders.filter(order => order.status == OrderStatus.APPROVED);
 
     userItems.map(obj => {
       obj.status = OrderStatus.PAYED;
       return obj;
     })
 
-    let productsWillPay: Array<CheckProduct> = Check.products.filter(product => userItems.map(obj => obj.timestamp).includes(product.timestamp));
+    const productsWillPay: Array<CheckProduct> = Check.products.filter(product => userItems.map(obj => obj.timestamp).includes(product.timestamp));
 
-    let receiptMethod: 'Nakit' | 'Kart' | 'Kupon' | 'İkram' = (receipt.method == ReceiptMethod.CARD ? 'Kart' : receipt.method == ReceiptMethod.CASH ? 'Nakit' : receipt.method == ReceiptMethod.COUPON ? 'Kupon' : 'İkram')
+    const receiptMethod: 'Nakit' | 'Kart' | 'Kupon' | 'İkram' = (receipt.method == ReceiptMethod.CARD ? 'Kart' : receipt.method == ReceiptMethod.CASH ? 'Nakit' : receipt.method == ReceiptMethod.COUPON ? 'Kupon' : 'İkram')
 
     const newPayment: PaymentStatus = { owner: User.name, method: receiptMethod, amount: receipt.total, discount: receipt.discount, timestamp: Date.now(), payed_products: productsWillPay };
 
@@ -412,7 +412,7 @@ export class StoreComponent implements OnInit {
       });
       this.tableViews = this.tables;
       if (localStorage.getItem('selectedFloor')) {
-        let selectedID = JSON.parse(localStorage['selectedFloor']);
+        const selectedID = JSON.parse(localStorage['selectedFloor']);
         this.getTablesBy(selectedID);
       }
     });
@@ -431,9 +431,9 @@ export class StoreComponent implements OnInit {
     } else {
       countObj = { product: id, count: 1, total: price };
     }
-    let contains = counDataArray.some(obj => obj.product === id);
+    const contains = counDataArray.some(obj => obj.product === id);
     if (contains) {
-      let index = counDataArray.findIndex(p_id => p_id.product == id);
+      const index = counDataArray.findIndex(p_id => p_id.product == id);
       if (manuelCount) {
         counDataArray[index].count += manuelCount;
       } else {
@@ -468,7 +468,7 @@ export class StoreComponent implements OnInit {
         }
         if (ProductRecipe) {
           ProductRecipe.forEach((ingredient: any) => {
-            let downStock = ingredient.amount * obj.count;
+            const downStock = ingredient.amount * obj.count;
             (this.mainService.LocalDB['allData'] as any).upsert(ingredient.stock_id, (doc: Stock) => {
               doc.left_total -= downStock;
               doc.quantity = doc.left_total / doc.total;

@@ -68,13 +68,13 @@ export class UserSettingsComponent implements OnInit {
   }
 
   addGroup(groupForm: NgForm) {
-    let form = groupForm.value;
+    const form = groupForm.value;
     if (form.name == undefined) {
       this.messageService.sendMessage('Grup Adı Girmek Zorundasınız.');
       return false;
     }
-    let userAuth = new UserAuth(new ComponentsAuth(form.store, form.cashbox, form.endoftheday, form.reports, form.settings), form.cancelCheck, form.cancelProduct, form.discount, form.payment, form.end);
-    let schema = new UserGroup(form.name, form.description, userAuth, 1, Date.now());
+    const userAuth = new UserAuth(new ComponentsAuth(form.store, form.cashbox, form.endoftheday, form.reports, form.settings), form.cancelCheck, form.cancelProduct, form.discount, form.payment, form.end);
+    const schema = new UserGroup(form.name, form.description, userAuth, 1, Date.now());
     this.mainService.getAllBy('users_group', { name: form.name }).then(result => {
       if (result.docs.length > 0 && result.docs[0].name == form.name) {
         this.messageService.sendMessage('Belirtilen Grup İsmi Kullanılmaktadır..');
@@ -90,13 +90,13 @@ export class UserSettingsComponent implements OnInit {
   }
 
   updateGroup(groupDetailForm: NgForm) {
-    let form = groupDetailForm.value;
+    const form = groupDetailForm.value;
     this.mainService.getAllBy('users_group', { name: form.name }).then(result => {
       if (result.docs.length > 0 && result.docs[0].name != form.name) {
         this.messageService.sendMessage('Belirtilen Grup İsmi Kullanılmaktadır..');
       } else {
-        let userAuth = new UserAuth(new ComponentsAuth(form.store, form.cashbox, form.endoftheday, form.reports, form.settings), form.cancelCheck, form.cancelProduct, form.discount, form.payment, form.end);
-        let schema = new UserGroup(form.name, form.description, userAuth, 1, Date.now(), form._id, form._rev);
+        const userAuth = new UserAuth(new ComponentsAuth(form.store, form.cashbox, form.endoftheday, form.reports, form.settings), form.cancelCheck, form.cancelProduct, form.discount, form.payment, form.end);
+        const schema = new UserGroup(form.name, form.description, userAuth, 1, Date.now(), form._id, form._rev);
         this.mainService.updateData('users_group', form._id, schema).then(() => {
           this.messageService.sendMessage('Grup Bilgileri Güncellendi!');
           this.selectedGroup = undefined;
@@ -107,12 +107,12 @@ export class UserSettingsComponent implements OnInit {
   }
 
   removeGroup(id: string | undefined) {
-    let isOk = confirm('Grubu Silmek Üzerisiniz. Gruba Bağlı Üyeleride Silmiş Olacaksınız.');
+    const isOk = confirm('Grubu Silmek Üzerisiniz. Gruba Bağlı Üyeleride Silmiş Olacaksınız.');
     if (isOk) {
       this.mainService.removeData('users_group', id!).then(() => {
         this.mainService.getAllBy('users', { role_id: id }).then(result => {
-          let data = result.docs
-          for (let prop in data) {
+          const data = result.docs
+          for (const prop in data) {
             this.mainService.removeData('users', data[prop]._id).then((result) => {
               this.mainService.getAllBy('reports', { connection_id: result.id }).then(res => {
                 this.mainService.removeData('reports', res.docs[0]._id);
@@ -128,7 +128,7 @@ export class UserSettingsComponent implements OnInit {
   }
 
   addUser(userForm: NgForm) {
-    let form = userForm.value;
+    const form = userForm.value;
     if (form.name == undefined) {
       this.messageService.sendMessage('Kullanıcı Girmek Zorundasınız.');
       return false;
@@ -149,8 +149,8 @@ export class UserSettingsComponent implements OnInit {
           userForm.reset();
         } else {
           this.mainService.getData('users_group', form.role_id).then(result => {
-            let role = result.name;
-            let schema = new User(form.name, role, form.role_id, form.pincode, 1, Date.now());
+            const role = result.name;
+            const schema = new User(form.name, role, form.role_id, form.pincode, 1, Date.now());
             this.mainService.addData('users', schema).then((response) => {
               this.mainService.addData('reports', new Report('User', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now())).then(res => {
                 this.logService.createLog(logType.USER_CREATED, res.id, `${form.name} Adlı Kullanıcı Oluşturuldu`);
@@ -191,7 +191,7 @@ export class UserSettingsComponent implements OnInit {
   }
 
   removeUser(id: string | undefined) {
-    let isOk = confirm('Kulanıcıyı Silmek Üzerisiniz. Bu işlem Geri Alınamaz.');
+    const isOk = confirm('Kulanıcıyı Silmek Üzerisiniz. Bu işlem Geri Alınamaz.');
     if (isOk) {
       this.mainService.removeData('users', id!).then((result) => {
         this.logService.createLog(logType.USER_DELETED, result.id, `${this.userForm.value.name} Adlı Kullanıcı Silindi`);
@@ -206,7 +206,7 @@ export class UserSettingsComponent implements OnInit {
   }
 
   filterUsers(value: string) {
-    let regexp = new RegExp(value, 'i');
+    const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('users', { name: { $regex: regexp } }).then(res => {
       this.users = res.docs;
     });

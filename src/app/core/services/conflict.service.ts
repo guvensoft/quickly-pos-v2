@@ -44,7 +44,7 @@ export class ConflictService {
 
   getPreRevision(conflicted_document: any): Promise<any> {
     return this.mainService.ServerDB.get(conflicted_document._id, { revs: true }).then((res: any) => {
-      let revToGet = `${res._revisions.start - 1}-${res._revisions.ids[1]}`;
+      const revToGet = `${res._revisions.start - 1}-${res._revisions.ids[1]}`;
       return this.mainService.ServerDB.get(res._id, { rev: revToGet });
     });
   }
@@ -108,8 +108,8 @@ export class ConflictService {
   }
 
   diffRevision(a: any, b: any): void {
-    let aRev = a._rev.split('-')[0];
-    let bRev = b._rev.split('-')[0];
+    const aRev = a._rev.split('-')[0];
+    const bRev = b._rev.split('-')[0];
     if (aRev > bRev) this.diffRecreate(a, b);
     if (bRev > aRev) this.diffRecreate(b, a);
   }
@@ -146,8 +146,8 @@ export class ConflictService {
   }
 
   diffReduce(reduce_element: any, older_element: any): Array<any> {
-    let objDiff: any = this.deepDiffMapper().map(reduce_element, older_element);
-    let parsedDiff: Array<any> = this.diffParser('updated', objDiff);
+    const objDiff: any = this.deepDiffMapper().map(reduce_element, older_element);
+    const parsedDiff: Array<any> = this.diffParser('updated', objDiff);
     return parsedDiff;
   }
 
@@ -155,13 +155,13 @@ export class ConflictService {
     delete objDiff._id;
     delete objDiff._rev;
     delete objDiff._conflicts;
-    let diffObjArr: Array<object> = [];
+    const diffObjArr: Array<object> = [];
 
-    for (let prop in objDiff) {
+    for (const prop in objDiff) {
       if (Object.keys(objDiff[prop]).length > 2) {
-        for (let innerProp in objDiff[prop]) {
+        for (const innerProp in objDiff[prop]) {
           if (objDiff[prop][innerProp].type == diffType) {
-            let diffObj = {
+            const diffObj = {
               firsProp: prop,
               secondProp: innerProp,
               data: objDiff[prop][innerProp].data
@@ -171,7 +171,7 @@ export class ConflictService {
         }
       } else {
         if (objDiff[prop].type == diffType) {
-          let diffObj = {
+          const diffObj = {
             firsProp: prop,
             data: objDiff[prop].data
           };
@@ -198,12 +198,12 @@ export class ConflictService {
             data: obj1 === undefined ? obj2 : obj1
           };
         }
-        var diff: any = {};
+        const diff: any = {};
         for (var key in obj1) {
           if (this.isFunction(obj1[key])) {
             continue;
           }
-          var value2 = undefined;
+          let value2 = undefined;
           if ('undefined' != typeof obj2[key]) {
             value2 = obj2[key];
           }

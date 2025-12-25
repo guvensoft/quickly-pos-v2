@@ -100,9 +100,9 @@ export class ProductReportsComponent implements OnInit {
   }
 
   normalWeekOrder(array: Array<any>) {
-    var arrayLength = array.length
-    for (var i = 0; i < arrayLength - 1; i++) {
-      var temp = array[i];
+    const arrayLength = array.length
+    for (let i = 0; i < arrayLength - 1; i++) {
+      const temp = array[i];
       array[i] = array[i + 1];
       array[i + 1] = temp;
     }
@@ -110,7 +110,7 @@ export class ProductReportsComponent implements OnInit {
   }
 
   dailyCount(arr: Array<number>, price: number) {
-    let newArray = [];
+    const newArray = [];
     for (let item of arr) {
       item = item / price;
       newArray.push(item);
@@ -170,7 +170,7 @@ export class ProductReportsComponent implements OnInit {
     this.productList = newArray;
     if (this.selectedCat) {
       this.mainService.getAllBy('products', { cat_id: this.selectedCat }).then(res => {
-        let products_ids = res.docs.map((obj: any) => obj._id);
+        const products_ids = res.docs.map((obj: any) => obj._id);
         this.productList = this.productList.filter(obj => products_ids.includes(obj.connection_id));
       })
     }
@@ -179,7 +179,7 @@ export class ProductReportsComponent implements OnInit {
   getReportsByCategory(cat_id: string) {
     this.selectedCat = cat_id;
     this.mainService.getAllBy('products', { cat_id: cat_id }).then(res => {
-      let products_ids = res.docs.map((obj: any) => obj._id);
+      const products_ids = res.docs.map((obj: any) => obj._id);
       this.productList = this.generalList.filter((obj: any) => products_ids.includes(obj.connection_id));
     })
   }
@@ -188,7 +188,7 @@ export class ProductReportsComponent implements OnInit {
     if (this.selectedCat) {
       this.mainService.getAllBy('products', { cat_id: this.selectedCat }).then(res => {
         res.docs.forEach((element: any) => {
-          let found = this.productList.find((obj: any) => obj.connection_id == element._id);
+          const found = this.productList.find((obj: any) => obj.connection_id == element._id);
           if (found) found.description = element.name;
         });
         this.printerService.printReport(this.printers[0], 'Ürünler', this.productList);
@@ -196,7 +196,7 @@ export class ProductReportsComponent implements OnInit {
     } else {
       this.mainService.getAllBy('products', {}).then(res => {
         res.docs.forEach((element: any) => {
-          let found = this.productList.find((obj: any) => obj.connection_id == element._id);
+          const found = this.productList.find((obj: any) => obj.connection_id == element._id);
           if (found) found.description = element.name;
         });
         this.printerService.printReport(this.printers[0], 'Ürünler', this.productList);
@@ -218,7 +218,7 @@ export class ProductReportsComponent implements OnInit {
           if (daily) {
             obj.weekly = this.normalWeekOrder(obj.weekly_count);
           }
-          let schema: any = { data: obj.weekly, label: res.name };
+          const schema: any = { data: obj.weekly, label: res.name };
           this.ChartData.push(schema);
           if (this.chartList.length - 1 == index) {
             this.ChartLoaded = true;

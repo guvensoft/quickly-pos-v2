@@ -431,7 +431,7 @@
         <div *ngIf="(printers?.length ?? 0) > 0" class="modal-body">
           <div class="row">
             <ng-container *ngFor="let printer of printers">
-              <div *ngIf="printer.mission == 'Adisyon'" class="col pr-2 pl-2 mb-2">
+              <div *ngIf="printer.mission === 'Adisyon'" class="col pr-2 pl-2 mb-2">
                 <button class="btn btn-warning btn-lg btn-block btn-specs"
                   (click)="printCheck(printer)">{{printer.name}}</button>
               </div>
@@ -455,7 +455,7 @@
         <div *ngIf="(printers?.length ?? 0) > 0" class="modal-body">
           <div class="row">
             <ng-container *ngFor="let printer of printers">
-              <div *ngIf="printer.mission == 'Adisyon'" class="col pr-2 pl-2 mb-2">
+              <div *ngIf="printer.mission === 'Adisyon'" class="col pr-2 pl-2 mb-2">
                 <button class="btn btn-warning btn-lg btn-block btn-specs"
                   (click)="qrCode(printer)">{{printer.name}}</button>
               </div>
@@ -602,7 +602,7 @@
               <div *ngFor="let keys of numboard;" class="row mb-1">
                 <div *ngFor="let key of keys;" class="col-lg-4 pr-1 pl-1 mb-1">
                   <button type="button"
-                    [disabled]="key == '◂' && numpad == '' || key == '.' && numpad == '' || key == '0' && numpad == '' || key == '.' && isFirstTime || key == '.' && specsUnit.innerHTML == 'Adet'"
+                    [disabled]="key === '◂' && numpad === '' || key === '.' && numpad === '' || key == '0' && numpad === '' || key === '.' && isFirstTime || key === '.' && specsUnit.innerHTML === 'Adet'"
                     (click)="pushKey(key)"
                     class="btn dark-bg btn-outline-primary font-weight-bold btn-lg p-3 btn-block numpad">{{key}}</button>
                 </div>

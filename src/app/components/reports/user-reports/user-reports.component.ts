@@ -86,9 +86,9 @@ export class UserReportsComponent implements OnInit {
 
 
   normalWeekOrder(array: Array<any>) {
-    var arrayLength = array.length
-    for (var i = 0; i < arrayLength - 1; i++) {
-      var temp = array[i];
+    const arrayLength = array.length
+    for (let i = 0; i < arrayLength - 1; i++) {
+      const temp = array[i];
       array[i] = array[i + 1];
       array[i + 1] = temp;
     }
@@ -163,7 +163,7 @@ export class UserReportsComponent implements OnInit {
     this.mainService.getAllBy('reports', { type: 'User' }).then(res => {
       this.generalList = res.docs.sort((a: any, b: any) => b.count - a.count);
       this.usersList = JSON.parse(JSON.stringify(this.generalList));
-      let chartTable = this.usersList.slice(0, 5);
+      const chartTable = this.usersList.slice(0, 5);
       chartTable.forEach((obj, index) => {
         this.mainService.getData('users', obj.connection_id).then(res => {
           obj.weekly = this.normalWeekOrder(obj.weekly);

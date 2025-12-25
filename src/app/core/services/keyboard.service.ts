@@ -12,7 +12,7 @@ export class KeyboardService {
   // İş Mantığı - %100 AYNEN KORUNDU
   // ============================================
 
-  triggerKeyboard(command: String, element: ElementRef): void {
+  triggerKeyboard(command: string, element: ElementRef): void {
     this.signal.next(command);
     this.input.next(element);
   }

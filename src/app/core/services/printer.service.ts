@@ -26,7 +26,7 @@ export class PrinterService {
     // Error handling - İş mantığı AYNEN
     this.electron.on('error', (message: string, check: any, device: any) => {
       this.messageService.sendMessage(message);
-      let newPrint = new PrintOut('Check', PrintOutStatus.WAITING, check._id, device);
+      const newPrint = new PrintOut('Check', PrintOutStatus.WAITING, check._id, device);
       this.mainService
         .addData('prints', newPrint)
         .then(isSended => {
@@ -47,15 +47,15 @@ export class PrinterService {
   }
 
   printOrder(device: any, table: any, orders: any[], owner: string): void {
-    let ordersArray: any[] = [];
+    const ordersArray: any[] = [];
     orders.forEach(element => {
-      let contains = ordersArray.some(obj => obj.name == element.name && obj.note == element.note);
+      const contains = ordersArray.some(obj => obj.name == element.name && obj.note == element.note);
       if (contains) {
-        let index = ordersArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
+        const index = ordersArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
         ordersArray[index].price += element.price;
         ordersArray[index].count++;
       } else {
-        let schema = { name: element.name, note: element.note, price: element.price, count: 1 };
+        const schema = { name: element.name, note: element.note, price: element.price, count: 1 };
         ordersArray.push(schema);
       }
     });
@@ -63,15 +63,15 @@ export class PrinterService {
   }
 
   printTableOrder(device: any, table: any, order: Order): void {
-    let ordersArray: any[] = [];
+    const ordersArray: any[] = [];
     order.items.forEach(element => {
-      let contains = ordersArray.some(obj => obj.name == element.name && obj.note == element.note);
+      const contains = ordersArray.some(obj => obj.name == element.name && obj.note == element.note);
       if (contains) {
-        let index = ordersArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
+        const index = ordersArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
         ordersArray[index].price += element.price;
         ordersArray[index].count++;
       } else {
-        let schema = { name: element.name, note: element.note, price: element.price, count: 1 };
+        const schema = { name: element.name, note: element.note, price: element.price, count: 1 };
         ordersArray.push(schema);
       }
     });
@@ -79,17 +79,17 @@ export class PrinterService {
   }
 
   printCheck(device: any, table: any, check: any): void {
-    let productsArray: any[] = [];
-    let payedArray: any[] = [];
+    const productsArray: any[] = [];
+    const payedArray: any[] = [];
 
     check.products.forEach((element: any) => {
-      let contains = productsArray.some(obj => obj.name == element.name && obj.note == element.note && obj.price == element.price);
+      const contains = productsArray.some(obj => obj.name == element.name && obj.note == element.note && obj.price == element.price);
       if (contains) {
-        let index = productsArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
+        const index = productsArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
         productsArray[index].total_price += element.price;
         productsArray[index].count++;
       } else {
-        let schema = {
+        const schema = {
           name: element.name,
           note: element.note,
           price: element.price,
@@ -104,7 +104,7 @@ export class PrinterService {
     if (check.payment_flow) {
       let payed: any[] = [];
       if (check.payment_flow.length > 1) {
-        let things = check.payment_flow.map((obj: any) => obj.payed_products);
+        const things = check.payment_flow.map((obj: any) => obj.payed_products);
         things.forEach((element: any) => {
           payed = payed.concat(element);
         });
@@ -113,13 +113,13 @@ export class PrinterService {
       }
 
       payed.forEach(element => {
-        let contains = payedArray.some(obj => obj.name == element.name && obj.note == element.note && obj.price == element.price);
+        const contains = payedArray.some(obj => obj.name == element.name && obj.note == element.note && obj.price == element.price);
         if (contains) {
-          let index = payedArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
+          const index = payedArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
           payedArray[index].total_price += element.price;
           payedArray[index].count++;
         } else {
-          let schema = {
+          const schema = {
             name: element.name,
             note: element.note,
             price: element.price,
@@ -132,22 +132,22 @@ export class PrinterService {
       });
     }
 
-    let newCheck = Object.assign({}, check);
+    const newCheck = Object.assign({}, check);
     newCheck.products = productsArray;
     newCheck.payed_products = payedArray;
     this.electron.send('printCheck', device, newCheck, table, this.storeLogo, '');
   }
 
   printPayment(device: any, table: any, payment: any): void {
-    let productsArray: any[] = [];
+    const productsArray: any[] = [];
     payment.payed_products.forEach((element: any) => {
-      let contains = productsArray.some(obj => obj.name == element.name && obj.note == element.note);
+      const contains = productsArray.some(obj => obj.name == element.name && obj.note == element.note);
       if (contains) {
-        let index = productsArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
+        const index = productsArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
         productsArray[index].total_price += element.price;
         productsArray[index].count++;
       } else {
-        let schema = {
+        const schema = {
           name: element.name,
           note: element.note,
           price: element.price,

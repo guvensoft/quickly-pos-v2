@@ -7,17 +7,17 @@
             <!-- Masalar  nav-justified -->
             <ul class="nav nav-tabs">
               <li class="nav-item">
-                <a class="nav-link" [ngClass]="{'active': section == 'Masalar'}" (click)="changeSection('Masalar')">
+                <a class="nav-link" [ngClass]="{'active': section === 'Masalar'}" (click)="changeSection('Masalar')">
                   <i class="fa fa-square" aria-hidden="true"></i>
                   Masalar
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" [ngClass]="{'active': section == 'Kroki'}" (click)="changeSection('Kroki')">
+                <a class="nav-link" [ngClass]="{'active': section === 'Kroki'}" (click)="changeSection('Kroki')">
                   <i class="fa fa-map" aria-hidden="true"></i> Kroki</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" [ngClass]="{'active': section == 'Hesaplar'}" (click)="changeSection('Hesaplar')">
+                <a class="nav-link" [ngClass]="{'active': section === 'Hesaplar'}" (click)="changeSection('Hesaplar')">
                   <i class="fa fa-sticky-note" aria-hidden="true"></i>
                   Hesaplar
                   <span *ngIf="checks.length > 0" class="badge bg-danger">{{checks?.length}}</span>
@@ -28,7 +28,7 @@
                   <i class="fa fa-motorcycle" aria-hidden="true"></i> Paket Servis</a>
               </li> -->
               <li class="nav-item">
-                <a class="nav-link" [ngClass]="{'active': section == 'Siparişler'}"
+                <a class="nav-link" [ngClass]="{'active': section === 'Siparişler'}"
                   (click)="changeSection('Siparişler')">
                   <i class="fa fa-paper-plane" aria-hidden="true"></i>
                   Siparişler
@@ -37,7 +37,7 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" [ngClass]="{'active': section == 'Ödemeler'}" (click)="changeSection('Ödemeler')">
+                <a class="nav-link" [ngClass]="{'active': section === 'Ödemeler'}" (click)="changeSection('Ödemeler')">
                   <i class="fa fa-credit-card-alt" aria-hidden="true"></i>
                   Ödemeler
                   <span *ngIf="waitingReceipts > 0"
@@ -58,7 +58,7 @@
         </div>
       </div>
 
-      <div *ngIf="section == 'Masalar'" class="card-body pt-0 flow">
+      <div *ngIf="section === 'Masalar'" class="card-body pt-0 flow">
         <section id="tables">
           <div class="row">
             <div *ngFor="let table of tableViews" [routerLink]="['/selling-screen','Normal', table._id!]"
@@ -102,7 +102,7 @@
         </section>
       </div>
 
-      <div *ngIf="section == 'Hesaplar'" class="card-body pt-0 flow">
+      <div *ngIf="section === 'Hesaplar'" class="card-body pt-0 flow">
         <section id="checks">
           <div class="row">
             <div *ngFor="let check of checksView" [routerLink]="['/selling-screen','Normal', check.table_id!]"
@@ -141,7 +141,7 @@
         </section>
       </div>
 
-      <div *ngIf="section == 'Siparişler'" class="card-body pt-0 flow">
+      <div *ngIf="section === 'Siparişler'" class="card-body pt-0 flow">
         <section id="orders">
           <div class="row">
             <ng-container *ngFor="let order of ordersView">
@@ -186,8 +186,8 @@
         </section>
       </div>
 
-      <div *ngIf="section == 'Kroki'" class="card-body p-0">
-        <section *ngIf="selected == ''" id="err">
+      <div *ngIf="section === 'Kroki'" class="card-body p-0">
+        <section *ngIf="selected === ''" id="err">
           <h1>Lütfen Sağ Taraftan Bölüm Seçiniz</h1>
         </section>
         <section *ngIf="selected !== ''" id="plan">
@@ -216,7 +216,7 @@
       </div>
 
 
-      <div *ngIf="section == 'Ödemeler'" class="card-body pt-0 flow">
+      <div *ngIf="section === 'Ödemeler'" class="card-body pt-0 flow">
         <section id="orders">
           <div class="row">
             <ng-container *ngFor="let receipt of receiptsView">
@@ -315,7 +315,7 @@
         <h2 class="mt-2"><i class="fa fa-sticky-note" aria-hidden="true"></i> Hızlı Hesap</h2>
       </div>
     </div>
-    <div class="card mb-2" (click)="getTablesBy('All')" [ngClass]="{'bg-danger text-white':selected == ''}">
+    <div class="card mb-2" (click)="getTablesBy('All')" [ngClass]="{'bg-danger text-white':selected === ''}">
       <div class="card-body">
         <h2 class="mt-2">Tüm Masalar</h2>
       </div>

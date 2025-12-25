@@ -91,9 +91,9 @@ export class TableReportsComponent implements OnInit {
   }
 
   normalWeekOrder(array: Array<any>) {
-    var arrayLength = array.length
-    for (var i = 0; i < arrayLength - 1; i++) {
-      var temp = array[i];
+    const arrayLength = array.length
+    for (let i = 0; i < arrayLength - 1; i++) {
+      const temp = array[i];
       array[i] = array[i + 1];
       array[i + 1] = temp;
     }
@@ -101,7 +101,7 @@ export class TableReportsComponent implements OnInit {
   }
 
   dailyCount(arr: Array<number>, price: number) {
-    let newArray = [];
+    const newArray = [];
     for (let item of arr) {
       item = item / price;
       newArray.push(item);
@@ -161,7 +161,7 @@ export class TableReportsComponent implements OnInit {
     this.tablesList = newArray;
     if (this.selectedCat) {
       this.mainService.getAllBy('tables', { floor_id: this.selectedCat }).then(res => {
-        let floors_ids = res.docs.map((obj: any) => obj._id);
+        const floors_ids = res.docs.map((obj: any) => obj._id);
         this.tablesList = this.tablesList.filter((obj: any) => floors_ids.includes(obj.connection_id));
       })
     }
@@ -170,7 +170,7 @@ export class TableReportsComponent implements OnInit {
   getReportsByCategory(cat_id: string) {
     this.selectedCat = cat_id;
     this.mainService.getAllBy('tables', { floor_id: cat_id }).then(res => {
-      let floors_ids = res.docs.map((obj: any) => obj._id);
+      const floors_ids = res.docs.map((obj: any) => obj._id);
       this.tablesList = this.generalList.filter((obj: any) => floors_ids.includes(obj.connection_id));
     })
   }
@@ -188,7 +188,7 @@ export class TableReportsComponent implements OnInit {
     this.mainService.getAllBy('reports', { type: 'Table' }).then(res => {
       this.generalList = res.docs.sort((a: any, b: any) => b.count - a.count);
       this.tablesList = JSON.parse(JSON.stringify(this.generalList));
-      let chartTable = this.tablesList.slice(0, 5);
+      const chartTable = this.tablesList.slice(0, 5);
       chartTable.forEach((obj, index) => {
         this.mainService.getData('tables', obj.connection_id).then(res => {
           obj.weekly = this.normalWeekOrder(obj.weekly);

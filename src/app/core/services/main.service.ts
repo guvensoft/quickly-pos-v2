@@ -110,7 +110,7 @@ export class MainService {
     // Server bilgilerini yükle
     this.getAllBy('settings', { key: 'ServerSettings' }).then(res => {
       if (res.docs.length > 0) {
-        let appType = localStorage.getItem('AppType');
+        const appType = localStorage.getItem('AppType');
         switch (appType) {
           case 'Primary':
             this.serverInfo = res.docs.find((obj: any) => obj.key == 'ServerSettings' && obj.value.type == 0)?.value;
@@ -169,7 +169,7 @@ export class MainService {
     return this.LocalDB[db].post(schema).then(res => {
       // PouchDB post returns { ok: true, id: '...', rev: '...' }
       // We need to fetch the document or construct it to put into 'allData'
-      let doc = Object.assign({}, schema, { _id: res.id, db_name: db, db_seq: 0 });
+      const doc = Object.assign({}, schema, { _id: res.id, db_name: db, db_seq: 0 });
       // DO NOT include _rev from the schema (it shouldn't be there anyway from post)
       // BUT we should respect the new rev if we were updating, but here we are adding.
       // For 'allData', this is a new insert/upsert.
@@ -328,7 +328,7 @@ export class MainService {
           this.LocalDB['allData'].remove(doc);
         });
       } else {
-        let cData = Object.assign({ db_name: local_db, db_seq: (change as any).seq }, change.doc);
+        const cData = Object.assign({ db_name: local_db, db_seq: (change as any).seq }, change.doc);
         (this.LocalDB['allData'] as any).upsert(change.id, (doc: any) => {
           return Object.assign(doc || {}, cData);
         }).catch((err: any) => {
@@ -344,7 +344,7 @@ export class MainService {
     if (sync.direction === 'pull') {
       changes.forEach((element: any) => {
         if (!element._deleted) {
-          let db = element.db_name;
+          const db = element.db_name;
           if (element.key !== 'ServerSettings' && element.key !== 'ActivationStatus') {
             delete element._rev;
             delete element._revisions;
@@ -359,7 +359,7 @@ export class MainService {
             }
           }
         } else {
-          for (let db in this.LocalDB) {
+          for (const db in this.LocalDB) {
             if (db !== 'allData') {
               this.LocalDB[db].get(element._id).then((doc) => {
                 if (doc) return this.LocalDB[db].remove(doc);
@@ -442,7 +442,7 @@ export class MainService {
   }
 
   replicateDB(db_configrations: any): any {
-    let db = new PouchDB(`http://${db_configrations.ip_address}:${db_configrations.ip_port}/${db_configrations.key}/appServer`);
+    const db = new PouchDB(`http://${db_configrations.ip_address}:${db_configrations.ip_port}/${db_configrations.key}/appServer`);
     return db.replicate.to(this.LocalDB['allData'], { batch_size: 500, batches_limit: 50, timeout: 60000, filter: (doc: any) => !doc._deleted });
   }
 

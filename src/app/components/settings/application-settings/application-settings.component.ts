@@ -90,7 +90,7 @@ export class ApplicationSettingsComponent implements OnInit {
   }
 
   generateKey(Form: NgForm) {
-    let newKey = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const newKey = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     Form.value.key = newKey;
     Form.value.ip_address = this.electronService.getLocalIP();
     this.serverSettingsForm.setValue(Form.value);
@@ -102,7 +102,7 @@ export class ApplicationSettingsComponent implements OnInit {
   }
 
   addPrinter(Form: NgForm) {
-    let form = Form.value;
+    const form = Form.value;
     let address;
     if (form.port_number == undefined) {
       address = this.selectedPrinter.portNumbers[0];
@@ -116,8 +116,8 @@ export class ApplicationSettingsComponent implements OnInit {
           return false;
         }
       }
-      let printer = new Printer(form.name, this.printerProcess, form.note, address, form.mission);
-      let printersData = this.printers.filter(obj => obj.name == form.name);
+      const printer = new Printer(form.name, this.printerProcess, form.note, address, form.mission);
+      const printersData = this.printers.filter(obj => obj.name == form.name);
       if (printersData.length == 0) {
         this.settings.addPrinter(printer);
         (window as any).$('#printerModal').modal('hide');
@@ -133,7 +133,7 @@ export class ApplicationSettingsComponent implements OnInit {
   }
 
   updatePrinter(Form: NgForm) {
-    let form = Form.value;
+    const form = Form.value;
     this.settings.updatePrinter(form, this.choosenPrinter);
     this.choosenPrinter = undefined!;
     this.message.sendMessage('Yazıcı Düzenlendi.');

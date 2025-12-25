@@ -66,13 +66,13 @@ export class RestaurantSettingsComponent implements OnInit {
   }
 
   addFloor(areaForm: NgForm) {
-    let form = areaForm.value;
+    const form = areaForm.value;
     if (!form.name) {
       this.messageService.sendMessage('Bölüm Adı Belirtmelisiniz');
       return false;
     }
-    let areaSpecs = new FloorSpecs(form.air, form.cigarate, form.reservation, form.music, form.events);
-    let schema = new Floor(form.name, form.description, 1, Date.now(), form.special, areaSpecs);
+    const areaSpecs = new FloorSpecs(form.air, form.cigarate, form.reservation, form.music, form.events);
+    const schema = new Floor(form.name, form.description, 1, Date.now(), form.special, areaSpecs);
     this.mainService.addData('floors', schema).then(() => {
       this.fillData();
       this.messageService.sendMessage('Bölüm Oluşturuldu!');
@@ -82,8 +82,8 @@ export class RestaurantSettingsComponent implements OnInit {
   }
 
   updateFloor(areaDetailForm: NgForm) {
-    let form = areaDetailForm.value;
-    let schema = new Floor(form.name, form.description, 1, Date.now(), form.special, new FloorSpecs(form.air, form.cigarate, form.reservation, form.music, form.events), form._id, form._rev);
+    const form = areaDetailForm.value;
+    const schema = new Floor(form.name, form.description, 1, Date.now(), form.special, new FloorSpecs(form.air, form.cigarate, form.reservation, form.music, form.events), form._id, form._rev);
     this.mainService.updateData('floors', form._id, schema).then(res => {
       this.selectedFloor = undefined;
       this.fillData();
@@ -92,12 +92,12 @@ export class RestaurantSettingsComponent implements OnInit {
   }
 
   removeFloor() {
-    let isOk = confirm('Bölümü Silmek Üzeresiniz. Bölüme Dahil Olan Masalarda Silinecektir.');
+    const isOk = confirm('Bölümü Silmek Üzeresiniz. Bölüme Dahil Olan Masalarda Silinecektir.');
     if (isOk) {
       this.mainService.removeData('floors', this.selectedFloor!).then(() => {
         this.mainService.getAllBy('tables', { floor_id: this.selectedFloor! }).then(result => {
-          let data = result.docs
-          for (let prop in data) {
+          const data = result.docs
+          for (const prop in data) {
             this.mainService.removeData('tables', data[prop]._id).then(result => {
               this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
                 if (res.docs.length > 0)
@@ -114,7 +114,7 @@ export class RestaurantSettingsComponent implements OnInit {
   }
 
   addTable(tableForm: NgForm) {
-    let form = tableForm.value;
+    const form = tableForm.value;
     if (!form.name) {
       this.messageService.sendMessage('Masa Adı Belirtmelisiniz');
       return false;
@@ -122,7 +122,7 @@ export class RestaurantSettingsComponent implements OnInit {
       this.messageService.sendMessage('Kategori Seçmelisiniz');
       return false;
     }
-    let schema = new Table(form.name, form.floor_id, form.capacity, form.description, 1, Date.now(), [], form._id, form._rev);
+    const schema = new Table(form.name, form.floor_id, form.capacity, form.description, 1, Date.now(), [], form._id, form._rev);
     if (form._id == undefined) {
       this.mainService.addData('tables', schema).then((response) => {
         this.mainService.addData('reports', new Report('Table', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now())).then(res => {
@@ -154,7 +154,7 @@ export class RestaurantSettingsComponent implements OnInit {
   }
 
   removeTable() {
-    let isOk = confirm('Masayı Silmek Üzeresiniz!');
+    const isOk = confirm('Masayı Silmek Üzeresiniz!');
     if (isOk) {
       this.mainService.removeData('tables', this.selectedTable!).then((result) => {
         this.logService.createLog(logType.TABLE_DELETED, result._id, `${this.tableForm.value.name} adlı Masa Silindi.`);
@@ -172,7 +172,7 @@ export class RestaurantSettingsComponent implements OnInit {
   }
 
   filterTables(value: string) {
-    let regexp = new RegExp(value, 'i');
+    const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('tables', { name: { $regex: regexp } }).then(res => {
       this.tables = res.docs;
       this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));

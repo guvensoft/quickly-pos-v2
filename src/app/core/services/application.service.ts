@@ -4,7 +4,7 @@ import { MessageService } from '../../core/services/message.service';
 import { SettingsService } from './settings.service';
 
 // jQuery type declaration for modal operations
-declare var $: any;
+declare let $: any;
 
 @Injectable({
   providedIn: 'root'
