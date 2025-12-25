@@ -7,7 +7,7 @@ import { MessageService } from '../../providers/message.service';
 import { LogService, logType } from '../../services/log.service';
 import { MainService } from '../../services/main.service';
 import { SettingsService } from '../../services/settings.service';
-import { PricePipe } from '../../pipes/price.pipe';
+import { PricePipe } from '../../shared/pipes/price.pipe';
 
 
 @Component({

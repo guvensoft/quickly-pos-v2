@@ -1,8 +1,8 @@
 import { Component, OnInit, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { PricePipe } from '../../pipes/price.pipe';
-import { GeneralPipe } from '../../pipes/general.pipe';
+import { PricePipe } from '../../shared/pipes/price.pipe';
+import { GeneralPipe } from '../../shared/pipes/general.pipe';
 import { MainService } from '../../services/main.service';
 import { Router } from '@angular/router';
 import { Floor, Table } from '../../core/models/table.model';

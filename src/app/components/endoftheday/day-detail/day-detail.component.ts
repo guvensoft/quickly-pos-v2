@@ -8,10 +8,10 @@ import { ElectronService } from '../../../providers/electron.service';
 import { Log, logType } from '../../../core/models/log.model';
 import { PrinterService } from '../../../providers/printer.service';
 import { SettingsService } from '../../../services/settings.service';
-import { PricePipe } from '../../../pipes/price.pipe';
-import { GeneralPipe } from '../../../pipes/general.pipe';
-import { TimeAgoPipe } from '../../../pipes/timeago.pipe';
-import { TruncatePipe } from '../../../pipes/truncate.pipe';
+import { PricePipe } from '../../../shared/pipes/price.pipe';
+import { GeneralPipe } from '../../../shared/pipes/general.pipe';
+import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { TruncatePipe } from '../../../shared/pipes/truncate.pipe';
 import { BaseChartDirective } from 'ng2-charts';
 
 @Component({

@@ -13,7 +13,7 @@ import { SettingsService } from '../../services/settings.service';
 import { ConflictService } from '../../services/conflict.service';
 import { HttpService } from '../../services/http.service';
 import { DayDetailComponent } from './day-detail/day-detail.component';
-import { PricePipe } from '../../pipes/price.pipe';
+import { PricePipe } from '../../shared/pipes/price.pipe';
 
 @Component({
   standalone: true,
