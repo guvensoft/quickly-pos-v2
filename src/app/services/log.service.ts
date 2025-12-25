@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { Log, logType } from '../mocks/log';
+import { Log, logType } from '../core/models/log.model';
 import { MainService } from './main.service';
 
-export { logType } from '../mocks/log';
+export { logType } from '../core/models/log.model';
 
 @Injectable({
   providedIn: 'root'

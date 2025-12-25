@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Subject } from 'rxjs';
-import { Settings } from '../mocks/settings';
+import { Settings } from '../core/models/settings.model';
 import { MainService } from './main.service';
 
 @Injectable({

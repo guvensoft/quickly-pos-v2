@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Activity, Report } from '../../mocks/report';
+import { Activity, Report } from '../../core/models/report.model';
 import { MainService } from '../../services/main.service';
 import { SettingsService } from '../../services/settings.service';
 import { ChartType } from 'chart.js';

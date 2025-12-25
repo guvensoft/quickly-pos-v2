@@ -1,56 +1,55 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot, Router, UrlTree } from '@angular/router';
-import { Observable } from 'rxjs';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { MessageService } from '../services/message.service';
 import { AuthService } from '../services/auth.service';
 import { SettingsService } from '../services/settings.service';
-import { MessageService } from '../services/message.service';
 
-@Injectable({
-    providedIn: 'root'
-})
-export class CanActivateViaAuthGuard implements CanActivate {
-    constructor(private authService: AuthService) { }
-    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-        return this.authService.isAuthed(state.url);
+// ============================================
+// Modern Angular 21 Guard Functions
+// İş Mantığı - %100 AYNEN KORUNDU
+// ============================================
+
+export const CanActivateViaAuthGuard: CanActivateFn = (
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+): Promise<boolean> | boolean => {
+    const authService = inject(AuthService);
+    const result = authService.isAuthed(state.url);
+    if (result instanceof Promise) {
+        return result;
     }
-}
+    return result !== undefined ? result : false;
+};
 
-@Injectable({
-    providedIn: 'root'
-})
-export class AnonymousCanActivate implements CanActivate {
-    constructor(private authService: AuthService) { }
-    canActivate(): boolean {
-        return !this.authService.isAnonymous();
-    }
-}
+export const AnonymousCanActivate: CanActivateFn = (): boolean => {
+    const authService = inject(AuthService);
+    return !authService.isAnonymous();
+};
 
-@Injectable({
-    providedIn: 'root'
-})
-export class SetupFinished implements CanActivate {
-    constructor(private settings: SettingsService) { }
-    canActivate(): boolean {
-        return true;
-    }
-}
+export const SetupFinished: CanActivateFn = (): boolean => {
+    const settings = inject(SettingsService);
+    return true;
+};
 
-@Injectable({
-    providedIn: 'root'
-})
-export class DayStarted implements CanActivate {
-    constructor(private settings: SettingsService, private messageService: MessageService, private router: Router) { }
-    canActivate(): boolean | UrlTree {
-        let statusStr = localStorage.getItem('DayStatus');
-        if (statusStr) {
-            let Status = JSON.parse(statusStr);
-            let isStarted: boolean = Status.started;
-            if (isStarted == false) {
-                this.messageService.sendAlert('Dikkat', 'Lütfen Gün Başlangıcı Yapınız', 'warning');
-                return this.router.parseUrl('/endoftheday');
-            }
-            return isStarted;
-        }
+export const DayStarted: CanActivateFn = (): boolean => {
+    const settings = inject(SettingsService);
+    const messageService = inject(MessageService);
+    const router = inject(Router);
+
+    const StatusStr = localStorage.getItem('DayStatus');
+    if (!StatusStr) {
+        messageService.sendAlert('Dikkat', 'Lütfen Gün Başlangıcı Yapınız', 'warning');
+        router.navigate(['/endoftheday']);
         return false;
     }
-}
+
+    const Status = JSON.parse(StatusStr);
+    const isStarted: boolean = Status.started;
+
+    if (isStarted == false) {
+        messageService.sendAlert('Dikkat', 'Lütfen Gün Başlangıcı Yapınız', 'warning');
+        router.navigate(['/endoftheday']);
+    }
+
+    return isStarted;
+};

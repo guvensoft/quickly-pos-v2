@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Printer } from '../../../mocks/settings';
+import { Printer } from '../../../core/models/settings.model';
 import { ElectronService } from '../../../providers/electron.service';
 import { MessageService } from '../../../providers/message.service';
 import { PrinterService } from '../../../providers/printer.service';

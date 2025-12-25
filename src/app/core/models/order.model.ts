@@ -1,11 +1,9 @@
-import { User } from './user.model';
-
-// export interface User {
-//     id: string,
-//     name: string,
-//     phone?: string,
-//     address?: string,
-// }
+export interface User {
+    id: string,
+    name: string,
+    phone?: string,
+    address?: string,
+}
 
 export interface OrderItem {
     product_id: string;

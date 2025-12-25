@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { User } from '../../mocks/user';
+import { User } from '../../core/models/user.model';
 import { MessageService } from "../../providers/message.service";
 import { AuthService } from "../../services/auth.service";
 import { MainService } from '../../services/main.service';

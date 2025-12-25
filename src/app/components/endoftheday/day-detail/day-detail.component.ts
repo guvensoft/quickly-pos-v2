@@ -1,11 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Cashbox } from '../../../mocks/cashbox';
-import { ClosedCheck } from '../../../mocks/check';
-import { BackupData, EndDay } from '../../../mocks/endoftheday';
-import { Report } from '../../../mocks/report';
+import { Cashbox } from '../../../core/models/cashbox.model';
+import { ClosedCheck } from '../../../core/models/check.model';
+import { BackupData, EndDay } from '../../../core/models/endoftheday.model';
+import { Report } from '../../../core/models/report.model';
 import { ElectronService } from '../../../providers/electron.service';
-import { Log, logType } from '../../../mocks/log';
+import { Log, logType } from '../../../core/models/log.model';
 import { PrinterService } from '../../../providers/printer.service';
 import { SettingsService } from '../../../services/settings.service';
 import { PricePipe } from '../../../pipes/price.pipe';

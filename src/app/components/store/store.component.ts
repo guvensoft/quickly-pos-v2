@@ -5,16 +5,16 @@ import { PricePipe } from '../../pipes/price.pipe';
 import { GeneralPipe } from '../../pipes/general.pipe';
 import { MainService } from '../../services/main.service';
 import { Router } from '@angular/router';
-import { Floor, Table } from '../../mocks/table';
-import { Check, CheckProduct, CheckType, PaymentStatus } from '../../mocks/check';
-import { Order, OrderItem, OrderStatus, OrderType, User } from '../../mocks/order';
-import { Ingredient, Product } from '../../mocks/product';
+import { Floor, Table } from '../../core/models/table.model';
+import { Check, CheckProduct, CheckType, PaymentStatus } from '../../core/models/check.model';
+import { Order, OrderItem, OrderStatus, OrderType, User } from '../../core/models/order.model';
+import { Ingredient, Product } from '../../core/models/product.model';
 import { SettingsService } from '../../services/settings.service';
-import { Stock } from '../../mocks/stocks';
-import { Report } from '../../mocks/report';
-import { DayInfo } from '../../mocks/settings';
+import { Stock } from '../../core/models/stocks.model';
+import { Report } from '../../core/models/report.model';
+import { DayInfo } from '../../core/models/settings.model';
 import { logType } from '../../services/log.service';
-import { Receipt, ReceiptMethod, ReceiptStatus, ReceiptType } from '../../mocks/receipt';
+import { Receipt, ReceiptMethod, ReceiptStatus, ReceiptType } from '../../core/models/receipt.model';
 
 export interface CountData { product: string; count: number; total: number; };
 

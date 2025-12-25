@@ -8,9 +8,9 @@ import { MainService } from '../../services/main.service';
 import { SettingsService } from '../../services/settings.service';
 import { ElectronService } from '../../providers/electron.service';
 import { MessageService } from '../../providers/message.service';
-import { Settings, AuthInfo } from '../../mocks/settings';
-import { Report, Activity } from '../../mocks/report';
-import { UserGroup, User, UserAuth, ComponentsAuth } from '../../mocks/user';
+import { Settings, AuthInfo } from '../../core/models/settings.model';
+import { Report, Activity } from '../../core/models/report.model';
+import { UserGroup, User, UserAuth, ComponentsAuth } from '../../core/models/user.model';
 
 @Component({
   standalone: true,

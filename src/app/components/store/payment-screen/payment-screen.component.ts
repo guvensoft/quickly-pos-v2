@@ -2,14 +2,14 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Check, CheckProduct, ClosedCheck, PaymentStatus, CheckStatus, CheckType, CheckNo } from '../../../mocks/check';
-import { Printer, PaymentMethod } from '../../../mocks/settings';
+import { Check, CheckProduct, ClosedCheck, PaymentStatus, CheckStatus, CheckType, CheckNo } from '../../../core/models/check.model';
+import { Printer, PaymentMethod } from '../../../core/models/settings.model';
 import { MessageService } from '../../../providers/message.service';
 import { PrinterService } from '../../../providers/printer.service';
 import { LogService, logType } from '../../../services/log.service';
 import { MainService } from '../../../services/main.service';
 import { SettingsService } from '../../../services/settings.service';
-import { Customer } from 'app/mocks/customer';
+import { Customer } from 'app/core/models/customer.model';
 
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';

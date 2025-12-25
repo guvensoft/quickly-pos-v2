@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
-import { Stock, StockCategory } from '../../../mocks/stocks';
+import { Stock, StockCategory } from '../../../core/models/stocks.model';
 import { MessageService } from '../../../providers/message.service';
 import { LogService, logType } from '../../../services/log.service';
 import { MainService } from '../../../services/main.service';

@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Log, logType } from '../../../mocks/log';
-import { Report } from '../../../mocks/report';
+import { Log, logType } from '../../../core/models/log.model';
+import { Report } from '../../../core/models/report.model';
 import { MainService } from '../../../services/main.service';
-import { Floor } from '../../../mocks/table';
+import { Floor } from '../../../core/models/table.model';
 import { ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';

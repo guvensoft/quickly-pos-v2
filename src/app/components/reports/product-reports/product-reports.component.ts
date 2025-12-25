@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Log, logType } from '../../../mocks/log';
-import { Report } from '../../../mocks/report';
-import { Printer } from '../../../mocks/settings';
+import { Log, logType } from '../../../core/models/log.model';
+import { Report } from '../../../core/models/report.model';
+import { Printer } from '../../../core/models/settings.model';
 import { MainService } from '../../../services/main.service';
 import { SettingsService } from '../../../services/settings.service';
-import { Category } from '../../../mocks/product';
+import { Category } from '../../../core/models/product.model';
 import { PrinterService } from '../../../providers/printer.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { PricePipe } from '../../../shared/pipes/price.pipe';

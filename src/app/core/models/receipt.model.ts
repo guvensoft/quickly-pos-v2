@@ -1,5 +1,4 @@
-import { Order } from "./order.model";
-import { User } from "./user.model";
+import { Order, User } from "./order.model";
 
 export class Receipt {
     constructor(

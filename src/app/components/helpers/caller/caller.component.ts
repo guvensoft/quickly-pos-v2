@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CallerIDService } from '../../../providers/caller-id.service';
 import { MainService } from '../../../services/main.service';
-import { Customer, CustomerType } from '../../../mocks/customer';
-import { Check, CheckType, CheckStatus, CheckNo } from '../../../mocks/check';
+import { Customer, CustomerType } from '../../../core/models/customer.model';
+import { Check, CheckType, CheckStatus, CheckNo } from '../../../core/models/check.model';
 import { SettingsService } from '../../../services/settings.service';
 import { Router } from '@angular/router';
 import { NgForm } from '@angular/forms';
 import { NgxMaskPipe } from 'ngx-mask';
-import { Call } from '../../../mocks/caller';
+import { Call } from '../../../core/models/caller.model';
 
 @Component({
   standalone: true,

@@ -13,7 +13,7 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { PageNotFoundComponent } from './app/shared/components';
 
 // Guards
-import { AnonymousCanActivate, CanActivateViaAuthGuard, DayStarted } from './app/guards/auth.guard';
+import { AnonymousCanActivate, CanActivateViaAuthGuard, DayStarted } from './app/core/guards/auth.guard';
 
 // Components
 import { ActivationComponent } from './app/components/activation/activation.component';

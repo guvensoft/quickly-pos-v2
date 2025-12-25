@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Cashbox } from '../../mocks/cashbox';
-import { CheckType, ClosedCheck } from '../../mocks/check';
-import { BackupData, EndDay } from '../../mocks/endoftheday';
-import { Log } from '../../mocks/log';
-import { Report } from '../../mocks/report';
+import { Cashbox } from '../../core/models/cashbox.model';
+import { CheckType, ClosedCheck } from '../../core/models/check.model';
+import { BackupData, EndDay } from '../../core/models/endoftheday.model';
+import { Log } from '../../core/models/log.model';
+import { Report } from '../../core/models/report.model';
 import { ElectronService } from '../../providers/electron.service';
 import { MessageService } from '../../providers/message.service';
 import { PrinterService } from '../../providers/printer.service';

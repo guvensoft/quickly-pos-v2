@@ -2,8 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { ElectronService } from './electron.service';
 import { MessageService } from './message.service';
 import { SettingsService } from '../services/settings.service';
-import { Order } from '../mocks/order';
-import { PrintOut, PrintOutStatus } from '../mocks/print';
+import { Order } from '../core/models/order.model';
+import { PrintOut, PrintOutStatus } from '../core/models/print.model';
 import { MainService } from '../services/main.service';
 
 @Injectable({

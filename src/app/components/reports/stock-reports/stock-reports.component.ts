@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Log, logType } from '../../../mocks/log';
-import { Stock, StockCategory } from '../../../mocks/stocks';
+import { Log, logType } from '../../../core/models/log.model';
+import { Stock, StockCategory } from '../../../core/models/stocks.model';
 import { MainService } from '../../../services/main.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';

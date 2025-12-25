@@ -2,12 +2,12 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpService } from '../../services/http.service';
 import { MainService } from '../../services/main.service';
-import { Report } from '../../mocks/report';
+import { Report } from '../../core/models/report.model';
 
 import * as fs from 'fs';
-import { ServerInfo, Settings } from '../../mocks/settings';
-import { Product } from '../../mocks/product';
-import { Table } from '../../mocks/table';
+import { ServerInfo, Settings } from '../../core/models/settings.model';
+import { Product } from '../../core/models/product.model';
+import { Table } from '../../core/models/table.model';
 
 @Component({
   standalone: true,
