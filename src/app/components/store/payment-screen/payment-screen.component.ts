@@ -4,11 +4,11 @@ import { RouterModule } from '@angular/router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Check, CheckProduct, ClosedCheck, PaymentStatus, CheckStatus, CheckType, CheckNo } from '../../../core/models/check.model';
 import { Printer, PaymentMethod } from '../../../core/models/settings.model';
-import { MessageService } from '../../../providers/message.service';
-import { PrinterService } from '../../../providers/printer.service';
-import { LogService, logType } from '../../../services/log.service';
-import { MainService } from '../../../services/main.service';
-import { SettingsService } from '../../../services/settings.service';
+import { MessageService } from '../../../core/services/message.service';
+import { PrinterService } from '../../../core/services/printer.service';
+import { LogService, logType } from '../../../core/services/log.service';
+import { MainService } from '../../../core/services/main.service';
+import { SettingsService } from '../../../core/services/settings.service';
 import { Customer } from 'app/core/models/customer.model';
 
 import { PricePipe } from '../../../shared/pipes/price.pipe';

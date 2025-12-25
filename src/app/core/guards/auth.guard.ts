@@ -1,8 +1,8 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { MessageService } from '../services/message.service';
-import { AuthService } from '../services/auth.service';
-import { SettingsService } from '../services/settings.service';
+import { MessageService } from '../../core/services/message.service';
+import { AuthService } from '../../core/services/auth.service';
+import { SettingsService } from '../../core/services/settings.service';
 
 // ============================================
 // Modern Angular 21 Guard Functions

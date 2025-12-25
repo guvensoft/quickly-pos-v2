@@ -5,9 +5,9 @@ import { NgForm } from '@angular/forms';
 import { Printer } from 'app/core/models/settings.model';
 import { Category, Ingredient, Product, ProductSpecs, Recipe, SubCategory } from '../../../core/models/product.model';
 import { Report } from '../../../core/models/report.model';
-import { MessageService } from '../../../providers/message.service';
-import { LogService, logType } from '../../../services/log.service';
-import { MainService } from '../../../services/main.service';
+import { MessageService } from '../../../core/services/message.service';
+import { LogService, logType } from '../../../core/services/log.service';
+import { MainService } from '../../../core/services/main.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 
 @Component({

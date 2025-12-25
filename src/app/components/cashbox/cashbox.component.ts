@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
 import { Cashbox } from '../../core/models/cashbox.model';
-import { MessageService } from '../../providers/message.service';
-import { LogService, logType } from '../../services/log.service';
-import { MainService } from '../../services/main.service';
-import { SettingsService } from '../../services/settings.service';
+import { MessageService } from '../../core/services/message.service';
+import { LogService, logType } from '../../core/services/log.service';
+import { MainService } from '../../core/services/main.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { PricePipe } from '../../shared/pipes/price.pipe';
 
 

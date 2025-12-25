@@ -1,11 +1,11 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CallerIDService } from '../../../providers/caller-id.service';
-import { MainService } from '../../../services/main.service';
+import { CallerIDService } from '../../../core/services/caller-id.service';
+import { MainService } from '../../../core/services/main.service';
 import { Customer, CustomerType } from '../../../core/models/customer.model';
 import { Check, CheckType, CheckStatus, CheckNo } from '../../../core/models/check.model';
-import { SettingsService } from '../../../services/settings.service';
+import { SettingsService } from '../../../core/services/settings.service';
 import { Router } from '@angular/router';
 import { NgForm } from '@angular/forms';
 import { NgxMaskPipe } from 'ngx-mask';

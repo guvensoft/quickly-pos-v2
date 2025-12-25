@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { NgForm } from '@angular/forms'
 import { Router } from '@angular/router'
-import { MainService } from '../../services/main.service';
-import { SettingsService } from '../../services/settings.service';
-import { ElectronService } from '../../providers/electron.service';
-import { MessageService } from '../../providers/message.service';
+import { MainService } from '../../core/services/main.service';
+import { SettingsService } from '../../core/services/settings.service';
+import { ElectronService } from '../../core/services/electron/electron.service';
+import { MessageService } from '../../core/services/message.service';
 import { Settings, AuthInfo } from '../../core/models/settings.model';
 import { Report, Activity } from '../../core/models/report.model';
 import { UserGroup, User, UserAuth, ComponentsAuth } from '../../core/models/user.model';

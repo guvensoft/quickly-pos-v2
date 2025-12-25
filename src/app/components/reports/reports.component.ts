@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Activity, Report } from '../../core/models/report.model';
-import { MainService } from '../../services/main.service';
-import { SettingsService } from '../../services/settings.service';
+import { MainService } from '../../core/services/main.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { GeneralPipe } from '../../shared/pipes/general.pipe';

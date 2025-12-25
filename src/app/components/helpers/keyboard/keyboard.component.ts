@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { KeyboardService } from '../../../providers/keyboard.service';
-import { SettingsService } from '../../../services/settings.service';
+import { KeyboardService } from '../../../core/services/keyboard.service';
+import { SettingsService } from '../../../core/services/settings.service';
 
 @Component({
   standalone: true,

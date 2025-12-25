@@ -1,16 +1,16 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
-import { ElectronService } from './providers/electron.service';
-import { MessageService } from './providers/message.service';
-import { ApplicationService } from './services/application.service';
-import { AuthService } from './services/auth.service';
-import { MainService } from './services/main.service';
-import { SettingsService } from './services/settings.service';
-import { ConflictService } from './services/conflict.service';
-import { CallerIDService } from './providers/caller-id.service';
-import { ScalerService } from './providers/scaler.service';
-import { PrinterService } from './providers/printer.service';
+import { ElectronService } from './core/services/electron/electron.service';
+import { MessageService } from './core/services/message.service';
+import { ApplicationService } from './core/services/application.service';
+import { AuthService } from './core/services/auth.service';
+import { MainService } from './core/services/main.service';
+import { SettingsService } from './core/services/settings.service';
+import { ConflictService } from './core/services/conflict.service';
+import { CallerIDService } from './core/services/caller-id.service';
+import { ScalerService } from './core/services/scaler.service';
+import { PrinterService } from './core/services/printer.service';
 import { Settings, ServerInfo, DayInfo } from './core/models/settings.model';
 import { Order, OrderStatus, OrderType } from './core/models/order.model';
 import { Category } from './core/models/product.model';
@@ -29,17 +29,17 @@ import { CallerComponent } from './components/helpers/caller/caller.component';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  private callerService = inject(CallerIDService);
-  private scalerService = inject(ScalerService);
-  private electronService = inject(ElectronService);
-  private mainService = inject(MainService);
+  private callerService: CallerIDService = inject(CallerIDService);
+  private scalerService: ScalerService = inject(ScalerService);
+  private electronService: ElectronService = inject(ElectronService);
+  private mainService: MainService = inject(MainService);
   private router = inject(Router);
-  private aplicationService = inject(ApplicationService);
-  private settingsService = inject(SettingsService);
-  private messageService = inject(MessageService);
-  private authService = inject(AuthService);
-  private conflictService = inject(ConflictService);
-  private printerService = inject(PrinterService);
+  private aplicationService: ApplicationService = inject(ApplicationService);
+  private settingsService: SettingsService = inject(SettingsService);
+  private messageService: MessageService = inject(MessageService);
+  private authService: AuthService = inject(AuthService);
+  private conflictService: ConflictService = inject(ConflictService);
+  private printerService: PrinterService = inject(PrinterService);
 
   title = 'Quickly';
   description = 'Quickly';

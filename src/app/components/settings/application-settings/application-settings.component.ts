@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Printer } from '../../../core/models/settings.model';
-import { ElectronService } from '../../../providers/electron.service';
-import { MessageService } from '../../../providers/message.service';
-import { PrinterService } from '../../../providers/printer.service';
-import { SettingsService } from '../../../services/settings.service';
+import { ElectronService } from '../../../core/services/electron/electron.service';
+import { MessageService } from '../../../core/services/message.service';
+import { PrinterService } from '../../../core/services/printer.service';
+import { SettingsService } from '../../../core/services/settings.service';
 
 @Component({
   standalone: true,

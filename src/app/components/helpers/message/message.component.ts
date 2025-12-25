@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { MessageService } from '../../../providers/message.service';
+import { MessageService } from '../../../core/services/message.service';
 
 @Component({
 	standalone: true,

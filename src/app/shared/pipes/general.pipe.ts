@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DatabaseService } from '../../core/services/database.service';
+import { MainService } from '../../core/services/main.service';
 
 @Pipe({
     name: 'general',
@@ -7,10 +7,10 @@ import { DatabaseService } from '../../core/services/database.service';
 })
 export class GeneralPipe implements PipeTransform {
 
-    constructor(private databaseService: DatabaseService) { }
+    constructor(private mainService: MainService) { }
 
     transform(value: any, args: string, property?: string): Promise<any> {
-        return this.databaseService.getData(args, value).then((result: any) => {
+        return this.mainService.getData(args, value).then((result: any) => {
             if (property) {
                 return result[property];
             } else {

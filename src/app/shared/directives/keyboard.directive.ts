@@ -1,5 +1,5 @@
 import { Directive, ElementRef, HostListener, Renderer2 } from '@angular/core';
-import { KeyboardService } from '../../providers/keyboard.service';
+import { KeyboardService } from '../../core/services/keyboard.service';
 
 @Directive({
     selector: 'input:not([type="checkbox"]):not([id="keyboardElement"]):not([readonly]),textarea:not([readonly])',

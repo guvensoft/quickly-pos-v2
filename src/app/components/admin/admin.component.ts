@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpService } from '../../services/http.service';
-import { MainService } from '../../services/main.service';
+import { HttpService } from '../../core/services/http.service';
+import { MainService } from '../../core/services/main.service';
 import { Report } from '../../core/models/report.model';
 
 import * as fs from 'fs';

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Log, logType } from '../../../core/models/log.model';
 import { Report } from '../../../core/models/report.model';
-import { MainService } from '../../../services/main.service';
+import { MainService } from '../../../core/services/main.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { ChartType } from 'chart.js';

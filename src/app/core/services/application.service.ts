@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { MessageService } from '../providers/message.service';
+import { MessageService } from '../../core/services/message.service';
 import { SettingsService } from './settings.service';
 
 // jQuery type declaration for modal operations

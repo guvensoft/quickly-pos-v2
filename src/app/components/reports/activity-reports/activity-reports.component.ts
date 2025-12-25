@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MainService } from '../../../services/main.service';
+import { MainService } from '../../../core/services/main.service';
 import { Activity } from '../../../core/models/report.model';
 
 import { BaseChartDirective } from 'ng2-charts';

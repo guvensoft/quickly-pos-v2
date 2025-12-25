@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { ElectronService } from './electron.service';
+import { ElectronService } from './electron/electron.service';
 import { MessageService } from './message.service';
-import { SettingsService } from '../services/settings.service';
+import { SettingsService } from './settings.service';
 import { Subject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 

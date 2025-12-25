@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ElectronService } from './../../providers/electron.service';
-import { SettingsService } from './../../services/settings.service';
+import { ElectronService } from '../../core/services/electron/electron.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { UserSettingsComponent } from './user-settings/user-settings.component';
 import { StockSettingsComponent } from './stock-settings/stock-settings.component';
 import { CustomerSettingsComponent } from './customer-settings/customer-settings.component';

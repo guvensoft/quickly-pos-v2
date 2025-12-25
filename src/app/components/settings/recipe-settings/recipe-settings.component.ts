@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Recipe, Ingredient, Product } from '../../../core/models/product.model';
-import { MainService } from '../../../services/main.service';
+import { MainService } from '../../../core/services/main.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 
 @Component({

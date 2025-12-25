@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ElectronService } from '../../providers/electron.service';
-import { MainService } from '../../services/main.service';
-import { SettingsService } from '../../services/settings.service';
+import { ElectronService } from '../../core/services/electron/electron.service';
+import { MainService } from '../../core/services/main.service';
+import { SettingsService } from '../../core/services/settings.service';
 
 @Component({
   standalone: true,

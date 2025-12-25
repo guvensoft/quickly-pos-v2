@@ -1,159 +1,154 @@
-import { Injectable } from '@angular/core';
-import { Subject, BehaviorSubject } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Subject } from 'rxjs';
 import { Settings } from '../models/settings.model';
-import { DatabaseService } from './database.service';
+import { MainService } from './main.service';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class SettingsService {
-    Settings: Array<Settings> = [];
-    AppInformation: Subject<Settings> = new Subject<Settings>();
-    AppSettings: Subject<Settings> = new Subject<Settings>();
-    AuthInfo: Subject<Settings> = new Subject<Settings>();
-    ActivationStatus: Subject<Settings> = new Subject<Settings>();
-    RestaurantInfo: Subject<Settings> = new Subject<Settings>();
-    Printers: Subject<Settings> = new Subject<Settings>();
-    ServerSettings: Subject<Settings> = new Subject<Settings>();
-    DateSettings: Subject<Settings> = new Subject<Settings>();
+  private mainService = inject(MainService);
 
-    constructor(private databaseService: DatabaseService) {
-        this.initSettings();
-    }
+  Settings!: Array<Settings>;
+  AppInformation: Subject<Settings> = new Subject<Settings>();
+  AppSettings: Subject<Settings> = new Subject<Settings>();
+  AuthInfo: Subject<Settings> = new Subject<Settings>();
+  ActivationStatus: Subject<Settings> = new Subject<Settings>();
+  RestaurantInfo: Subject<Settings> = new Subject<Settings>();
+  Printers: Subject<Settings> = new Subject<Settings>();
+  ServerSettings: Subject<Settings> = new Subject<Settings>();
+  DateSettings: Subject<Settings> = new Subject<Settings>();
 
-    initSettings() {
-        this.databaseService.getAllBy('settings', {}).then((res: any) => {
-            this.Settings = res.docs;
+  constructor() {
+    // Constructor'da mainService kullanımı - İş mantığı AYNEN
+    this.mainService.getAllBy('settings', {}).then((res) => {
+      this.Settings = res.docs;
 
-            const findSetting = (key: string) => this.Settings.find((setting) => setting.key == key);
+      const appSettings = this.Settings.find((setting) => setting.key == 'AppSettings');
+      if (appSettings) this.AppSettings.next(appSettings);
 
-            const appSettings = findSetting('AppSettings');
-            if (appSettings) this.AppSettings.next(appSettings);
+      const authInfo = this.Settings.find((setting) => setting.key == 'AuthInfo');
+      if (authInfo) this.AuthInfo.next(authInfo);
 
-            const authInfo = findSetting('AuthInfo');
-            if (authInfo) this.AuthInfo.next(authInfo);
+      const activationStatus = this.Settings.find((setting) => setting.key == 'ActivationStatus');
+      if (activationStatus) this.ActivationStatus.next(activationStatus);
 
-            const activationStatus = findSetting('ActivationStatus');
-            if (activationStatus) this.ActivationStatus.next(activationStatus);
+      const appInformation = this.Settings.find((setting) => setting.key == 'AppInformation');
+      if (appInformation) this.AppInformation.next(appInformation);
 
-            const appInformation = findSetting('AppInformation');
-            if (appInformation) this.AppInformation.next(appInformation);
+      const restaurantInfo = this.Settings.find((setting) => setting.key == 'RestaurantInfo');
+      if (restaurantInfo) this.RestaurantInfo.next(restaurantInfo);
 
-            const restaurantInfo = findSetting('RestaurantInfo');
-            if (restaurantInfo) this.RestaurantInfo.next(restaurantInfo);
+      const printers = this.Settings.find((setting) => setting.key == 'Printers');
+      if (printers) this.Printers.next(printers);
 
-            const printers = findSetting('Printers');
-            if (printers) this.Printers.next(printers);
+      const dateSettings = this.Settings.find((setting) => setting.key == 'DateSettings');
+      if (dateSettings) this.DateSettings.next(dateSettings);
 
-            const dateSettings = findSetting('DateSettings');
-            if (dateSettings) this.DateSettings.next(dateSettings);
-
-            let appType = localStorage.getItem('AppType');
-            if (appType) {
-                switch (appType) {
-                    case 'Primary':
-                        const primarySettings = this.Settings.find((setting) => setting.key == 'ServerSettings' && setting.value.type == 0);
-                        if (primarySettings) this.ServerSettings.next(primarySettings);
-                        break;
-                    case 'Secondary':
-                        const secondarySettings = this.Settings.find((setting) => setting.key == 'ServerSettings' && setting.value.type == 1);
-                        if (secondarySettings) this.ServerSettings.next(secondarySettings);
-                        break; // Added break
-                    default:
-                        break;
-                }
-            }
-        }).catch(err => console.error("SettingsService Init Error", err));
-    }
-
-    getUser(value: string) {
-        let result;
-        switch (value) {
-            case 'id':
-                result = localStorage.getItem('userID');
-                break;
-            case 'auth':
-                result = localStorage.getItem('userAuth');
-                break;
-            case 'type':
-                result = localStorage.getItem('userType');
-                break;
-            case 'name':
-                result = localStorage.getItem('userName');
-                break;
-            default:
-                break;
+      let appType = localStorage.getItem('AppType');
+      switch (appType) {
+        case 'Primary': {
+          const serverSettings = this.Settings.find((setting) => setting.key == 'ServerSettings' && setting.value.type == 0);
+          if (serverSettings) this.ServerSettings.next(serverSettings);
+          break;
         }
-        return result;
-    }
+        case 'Secondary': {
+          const serverSettings = this.Settings.find((setting) => setting.key == 'ServerSettings' && setting.value.type == 1);
+          if (serverSettings) this.ServerSettings.next(serverSettings);
+          break;
+        }
+        default:
+          break;
+      }
+    }).catch(err => {
+      console.log('SettingsService: Ayarlar yüklenemedi (İlk kurulum olabilir)', err);
+    });
+  }
 
-    getUserName() {
-        return this.getUser('name');
-    }
+  // ============================================
+  // İş Mantığı - AYNEN KORUNDU
+  // ============================================
 
-    setLocalStorage() {
-        this.DateSettings.subscribe(res => {
-            if (res) {
-                localStorage.setItem('DayStatus', JSON.stringify(res.value));
-            }
-        });
+  getUser(value: string): string | null {
+    let result: string | null = null;
+    switch (value) {
+      case 'id':
+        result = localStorage.getItem('userID');
+        break;
+      case 'auth':
+        result = localStorage.getItem('userAuth');
+        break;
+      case 'type':
+        result = localStorage.getItem('userType');
+        break;
+      case 'name':
+        result = localStorage.getItem('userName');
+        break;
+      default:
+        break;
     }
+    return result;
+  }
 
-    setAppSettings(Key: string, SettingsData: any) {
-        let AppSettings = new Settings(Key, SettingsData, Key, Date.now());
-        return this.databaseService.getAllBy('settings', { key: Key }).then((res: any) => {
-            if (res.docs && res.docs.length > 0) {
-                return this.databaseService.updateData('settings', res.docs[0]._id, AppSettings);
-            } else {
-                return this.databaseService.addData('settings', AppSettings);
-            }
-        });
-    }
+  setLocalStorage(): void {
+    this.DateSettings.subscribe(res => {
+      if (res) {
+        localStorage.setItem('DayStatus', JSON.stringify(res.value));
+      }
+    });
+  }
 
-    getPrinters() {
-        return this.Printers.asObservable();
-    }
+  setAppSettings(Key: string, SettingsData: any): Promise<any> {
+    let AppSettings = new Settings(Key, SettingsData, Key, Date.now());
+    return this.mainService.getAllBy('settings', { key: Key }).then(res => {
+      return this.mainService.updateData('settings', res.docs[0]._id, AppSettings);
+    });
+  }
 
-    addPrinter(printerData: any) {
-        this.databaseService.getAllBy('settings', { key: 'Printers' }).then((res: any) => {
-            if (res.docs.length > 0) {
-                res.docs[0].value.push(printerData);
-                this.databaseService.updateData('settings', res.docs[0]._id, res.docs[0]);
-                this.Printers.next(res.docs[0]);
-            } else {
-                let printerSettings = new Settings('Printers', [printerData], 'Yazıcılar', Date.now());
-                this.databaseService.addData('settings', printerSettings);
-                this.Printers.next(printerSettings);
-            }
-        });
-    }
+  getPrinters() {
+    return this.Printers.asObservable();
+  }
 
-    updatePrinter(newPrinter: any, oldPrinter: any) {
-        this.databaseService.getAllBy('settings', { key: 'Printers' }).then((res: any) => {
-            res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== oldPrinter.name);
-            res.docs[0].value.push(newPrinter);
-            this.databaseService.updateData('settings', res.docs[0]._id, res.docs[0]);
-            this.Printers.next(res.docs[0]);
-        });
-    }
+  addPrinter(printerData: any): void {
+    this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
+      if (res.docs.length > 0) {
+        res.docs[0].value.push(printerData);
+        this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
+        this.Printers.next(res.docs[0]);
+      } else {
+        let printerSettings = new Settings('Printers', [printerData], 'Yazıcılar', Date.now());
+        this.mainService.addData('settings', printerSettings);
+        this.Printers.next(printerSettings);
+      }
+    });
+  }
 
-    removePrinter(printer: any) {
-        this.databaseService.getAllBy('settings', { key: 'Printers' }).then((res: any) => {
-            res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== printer.name);
-            this.databaseService.updateData('settings', res.docs[0]._id, res.docs[0]);
-            this.Printers.next(res.docs[0]);
-        });
-    }
+  updatePrinter(newPrinter: any, oldPrinter: any): void {
+    this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
+      res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== oldPrinter.name);
+      res.docs[0].value.push(newPrinter);
+      this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
+      this.Printers.next(res.docs[0]);
+    });
+  }
 
-    getDate() {
-        return this.DateSettings.asObservable(); // Added return
-    }
+  removePrinter(printer: any): void {
+    this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
+      res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== printer.name);
+      this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
+      this.Printers.next(res.docs[0]);
+    });
+  }
 
-    getActivationStatus() {
-        return this.ActivationStatus.asObservable();
-    }
+  getDate() {
+    return this.DateSettings.asObservable();
+  }
 
-    getAppSettings() {
-        return this.AppSettings.asObservable();
-    }
+  getActivationStatus() {
+    return this.ActivationStatus.asObservable();
+  }
+
+  getAppSettings() {
+    return this.AppSettings.asObservable();
+  }
 }

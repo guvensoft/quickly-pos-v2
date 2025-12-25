@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../core/models/user.model';
-import { MessageService } from "../../providers/message.service";
-import { AuthService } from "../../services/auth.service";
-import { MainService } from '../../services/main.service';
-import { SettingsService } from '../../services/settings.service';
+import { MessageService } from '../../core/services/message.service';
+import { AuthService } from '../../core/services/auth.service';
+import { MainService } from '../../core/services/main.service';
+import { SettingsService } from '../../core/services/settings.service';
 
 @Component({
   standalone: true,
