@@ -41,24 +41,24 @@ export class SellingScreenComponent implements OnInit {
   checks!: Array<any>;
   floors!: Array<Floor>;
   selectedFloor?: string;
-  table!: Table;
-  tables?: Array<Table>;
-  selectedTable?: any;
-  tablesView?: Array<any>;
-  check?: Check;
+  tables: Array<Table> = [];
+  selectedTable: any;
+  tablesView: Array<any> = [];
+  table: any = {};
+  check: any = {};
   check_id!: string;
   selectedCat?: string;
-  selectedProduct?: CheckProduct;
-  selectedIndex?: number;
-  noteForm?: NgForm;
-  owner?: string;
-  ownerRole?: string;
-  ownerId?: string;
+  selectedProduct!: CheckProduct;
+  selectedIndex!: number;
+  noteForm!: NgForm;
+  owner!: string;
+  ownerRole!: string;
+  ownerId!: string;
   newOrders: Array<CheckProduct> = [];
   countData: Array<any> = [];
   payedShow: boolean = false;
   payedTitle: string = 'Alınan Ödemeleri Görüntüle';
-  permissions: any;
+  permissions?: any;
   readyNotes: any[] = [];
   productSpecs: any[] = [];
   printers: any[] = [];
@@ -214,7 +214,7 @@ export class SellingScreenComponent implements OnInit {
       if (this.check.status == CheckStatus.PASSIVE) {
         this.updateUserReport();
         this.updateProductReport(this.countData);
-        this.check.products.map(obj => obj.status = 2);
+        this.check.products.map((obj: any) => obj.status = 2);
         this.check.status = CheckStatus.OCCUPIED;
         this.mainService.addData('checks', this.check).then((res: any) => {
           if (res.ok) {
@@ -679,7 +679,7 @@ export class SellingScreenComponent implements OnInit {
       this.selectedProduct = this.check.products[index];
       this.selectedIndex = index;
       try {
-        this.readyNotes = this.products.find(obj => obj._id == this.selectedProduct.id)?.notes?.split(',') || [];
+        this.readyNotes = this.products.find((obj: any) => obj._id == this.selectedProduct.id)?.notes?.split(',') || [];
       } catch (error) {
         this.readyNotes = [];
       }
@@ -687,12 +687,12 @@ export class SellingScreenComponent implements OnInit {
   }
 
   getSpecies(product: any) {
-    this.productSpecs = this.products.find(obj => obj._id == product.id)?.specifies || [];
+    this.productSpecs = this.products.find((obj: any) => obj._id == product.id)?.specifies || [];
   }
 
 
   recalculateTotal() {
-    this.check.total_price = this.check.products.filter(obj => obj.status != 3).map(obj => obj.price).reduce((a: number, b: number) => a + b, 0);
+    this.check.total_price = this.check.products.filter((obj: any) => obj.status != 3).map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0);
   }
 
   changeSpecs(spec: any) {
@@ -766,14 +766,14 @@ export class SellingScreenComponent implements OnInit {
       this.check.products[this.selectedIndex].owner = this.owner;
       this.check.products[this.selectedIndex].timestamp = Date.now();
       this.check.total_price -= this.selectedProduct.price;
-      const productAfterCancel = this.check.products.filter(obj => obj.status == 1);
-      this.check.products = this.check.products.filter(obj => obj.status !== 1);
-      let analizeCheck = this.check.products.some(obj => obj.status !== 3);
+      const productAfterCancel = this.check.products.filter((obj: any) => obj.status == 1);
+      this.check.products = this.check.products.filter((obj: any) => obj.status !== 1);
+      let analizeCheck = this.check.products.some((obj: any) => obj.status !== 3);
       if (analizeCheck) {
         this.mainService.updateData(this.check.type == CheckType.ORDER ? 'closed_checks' : 'checks', this.check_id, this.check).then((res: any) => {
           if (res.ok) {
             if (this.check.type == CheckType.NORMAL) {
-              let pCat = this.categories.find(obj => obj._id == this.check.products[this.selectedIndex].cat_id)!;
+              let pCat = this.categories.find((obj: any) => obj._id == this.check.products[this.selectedIndex].cat_id)!;
               let device = this.printers.find((obj: any) => obj.name == pCat.printer);
               this.printerService.printCancel(device!, this.check.products[this.selectedIndex], reason, this.table.name, this.owner);
               this.logService.createLog(logType.ORDER_CANCELED, this.check._id!, `${this.table.name} Masasından ${this.selectedProduct.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
@@ -874,13 +874,13 @@ export class SellingScreenComponent implements OnInit {
   }
 
   decountProductsData(deProduct: CheckProduct) {
-    let contains = this.countData.some(obj => obj.product === deProduct.id);
+    let contains = this.countData.some((obj: any) => obj.product === deProduct.id);
     if (contains) {
       let index = this.countData.findIndex(p_id => p_id.product == deProduct.id);
       this.countData[index].count--;
       this.countData[index].total -= deProduct.price;
       if (this.countData[index].count == 0) {
-        this.countData = this.countData.filter(obj => obj.product !== deProduct.id);
+        this.countData = this.countData.filter((obj: any) => obj.product !== deProduct.id);
       }
     }
   }
@@ -892,7 +892,7 @@ export class SellingScreenComponent implements OnInit {
     } else {
       countObj = { product: id, count: 1, total: price };
     }
-    let contains = this.countData.some(obj => obj.product === id);
+    let contains = this.countData.some((obj: any) => obj.product === id);
     if (contains) {
       let index = this.countData.findIndex(p_id => p_id.product == id);
       if (manuelCount) {
@@ -985,8 +985,8 @@ export class SellingScreenComponent implements OnInit {
     } else {
       this.check.status = CheckStatus.OCCUPIED;
       // this.check.type = CheckType.SELF;
-      if (this.check.products.some(obj => obj.status == 1)) {
-        this.check.products = this.check.products.filter(obj => obj.status !== 1);
+      if (this.check.products.some((obj: any) => obj.status == 1)) {
+        this.check.products = this.check.products.filter((obj: any) => obj.status !== 1);
         this.mainService.addData('checks', this.check).then((res: any) => {
           this.mainService.updateData('tables', this.table._id!, { status: 2, timestamp: Date.now() }).then(() => {
             console.log(this.check._id!);
@@ -1013,7 +1013,7 @@ export class SellingScreenComponent implements OnInit {
 
   printOrder() {
     if (this.printers.length > 0) {
-      let orders = this.check.products.filter(obj => obj.status == 1);
+      let orders = this.check.products.filter((obj: any) => obj.status == 1);
       if (orders.length > 0) {
         let splitPrintArray: Array<any> = [];
         orders.forEach((obj: any, index: number) => {
@@ -1023,7 +1023,7 @@ export class SellingScreenComponent implements OnInit {
             let index = splitPrintArray.findIndex(p_name => p_name.printer.name == catPrinter);
             splitPrintArray[index].products.push(obj);
           } else {
-            let thePrinter = this.printers.filter(obj => obj.name == catPrinter)[0];
+            let thePrinter = this.printers.filter((obj: any) => obj.name == catPrinter)[0];
             let splitPrintOrder = { printer: thePrinter, products: [obj] };
             splitPrintArray.push(splitPrintOrder);
           }
@@ -1046,8 +1046,8 @@ export class SellingScreenComponent implements OnInit {
   printCheck(selectedPrinter: any) {
     (window as any).$('#printersModal').modal('hide');
     if (this.check.type == CheckType.NORMAL) {
-      this.check.products = this.check.products.filter(obj => obj.status == 2);
-      this.check.total_price = this.check.products.map(obj => obj.price).reduce((a: number, b: number) => a + b);
+      this.check.products = this.check.products.filter((obj: any) => obj.status == 2);
+      this.check.total_price = this.check.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b);
       if (this.table.status !== TableStatus.WILL_READY) {
         this.printerService.printCheck(selectedPrinter, this.table.name, this.check);
         if (this.check.status !== CheckStatus.PASSIVE) {
@@ -1066,19 +1066,19 @@ export class SellingScreenComponent implements OnInit {
         });
       }
     } else if (this.check.type == CheckType.FAST) {
-      this.check.total_price = this.check.products.map(obj => obj.price).reduce((a: number, b: number) => a + b);
+      this.check.total_price = this.check.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b);
       this.printerService.printCheck(selectedPrinter, this.check.note, this.check);
     }
   }
 
   getProductsBy(id: string) {
     this.selectedCat = id;
-    this.subCatsView = this.sub_categories.filter(obj => obj.cat_id == id);
-    this.productsView = this.products.filter(obj => obj.cat_id == id);
+    this.subCatsView = this.sub_categories.filter((obj: any) => obj.cat_id == id);
+    this.productsView = this.products.filter((obj: any) => obj.cat_id == id);
   }
 
   getProductsBySubCat(id: string) {
-    this.productsView = this.products.filter(obj => obj.subcat_id == id);
+    this.productsView = this.products.filter((obj: any) => obj.subcat_id == id);
   }
 
   selectTable(id: string) {
@@ -1275,7 +1275,7 @@ export class SellingScreenComponent implements OnInit {
 
   catName(cat_id: string) {
     try {
-      return this.categories.find(obj => obj._id == cat_id)!.name;
+      return this.categories.find((obj: any) => obj._id == cat_id)!.name;
     } catch (error) {
       return '';
     }
