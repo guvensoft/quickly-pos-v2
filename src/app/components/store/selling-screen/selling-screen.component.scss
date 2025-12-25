@@ -1,0 +1,211 @@
+.sellButton,
+.sendButton {
+  font-family: 'Quickly', sans-serif;
+  margin-bottom: 4px;
+  margin-top: 0;
+  padding: 10px 0;
+  color: #000;
+  transition: all 0.2s ease-in-out;
+  border-radius: 8px;
+  border: none;
+
+  i {
+    font-size: 7vh;
+    transition: transform 0.2s;
+  }
+
+  &:not([disabled]) {
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+
+      i {
+        transform: scale(1.1);
+      }
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  &[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(0.8);
+  }
+
+  p {
+    font-size: 0.9em;
+    margin: 0 !important;
+    font-weight: 600;
+  }
+}
+
+.btn-specs {
+  padding: 20px;
+  font-weight: 700;
+  font-size: 1.5rem;
+  text-transform: capitalize;
+  border-radius: 12px;
+  transition: transform 0.1s;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  .spec-price {
+    font-size: 1rem;
+    color: #5a3d1b;
+    margin-left: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+}
+
+.scroll-container {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.4);
+    }
+  }
+}
+
+.payment-flow {
+  height: 35vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  @extend .scroll-container;
+
+  p {
+    font-weight: bold;
+  }
+}
+
+.tareClass {
+  .input-group {
+    height: 75px;
+  }
+
+  input {
+    height: 100%;
+    font-size: 30px;
+    font-weight: 800;
+  }
+}
+
+#productHolder,
+.tFlow {
+  overflow-y: auto;
+  @extend .scroll-container;
+}
+
+#productHolder {
+  padding: 5px;
+}
+
+.tFlow {
+  height: 60vh;
+  overflow-x: hidden;
+}
+
+.modal-big {
+  max-width: 95vw;
+}
+
+.payedLayer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.payed-things {
+  min-height: 200px;
+}
+
+.numpad {
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.proCard,
+.catCard,
+.tableCard {
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+  }
+
+  &:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.proCard {
+  p.card-text {
+    width: 100%;
+
+    .price {
+      float: left;
+      font-weight: bold;
+      color: #28a745;
+    }
+
+    .category {
+      float: right;
+      font-size: 0.75rem;
+      opacity: 0.8;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  }
+}
+
+.catButton {
+  padding: 8px !important;
+  font-weight: 700;
+  white-space: pre-line;
+  font-size: 1.1rem;
+  height: auto;
+  min-height: 50px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+
+.humanIcon {
+  font-size: 1.25rem !important;
+  padding: 0 8px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
