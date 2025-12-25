@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, RouterLink } from '@angular/router';
 import { ElectronService } from './core/services/electron/electron.service';
 import { MessageService } from './core/services/message.service';
 import { ApplicationService } from './core/services/application.service';
@@ -24,7 +24,7 @@ import { CallerComponent } from './components/helpers/caller/caller.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MessageComponent, KeyboardComponent, CallerComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, MessageComponent, KeyboardComponent, CallerComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
@@ -34,12 +34,13 @@ export class AppComponent implements OnInit {
   private electronService: ElectronService = inject(ElectronService);
   private mainService: MainService = inject(MainService);
   private router = inject(Router);
-  private aplicationService: ApplicationService = inject(ApplicationService);
+  private applicationService: ApplicationService = inject(ApplicationService);
   private settingsService: SettingsService = inject(SettingsService);
   private messageService: MessageService = inject(MessageService);
   private authService: AuthService = inject(AuthService);
   private conflictService: ConflictService = inject(ConflictService);
   private printerService: PrinterService = inject(PrinterService);
+  private cdr = inject(ChangeDetectorRef);
 
   title = 'Quickly';
   description = 'Quickly';
@@ -60,12 +61,19 @@ export class AppComponent implements OnInit {
   dayStatus!: DayInfo;
 
   ngOnInit(): void {
-    // if (this.electronService.isElectron()) {
+    // Ensure jQuery is available globally early
+    if (typeof (window as any).$ === 'undefined') {
+      try {
+        const $ = require('jquery');
+        (window as any).$ = (window as any).jQuery = $;
+      } catch (e) {
+        console.warn('jQuery early load failed in AppComponent', e);
+      }
+    }
     this.settingsService.setLocalStorage();
     this.initAppSettings();
     this.initConnectivityAndTime();
     this.settingsService.getPrinters().subscribe(res => (this.printers = res.value));
-    // }
   }
 
   callMe(): void { }
@@ -117,7 +125,7 @@ export class AppComponent implements OnInit {
   initConnectivityAndTime(): void {
     setInterval(() => {
       this.date = Date.now();
-      this.connectionStatus = this.aplicationService.connectionStatus();
+      this.connectionStatus = this.applicationService.connectionStatus();
     }, 5000);
   }
 
@@ -135,6 +143,7 @@ export class AppComponent implements OnInit {
               this.mainService.loadAppData().then((isLoaded: boolean) => {
                 if (isLoaded) {
                   this.onSync = false;
+                  this.cdr.detectChanges();
                   this.updateActivityReport();
                   this.updateLastSeen();
                   this.router.navigate(['']);
@@ -153,6 +162,7 @@ export class AppComponent implements OnInit {
               this.mainService.loadAppData().then((isLoaded: boolean) => {
                 if (isLoaded) {
                   this.onSync = false;
+                  this.cdr.detectChanges();
                   this.router.navigate(['']);
                   this.dayCheck();
                 }
@@ -230,15 +240,21 @@ export class AppComponent implements OnInit {
                   if (orders.length > 0) {
                     let splitPrintArray: any[] = [];
                     orders.forEach((obj: any) => {
-                      let catPrinter = categories.filter((cat: any) => cat._id == obj.cat_id)[0].printer || printers[0].name;
-                      let contains = splitPrintArray.some(element => element.printer.name == catPrinter);
-                      if (contains) {
-                        let index = splitPrintArray.findIndex(p_name => p_name.printer.name == catPrinter);
-                        splitPrintArray[index].products.push(obj);
-                      } else {
-                        let thePrinter = printers.filter((p: any) => p.name == catPrinter)[0];
-                        let splitPrintOrder = { printer: thePrinter, products: [obj] };
-                        splitPrintArray.push(splitPrintOrder);
+                      let category = categories.find((cat: any) => cat._id == obj.cat_id);
+                      let catPrinter = (category && category.printer) ? category.printer : (printers.length > 0 ? printers[0].name : null);
+
+                      if (catPrinter) {
+                        let contains = splitPrintArray.some(element => element.printer.name == catPrinter);
+                        if (contains) {
+                          let index = splitPrintArray.findIndex(p_name => p_name.printer.name == catPrinter);
+                          splitPrintArray[index].products.push(obj);
+                        } else {
+                          let thePrinter = printers.filter((p: any) => p.name == catPrinter)[0];
+                          if (thePrinter) {
+                            let splitPrintOrder = { printer: thePrinter, products: [obj] };
+                            splitPrintArray.push(splitPrintOrder);
+                          }
+                        }
                       }
                     });
                     splitPrintArray.forEach(order => {
@@ -303,6 +319,7 @@ export class AppComponent implements OnInit {
     this.mainService.loadAppData().then((isLoaded: boolean) => {
       if (isLoaded) {
         this.onSync = false;
+        this.cdr.detectChanges();
         this.router.navigate(['']);
         this.settingsListener();
         this.dayCheck();
@@ -443,7 +460,7 @@ export class AppComponent implements OnInit {
   }
 
   resetTimer(): void {
-    this.aplicationService.screenLock('reset');
+    this.applicationService.screenLock('reset');
   }
 
   exitProgram(): void {

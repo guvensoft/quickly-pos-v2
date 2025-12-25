@@ -1,13 +1,16 @@
 import { enableProdMode, provideZoneChangeDetection } from '@angular/core';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import * as jQuery from 'jquery';
+const $ = (jQuery as any).default || jQuery;
+(window as any).$ = (window as any).jQuery = $;
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { importProvidersFrom } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { provideNgxMask } from 'ngx-mask';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 import { AppComponent } from './app/app.component';
 import { APP_CONFIG } from './environments/environment';
-import { CoreModule } from './app/core/core.module';
-import { SharedModule } from './app/shared/shared.module';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { PageNotFoundComponent } from './app/shared/components';
@@ -35,7 +38,7 @@ if (APP_CONFIG.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideZoneChangeDetection(), provideHttpClient(withInterceptorsFromDi()),
+    provideZoneChangeDetection(), provideHttpClient(),
     provideTranslateService({
       loader: provideTranslateHttpLoader({
         prefix: './assets/i18n/',
@@ -109,9 +112,8 @@ bootstrapApplication(AppComponent, {
         component: PageNotFoundComponent
       }
     ]),
-    importProvidersFrom(
-      CoreModule,
-      SharedModule
-    )
+    provideNgxMask(),
+    provideCharts(withDefaultRegisterables()),
+    provideAnimations()
   ]
 }).catch(err => console.error(err));

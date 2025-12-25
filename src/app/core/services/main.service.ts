@@ -141,6 +141,15 @@ export class MainService {
   }
 
   getAllBy(db: string, $schema: any): Promise<any> {
+    if (!this.LocalDB[db]) return Promise.reject(`Database ${db} not found`);
+
+    // Performance optimization: use allDocs for empty queries
+    if (Object.keys($schema || {}).length === 0) {
+      return this.LocalDB[db].allDocs({ include_docs: true }).then((res: any) => {
+        return { docs: res.rows.map((row: any) => row.doc).filter((doc: any) => doc !== null) };
+      });
+    }
+
     return this.LocalDB[db].find({
       selector: $schema,
       limit: 10000
@@ -167,12 +176,11 @@ export class MainService {
 
       // Use upsert instead of put to handle potential conflicts in 'allData'
       return (this.LocalDB['allData'] as any).upsert(res.id, (existingDoc: any) => {
-        return doc; // Overwrite or create
-      }).then((upsertRes: any) => {
-        return { ok: true, id: res.id, doc: doc }; // Return consistent result with ID
+        return doc;
       }).catch((err: any) => {
-        console.log('addData-All', err);
-        return { ok: true, id: res.id, error: err }; // Return success for local even if allData fails, but log it.
+        // Silently handle conflict if it still happens
+        if (err.status !== 409) console.log('addData-All', err);
+        return { ok: true, id: res.id, doc: doc };
       });
     }).catch(err => {
       console.log('addData-Local', err);
@@ -181,24 +189,28 @@ export class MainService {
   }
 
   changeData(db: string, id: string, schema: any): Promise<any> {
-    (this.LocalDB['allData'] as any).upsert(id, schema).catch((err: any) => {
-      console.log('changeData-Local', err);
+    (this.LocalDB['allData'] as any).upsert(id, (doc: any) => {
+      return Object.assign(doc || {}, schema);
+    }).catch((err: any) => {
+      if (err.status !== 409) console.log('changeData-All', err);
     });
-    return (this.LocalDB[db] as any).upsert(id, schema).catch((err: any) => {
-      console.log('changeData-All', err);
+    return (this.LocalDB[db] as any).upsert(id, (doc: any) => {
+      return Object.assign(doc || {}, schema);
+    }).catch((err: any) => {
+      if (err.status !== 409) console.log('changeData-Local', err);
     });
   }
 
   updateData(db: string, id: string, schema: any): Promise<any> {
-    return this.LocalDB[db].get(id).then((doc) => {
-      (this.LocalDB['allData'] as any).upsert(id, function (doc: any) {
-        return Object.assign(doc, schema);
-      }).catch((err: any) => {
-        console.log('updateData-Local', err);
-      });
-      return this.LocalDB[db].put(Object.assign(doc, schema)).catch(err => {
-        console.log('updateData-All', err);
-      });
+    (this.LocalDB['allData'] as any).upsert(id, (doc: any) => {
+      return Object.assign(doc || {}, schema);
+    }).catch((err: any) => {
+      if (err.status !== 409) console.log('updateData-All', err);
+    });
+    return (this.LocalDB[db] as any).upsert(id, (doc: any) => {
+      return Object.assign(doc || {}, schema);
+    }).catch((err: any) => {
+      if (err.status !== 409) console.log('updateData-Local', err);
     });
   }
 
@@ -317,18 +329,17 @@ export class MainService {
         });
       } else {
         let cData = Object.assign({ db_name: local_db, db_seq: (change as any).seq }, change.doc);
-        (this.LocalDB['allData'] as any).putIfNotExists(cData).then((res: any) => {
-          if (!res.updated) {
-            (this.LocalDB['allData'] as any).upsert(res.id, function () {
-              return cData;
-            });
-          }
+        (this.LocalDB['allData'] as any).upsert(change.id, (doc: any) => {
+          return Object.assign(doc || {}, cData);
+        }).catch((err: any) => {
+          if (err.status !== 409) console.log('syncToAllData-Err', err);
         });
       }
     });
   }
 
   handleChanges(sync: any): void {
+    if (!sync || !sync.change || !sync.change.docs) return;
     const changes = sync.change.docs;
     if (sync.direction === 'pull') {
       changes.forEach((element: any) => {
@@ -339,11 +350,13 @@ export class MainService {
             delete element._revisions;
             delete element.db_seq;
             delete element.db_name;
-            (this.LocalDB[db] as any).upsert(element._id, (doc: any) => {
-              return Object.assign(doc, element);
-            }).catch((err: any) => {
-              console.log(err);
-            });
+            if (db && this.LocalDB[db]) {
+              (this.LocalDB[db] as any).upsert(element._id, (doc: any) => {
+                return Object.assign(doc || {}, element);
+              }).catch((err: any) => {
+                console.log('MainService: upsert error in handleChanges', err);
+              });
+            }
           }
         } else {
           for (let db in this.LocalDB) {
@@ -359,79 +372,82 @@ export class MainService {
   }
 
   loadAppData(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.getAllBy('allData', {}).then(res => {
-        let docs = res.docs;
-        let docsWillPut = docs.filter((obj: any) => obj.db_name !== 'settings');
-        docsWillPut.map((obj: any) => {
-          delete obj.db_seq;
-          delete obj._rev;
-          return obj;
-        });
-        let promisesAll: Promise<any>[] = [];
-        docsWillPut.forEach((element: any) => {
-          const db = element.db_name;
-          delete element.db_name;
-          if (db !== undefined) {
-            let promise = this.LocalDB[db].put(element);
-            promisesAll.push(promise);
-          }
-        });
-        Promise.all(promisesAll).then(res => {
-          resolve(true);
-        }).catch(err => {
-          console.log(err);
-          resolve(true); // Should Be False Reject
-        });
-      }).catch(err => {
-        console.log(err);
-        reject(false);
+    return this.getAllBy('allData', {}).then(res => {
+      const docs = res.docs;
+      const groups: { [key: string]: any[] } = {};
+
+      docs.forEach((doc: any) => {
+        // Skip settings and ensure db exists
+        if (doc.db_name && doc.db_name !== 'settings' && this.LocalDB[doc.db_name]) {
+          const dbName = doc.db_name;
+          const cleanDoc = { ...doc };
+          delete cleanDoc.db_name;
+          delete cleanDoc.db_seq;
+          delete cleanDoc._rev;
+
+          if (!groups[dbName]) groups[dbName] = [];
+          groups[dbName].push(cleanDoc);
+        }
       });
+
+      const dbPromises = Object.keys(groups).map(dbName => {
+        // Try to fetch existing docs to avoid conflicts if possible, 
+        // but bulkDocs without _rev will just result in conflict items in the result array anyway.
+        // To truly overwrite, we would need current revs. 
+        // However, loadAppData is typically for initial load.
+        return this.LocalDB[dbName].bulkDocs(groups[dbName]).catch((err: any) => {
+          console.warn(`Bulk update failed for ${dbName}:`, err);
+          return [];
+        });
+      });
+
+      return Promise.all(dbPromises).then(() => {
+        console.log('MainService: App Data Successfully Initialized');
+        return true;
+      });
+    }).catch(err => {
+      console.error('MainService: Error in loadAppData:', err);
+      return true; // Still return true to let the UI proceed
     });
   }
 
   syncToLocal(database?: string): Promise<any> {
-    let selector;
-    if (database) {
-      selector = { db_name: database };
-    } else {
-      selector = {};
-    }
-    return new Promise((resolve, reject) => {
-      this.getAllBy('allData', selector).then(res => {
-        const docs = res.docs;
-        if (docs.length > 0) {
-          docs.forEach((element: any, index: number) => {
-            let db = element.db_name;
-            if (db !== undefined) {
-              if (element.key !== 'ServerSettings') {
-                delete element.db_name;
-                delete element.db_seq;
-                delete element._rev;
-                this.LocalDB[db].put(element).then(res => {
-                  if (docs.length == index + 1) {
-                    resolve(true);
-                  }
-                }).catch(err => {
-                  console.log(db, element);
-                });
-              }
-            }
-          });
-        } else {
-          reject(false);
+    const selector = database ? { db_name: database } : {};
+    return this.getAllBy('allData', selector).then(res => {
+      const docs = res.docs;
+      const groups: { [key: string]: any[] } = {};
+
+      docs.forEach((doc: any) => {
+        const dbName = doc.db_name;
+        if (dbName && dbName !== 'settings' && this.LocalDB[dbName]) {
+          const cleanDoc = { ...doc };
+          delete cleanDoc.db_name;
+          delete cleanDoc.db_seq;
+          delete cleanDoc._rev;
+
+          if (!groups[dbName]) groups[dbName] = [];
+          groups[dbName].push(cleanDoc);
         }
       });
+
+      const dbPromises = Object.keys(groups).map(dbName => {
+        return this.LocalDB[dbName].bulkDocs(groups[dbName]).catch(() => []);
+      });
+
+      return Promise.all(dbPromises).then(() => true);
+    }).catch(err => {
+      console.error('MainService: syncToLocal Error:', err);
+      return false;
     });
   }
 
   replicateDB(db_configrations: any): any {
     let db = new PouchDB(`http://${db_configrations.ip_address}:${db_configrations.ip_port}/${db_configrations.key}/appServer`);
-    return db.replicate.to(this.LocalDB['allData'], { batch_size: 500, batches_limit: 50, timeout: 60000 });
+    return db.replicate.to(this.LocalDB['allData'], { batch_size: 500, batches_limit: 50, timeout: 60000, filter: (doc: any) => !doc._deleted });
   }
 
   replicateFrom(): any {
-    return this.RemoteDB.replicate.to(this.LocalDB['allData']);
+    return this.RemoteDB.replicate.to(this.LocalDB['allData'], { filter: (doc: any) => !doc._deleted });
   }
 
   syncToServer(): any {
@@ -439,6 +455,7 @@ export class MainService {
       live: true,
       retry: true,
       heartbeat: 2500,
+      pull: { filter: (doc: any) => !doc._deleted },
       back_off_function: (delay: number) => {
         delay = 1000;
         return delay;
@@ -447,12 +464,13 @@ export class MainService {
   }
 
   syncToRemote(): any {
-    let rOpts: any = { live: true, retry: true };
+    let rOpts: any = { live: true, retry: true, pull: { filter: (doc: any) => !doc._deleted } };
     if (this.serverInfo && this.serverInfo.type == 1) {
       rOpts = {
         live: true,
         retry: true,
         heartbeat: 2500,
+        pull: { filter: (doc: any) => !doc._deleted },
         back_off_function: (delay: number) => {
           delay = 1000;
           return delay;

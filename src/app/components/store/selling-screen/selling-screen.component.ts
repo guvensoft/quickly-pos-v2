@@ -1,5 +1,6 @@
-import { Component, ElementRef, OnInit, ViewChild, NgZone } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, NgZone, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ButtonDirective } from '../../../shared/directives/button.directive';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -23,7 +24,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, PricePipe, GeneralPipe, TimeAgoPipe],
+  imports: [CommonModule, FormsModule, RouterModule, PricePipe, GeneralPipe, TimeAgoPipe, ButtonDirective],
   selector: 'app-selling-screen',
   templateUrl: './selling-screen.component.html',
   styleUrls: ['./selling-screen.component.scss'],
@@ -85,6 +86,7 @@ export class SellingScreenComponent implements OnInit {
   takeaway!: boolean;
   changes: any;
   scalerListener!: Subscription;
+  private cdr = inject(ChangeDetectorRef);
 
   @ViewChild('productName') productFilterInput!: ElementRef;
   @ViewChild('specsUnit') productUnit!: ElementRef;
@@ -187,17 +189,27 @@ export class SellingScreenComponent implements OnInit {
     //   }
     // }, 500)
 
-    this.zone.run(() => {
-      let unsub = () => this.scalerListener.unsubscribe();
-      (window as any).$('#productSpecs').on('hide.bs.modal', (event: any) => {
-        unsub();
-      })
-      let setdefquntity = () => this.selectedQuantity = 1;
-      (window as any).$('#specsModal').on('hide.bs.modal', (event: any) => {
-        setdefquntity();
-      })
-    })
+    this.zone.runOutsideAngular(() => {
+      const $ = (window as any).$;
+      if ($ && typeof $ === 'function') {
+        const productSpecsModal = $('#productSpecs');
+        if (productSpecsModal.length) {
+          productSpecsModal.on('hide.bs.modal', () => {
+            if (this.scalerListener && typeof this.scalerListener.unsubscribe === 'function') {
+              this.scalerListener.unsubscribe();
+            }
+          });
+        }
 
+        const specsModal = $('#specsModal');
+        if (specsModal.length) {
+          specsModal.on('hide.bs.modal', () => {
+            this.selectedQuantity = 1;
+          });
+        }
+      }
+    });
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy() {

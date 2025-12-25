@@ -23,3 +23,6 @@ import * as process from 'process';
 (window as any).Buffer = Buffer;
 (window as any).global = window;
 (window as any).process = process;
+import * as jQuery from 'jquery';
+const $ = (jQuery as any).default || jQuery;
+(window as any).$ = (window as any).jQuery = $;

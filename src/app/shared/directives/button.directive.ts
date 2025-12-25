@@ -6,16 +6,12 @@ import { Directive, ElementRef, HostListener, Input } from '@angular/core';
 })
 export class ButtonDirective {
 
-    @Input('oneShot') isActive: any;
+    @Input('oneShot') isActive: any = true;
 
-    constructor(private element: ElementRef) {
-        if (this.isActive) {
-            this.isActive = true;
-        }
-    }
+    constructor(private element: ElementRef) { }
 
     @HostListener('click') onClick() {
-        if (this.isActive) {
+        if (this.isActive !== false && this.isActive !== 'false') {
             this.element.nativeElement.disabled = true;
         }
     }
