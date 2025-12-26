@@ -112,9 +112,9 @@ export class RestaurantSettingsComponent implements OnInit {
         this.mainService.getAllBy('tables', { floor_id: this.selectedFloor! }).then(result => {
           if (result && result.docs && result.docs.length > 0) {
             const data = result.docs;
-            for (const prop in data) {
-              if (data[prop]._id) {
-                this.mainService.removeData('tables', data[prop]._id!).then(result => {
+            data.forEach((table: any) => {
+              if (table._id) {
+                this.mainService.removeData('tables', table._id).then(result => {
                   if (result && result.id) {
                     this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
                       if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
@@ -124,7 +124,7 @@ export class RestaurantSettingsComponent implements OnInit {
                   }
                 });
               }
-            }
+            });
           }
         });
         this.messageService.sendMessage('Bölüm ve Masalar Silindi!')

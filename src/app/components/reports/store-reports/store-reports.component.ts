@@ -312,14 +312,14 @@ export class StoreReportsComponent implements OnInit {
     this.mainService.getAllBy('closed_checks', {}).then(res => {
       if (res.docs.length > 0) {
         this.AllChecks = res.docs as any;
-        this.AllChecks!.sort((a: any, b: any) => b.timestamp - a.timestamp);
-        this.NotPayedChecks = this.AllChecks!.filter((obj: any) => obj.type == CheckType.CANCELED);
-        this.FastChecks = this.AllChecks!.filter((obj: any) => obj.type == CheckType.FAST);
-        this.NormalChecks = this.AllChecks!.filter((obj: any) => obj.type == CheckType.NORMAL);
-        this.DeliveryChecks = this.AllChecks!.filter((obj: any) => obj.type == CheckType.ORDER)
-        this.NormalTotal = this.NormalChecks!.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
-        this.FastTotal = this.FastChecks!.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
-        this.DeliveryTotal = this.DeliveryChecks!.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
+        this.AllChecks.sort((a: any, b: any) => b.timestamp - a.timestamp);
+        this.NotPayedChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.CANCELED);
+        this.FastChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.FAST);
+        this.NormalChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.NORMAL);
+        this.DeliveryChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.ORDER)
+        this.NormalTotal = this.NormalChecks.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
+        this.FastTotal = this.FastChecks.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
+        this.DeliveryTotal = this.DeliveryChecks.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
       }
     });
   }
