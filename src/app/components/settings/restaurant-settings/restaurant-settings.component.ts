@@ -40,20 +40,32 @@ export class RestaurantSettingsComponent implements OnInit {
     this.onUpdate = false;
     this.selectedTable = undefined;
     this.selectedFloor = undefined;
-    this.areaForm.reset();
-    this.tableForm.reset();
+    if (this.areaForm) {
+      this.areaForm.reset();
+    }
+    if (this.tableForm) {
+      this.tableForm.reset();
+    }
   }
 
   getTablesByFloor(id: string | null | undefined) {
     if (id) {
       this.mainService.getAllBy('tables', { floor_id: id }).then(result => {
-        this.tables = result.docs as any;
-        this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
+        if (result && result.docs) {
+          this.tables = result.docs as any;
+          this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
+        } else {
+          this.tables = [];
+        }
       });
     } else {
       this.mainService.getAllBy('tables', {}).then(result => {
-        this.tables = result.docs as any;
-        this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
+        if (result && result.docs) {
+          this.tables = result.docs as any;
+          this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
+        } else {
+          this.tables = [];
+        }
       });
     }
   }
@@ -62,7 +74,9 @@ export class RestaurantSettingsComponent implements OnInit {
     this.selectedFloor = floor._id;
     floor = Object.assign(floor, floor.conditions);
     delete floor.conditions;
-    this.areaDetailForm.setValue(floor);
+    if (this.areaDetailForm) {
+      this.areaDetailForm.setValue(floor);
+    }
   }
 
   addFloor(areaForm: NgForm) {
@@ -96,15 +110,20 @@ export class RestaurantSettingsComponent implements OnInit {
     if (isOk) {
       this.mainService.removeData('floors', this.selectedFloor!).then(() => {
         this.mainService.getAllBy('tables', { floor_id: this.selectedFloor! }).then(result => {
-          const data = result.docs
-          for (const prop in data) {
-            if (data[prop]._id) {
-              this.mainService.removeData('tables', data[prop]._id!).then(result => {
-                this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
-                  if (res.docs.length > 0 && res.docs[0]._id)
-                    this.mainService.removeData('reports', res.docs[0]._id);
+          if (result && result.docs && result.docs.length > 0) {
+            const data = result.docs;
+            for (const prop in data) {
+              if (data[prop]._id) {
+                this.mainService.removeData('tables', data[prop]._id!).then(result => {
+                  if (result && result.id) {
+                    this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
+                      if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
+                        this.mainService.removeData('reports', res.docs[0]._id);
+                      }
+                    });
+                  }
                 });
-              });
+              }
             }
           }
           this.messageService.sendMessage('Bölüm ve Masalar Silindi!')
@@ -127,9 +146,13 @@ export class RestaurantSettingsComponent implements OnInit {
     const schema = new Table(form.name, form.floor_id, form.capacity, form.description, 1, Date.now(), [], form._id, form._rev);
     if (form._id == undefined) {
       this.mainService.addData('tables', schema).then((response) => {
-        this.mainService.addData('reports', new Report('Table', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now())).then(res => {
-          this.logService.createLog(logType.TABLE_CREATED, res.id, `${form.name} adlı Masa oluşturuldu.`);
-        });
+        if (response && response.id) {
+          this.mainService.addData('reports', new Report('Table', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now())).then(res => {
+            if (res && res.id) {
+              this.logService.createLog(logType.TABLE_CREATED, res.id, `${form.name} adlı Masa oluşturuldu.`);
+            }
+          });
+        }
         this.fillData();
         this.messageService.sendMessage('Masa Oluşturuldu.');
         tableForm.reset();
@@ -150,7 +173,9 @@ export class RestaurantSettingsComponent implements OnInit {
     this.selectedTable = id;
     this.mainService.getData('tables', id!).then((result: Table) => {
       delete (result as any).customers;
-      this.tableForm.setValue(result);
+      if (this.tableForm) {
+        this.tableForm.setValue(result);
+      }
       (window as any).$('#tableModal').modal('show');
     });
   }
@@ -159,11 +184,15 @@ export class RestaurantSettingsComponent implements OnInit {
     const isOk = confirm('Masayı Silmek Üzeresiniz!');
     if (isOk) {
       this.mainService.removeData('tables', this.selectedTable!).then((result) => {
-        this.logService.createLog(logType.TABLE_DELETED, result.id, `${this.tableForm.value.name} adlı Masa Silindi.`);
-        this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
-          if (res.docs.length > 0 && res.docs[0]._id)
-            this.mainService.removeData('reports', res.docs[0]._id);
-        });
+        if (result && result.id) {
+          const tableName = this.tableForm?.value?.name || 'Masa';
+          this.logService.createLog(logType.TABLE_DELETED, result.id, `${tableName} adlı Masa Silindi.`);
+          this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
+            if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
+              this.mainService.removeData('reports', res.docs[0]._id);
+            }
+          });
+        }
         this.fillData();
         this.messageService.sendMessage('Masa Silindi.');
         (window as any).$('#tableModal').modal('hide');
@@ -176,19 +205,31 @@ export class RestaurantSettingsComponent implements OnInit {
   filterTables(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('tables', { name: { $regex: regexp } }).then(res => {
-      this.tables = res.docs as any;
-      this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
+      if (res && res.docs) {
+        this.tables = res.docs as any;
+        this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
+      } else {
+        this.tables = [];
+      }
     });
   }
 
   fillData() {
     this.mainService.getAllBy('floors', {}).then((result) => {
-      this.floors = result.docs as any;
-      this.floors = this.floors.sort((a, b) => a.timestamp - b.timestamp);
+      if (result && result.docs) {
+        this.floors = result.docs as any;
+        this.floors = this.floors.sort((a, b) => a.timestamp - b.timestamp);
+      } else {
+        this.floors = [];
+      }
     });
     this.mainService.getAllBy('tables', {}).then((result) => {
-      this.tables = result.docs as any;
-      this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
+      if (result && result.docs) {
+        this.tables = result.docs as any;
+        this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
+      } else {
+        this.tables = [];
+      }
     });
   }
 }
