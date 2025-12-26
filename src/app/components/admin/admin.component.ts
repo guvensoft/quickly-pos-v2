@@ -42,7 +42,7 @@ export class AdminComponent implements OnInit {
 
   showDatabase(db_name: string) {
     this.selectedDB = db_name;
-    this.mainService.getAllBy(db_name, {}).then((res: any) => {
+    this.mainService.getAllBy(db_name as any, {}).then((res: any) => {
       this.documents = res.docs;
     });
   }
@@ -61,7 +61,7 @@ export class AdminComponent implements OnInit {
     } else {
       db_name = this.selectedDB;
     }
-    this.mainService.updateData(db_name, newDocument._id, newDocument).then((res: any) => {
+    this.mainService.updateData(db_name as any, newDocument._id, newDocument).then((res: any) => {
       (window as any).$('#docModal').modal('hide');
       console.log('Döküman Güncellendi');
       this.editArea.nativeElement.value = '';
@@ -73,7 +73,7 @@ export class AdminComponent implements OnInit {
 
   createDocument(document: any) {
     const newDocument = JSON.parse(document);
-    this.mainService.addData(this.selectedDB, newDocument).then((res: any) => {
+    this.mainService.addData(this.selectedDB as any, newDocument).then((res: any) => {
       if (res.ok) {
         (window as any).$('#docModal').modal('hide');
         console.log('Döküman Güncellendi');
@@ -88,14 +88,14 @@ export class AdminComponent implements OnInit {
     const filter = new Object() as any;
     filter[key] = value;
     if (this.selectedDB) {
-      this.mainService.getAllBy(this.selectedDB, filter).then((res: any) => {
+      this.mainService.getAllBy(this.selectedDB as any, filter).then((res: any) => {
         this.documents = res.docs;
       });
     }
   }
 
   removeDocument(id: string) {
-    this.mainService.removeData(this.selectedDB, id).then((res: any) => {
+    this.mainService.removeData(this.selectedDB as any, id).then((res: any) => {
       (window as any).$('#docModal').modal('hide');
       console.log('Döküman Silindi');
       this.selectedDoc = undefined!;
@@ -129,9 +129,9 @@ export class AdminComponent implements OnInit {
   }
 
   clearDB() {
-    this.mainService.getAllBy(this.selectedDB, {}).then((res: any) => {
+    this.mainService.getAllBy(this.selectedDB as any, {}).then((res: any) => {
       res.docs.forEach((element: any, index: number) => {
-        this.mainService.removeData(this.selectedDB, element._id);
+        this.mainService.removeData(this.selectedDB as any, element._id);
         console.log(index);
       });
     });

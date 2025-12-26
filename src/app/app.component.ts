@@ -449,11 +449,17 @@ export class AppComponent implements OnInit {
           const activity_count = (checks_total_count * 100) / tables.docs.length;
           this.mainService.getAllBy('reports', { type: 'Activity' }).then(res => {
             const sellingAct = res.docs[0];
-            const date = new Date();
-            sellingAct.activity.push(Math.round(activity_value));
-            sellingAct.activity_count.push(Math.round(activity_count));
-            sellingAct.activity_time.push(date.getHours() + ':' + (date.getMinutes() < 10 ? '0' : '') + date.getMinutes());
-            this.mainService.updateData('reports', sellingAct._id, sellingAct);
+            if (sellingAct && sellingAct._id) {
+              const date = new Date();
+              if (!sellingAct.activity) sellingAct.activity = [];
+              if (!sellingAct.activity_count) sellingAct.activity_count = [];
+              if (!sellingAct.activity_time) sellingAct.activity_time = [];
+
+              sellingAct.activity.push(Math.round(activity_value));
+              sellingAct.activity_count.push(Math.round(activity_count));
+              sellingAct.activity_time.push(date.getHours() + ':' + (date.getMinutes() < 10 ? '0' : '') + date.getMinutes());
+              this.mainService.updateData('reports', sellingAct._id, sellingAct);
+            }
           });
         });
       });

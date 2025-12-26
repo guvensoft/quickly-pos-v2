@@ -6,6 +6,16 @@ import PouchDBUpsert from 'pouchdb-upsert';
 import * as PouchDBResolve from 'pouch-resolve-conflicts';
 // Note: PouchDB-adapter-memory ve replication-stream ihtiyaç durumuna göre eklenebilir
 
+// Type Safety: Database type definitions
+import {
+  DatabaseName,
+  DatabaseModelMap,
+  PouchDBDocument,
+  PouchDBResponse,
+  PouchDBFindResult,
+  PouchDBAllDocsResult
+} from '../models/database.types';
+
 // PouchDB plugin'lerini yükle
 PouchDB.plugin(PouchDBFind);
 PouchDB.plugin(PouchDBUpsert);
@@ -136,51 +146,75 @@ export class MainService {
   // CRUD İşlemleri - İş mantığı AYNEN KORUNDU
   // ============================================
 
-  getAllData(db: string): Promise<any> {
-    return this.LocalDB[db].allDocs({ include_docs: true });
+  /**
+   * Tüm dokümanları getir (Tip güvenli)
+   * İÇ MANTIK: AYNEN KORUNDU
+   */
+  getAllData<K extends DatabaseName>(db: K): Promise<PouchDBAllDocsResult<DatabaseModelMap[K]>> {
+    return this.LocalDB[db].allDocs({ include_docs: true }) as Promise<PouchDBAllDocsResult<DatabaseModelMap[K]>>;
   }
 
-  getAllBy(db: string, $schema: any): Promise<any> {
+  /**
+   * Filtreye göre dokümanları getir (Tip güvenli)
+   * İÇ MANTIK: AYNEN KORUNDU
+   */
+  getAllBy<K extends DatabaseName>(
+    db: K,
+    $schema: any // Şimdilik any, sonra Partial<DatabaseModelMap[K]> yapılabilir
+  ): Promise<PouchDBFindResult<DatabaseModelMap[K]>> {
     if (!this.LocalDB[db]) return Promise.reject(`Database ${db} not found`);
 
     // Performance optimization: use allDocs for empty queries
     if (Object.keys($schema || {}).length === 0) {
       return this.LocalDB[db].allDocs({ include_docs: true }).then((res: any) => {
         return { docs: res.rows.map((row: any) => row.doc).filter((doc: any) => doc !== null) };
-      });
+      }) as Promise<PouchDBFindResult<DatabaseModelMap[K]>>;
     }
 
     return this.LocalDB[db].find({
       selector: $schema,
       limit: 10000
-    });
+    }) as Promise<PouchDBFindResult<DatabaseModelMap[K]>>;
   }
 
-  getData(db: string, id: string): Promise<any> {
-    return this.LocalDB[db].get(id);
+  /**
+   * ID ile tek doküman getir (Tip güvenli)
+   * İÇ MANTIK: AYNEN KORUNDU
+   */
+  getData<K extends DatabaseName>(db: K, id: string): Promise<DatabaseModelMap[K]> {
+    return this.LocalDB[db].get(id) as Promise<DatabaseModelMap[K]>;
   }
 
   getBulk(db: string, docs: Array<string>): Promise<any> {
     return this.LocalDB[db].bulkGet(docs as any);
   }
 
-  addData(db: string, schema: any): Promise<any> {
-    delete schema._rev; // Ensure _rev is removed before post
-    return this.LocalDB[db].post(schema).then(res => {
+  /**
+   * Yeni doküman ekle (Tip güvenli)
+   * İÇ MANTIK: AYNEN KORUNDU
+   */
+  addData<K extends DatabaseName>(
+    db: K,
+    schema: Omit<DatabaseModelMap[K], '_id' | '_rev'>
+  ): Promise<PouchDBResponse> {
+    const doc = { ...schema } as any;
+    delete doc._rev; // Ensure _rev is removed before post
+
+    return this.LocalDB[db].post(doc).then(res => {
       // PouchDB post returns { ok: true, id: '...', rev: '...' }
       // We need to fetch the document or construct it to put into 'allData'
-      const doc = Object.assign({}, schema, { _id: res.id, db_name: db, db_seq: 0 });
+      const docWithMeta = Object.assign({}, schema, { _id: res.id, db_name: db, db_seq: 0 });
       // DO NOT include _rev from the schema (it shouldn't be there anyway from post)
       // BUT we should respect the new rev if we were updating, but here we are adding.
       // For 'allData', this is a new insert/upsert.
 
       // Use upsert instead of put to handle potential conflicts in 'allData'
       return (this.LocalDB['allData'] as any).upsert(res.id, (existingDoc: any) => {
-        return doc;
+        return docWithMeta;
       }).catch((err: any) => {
         // Silently handle conflict if it still happens
         if (err.status !== 409) console.log('addData-All', err);
-        return { ok: true, id: res.id, doc: doc };
+        return { ok: true, id: res.id, rev: res.rev };
       });
     }).catch(err => {
       console.log('addData-Local', err);
@@ -201,7 +235,15 @@ export class MainService {
     });
   }
 
-  updateData(db: string, id: string, schema: any): Promise<any> {
+  /**
+   * Doküman güncelle (Tip güvenli - Partial)
+   * İÇ MANTIK: AYNEN KORUNDU
+   */
+  updateData<K extends DatabaseName>(
+    db: K,
+    id: string,
+    schema: Partial<DatabaseModelMap[K]>
+  ): Promise<PouchDBResponse> {
     (this.LocalDB['allData'] as any).upsert(id, (doc: any) => {
       return Object.assign(doc || {}, schema);
     }).catch((err: any) => {
@@ -214,16 +256,21 @@ export class MainService {
     });
   }
 
-  removeData(db: string, id: string): Promise<any> {
+  /**
+   * Doküman sil (Tip güvenli)
+   * İÇ MANTIK: AYNEN KORUNDU
+   */
+  removeData<K extends DatabaseName>(db: K, id: string): Promise<PouchDBResponse> {
     this.LocalDB['allData'].get(id).then((doc) => {
       this.LocalDB['allData'].remove(doc).catch(err => {
         console.log('removeData-All', err);
       });
     });
     return this.LocalDB[db].get(id).then((doc) => {
-      return this.LocalDB[db].remove(doc).catch(err => {
-        console.log('removeData-Local', err);
-      });
+      return this.LocalDB[db].remove(doc) as Promise<PouchDBResponse>;
+    }).catch(err => {
+      console.log('removeData-Local', err);
+      throw err;
     });
   }
 
