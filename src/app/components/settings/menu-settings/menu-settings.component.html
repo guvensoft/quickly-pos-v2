@@ -101,7 +101,7 @@
                             Yazıcı
                           </div>
                         </div>
-                        <select [disabled]="printers?.length === 0" name="printer" class="form-control form-control-lg"
+                        <select [disabled]="printers.length === 0" name="printer" class="form-control form-control-lg"
                           ngModel>
                           <option *ngFor="let item of printers">{{item.name}}</option>
                         </select>
@@ -322,7 +322,7 @@
               <div class="input-group-prepend">
                 <div class="input-group-text">Yazıcı</div>
               </div>
-              <select [disabled]="printers?.length === 0" name="printer" class="form-control form-control-lg" ngModel>
+              <select [disabled]="printers.length === 0" name="printer" class="form-control form-control-lg" ngModel>
                 <option *ngFor="let item of printers">{{item.name}}</option>
               </select>
             </div>
@@ -491,7 +491,7 @@
                   <form #recipesForm="ngForm" (ngSubmit)="addRecipe(recipesForm)">
                     <div class="input-group">
                       <select placeholder="Stok Seçiniz..."
-                        [disabled]="stocks?.length === 0 || productType === 2 && productRecipe.length > 0 || productType === 2 && oldRecipes.length > 0"
+                        [disabled]="stocks.length === 0 || productType === 2 && productRecipe.length > 0 || productType === 2 && oldRecipes.length > 0"
                         name="stock_id" (change)="onStockChange($any($event.target).value)"
                         class="form-control form-control-lg" ngModel>
                         <option *ngFor="let stock of stocks" [value]="stock._id">{{stock.name}}</option>
@@ -499,12 +499,12 @@
                     </div>
                     <div class="input-group">
                       <input
-                        [disabled]="stocks?.length === 0 || productType === 2 && productRecipe.length > 0 || productType === 2 && oldRecipes.length > 0"
+                        [disabled]="stocks.length === 0 || productType === 2 && productRecipe.length > 0 || productType === 2 && oldRecipes.length > 0"
                         type="number" placeholder="0 {{stockUnit}}" name="amount" class="form-control form-control-lg"
                         ngModel />
                       <span class="input-group-append">
                         <button
-                          [disabled]="stocks?.length === 0 || productType === 2 && productRecipe.length > 0 || productType === 2 && oldRecipes.length > 0"
+                          [disabled]="stocks.length === 0 || productType === 2 && productRecipe.length > 0 || productType === 2 && oldRecipes.length > 0"
                           class="btn btn-success" type="submit">Ekle</button>
                       </span>
                     </div>

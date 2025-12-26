@@ -9,7 +9,7 @@
       </div>
       <div class="modal-body">
         <h4 class="text-center">Arayan Numara:</h4>
-        <h1 class="text-center">{{call?.number | mask: '0 (000) 000 00 00'}}</h1>
+        <h1 class="text-center">{{call.number | mask: '0 (000) 000 00 00'}}</h1>
         <div *ngIf="customer">
           <div class="alert alert-success text-center mt-5" role="alert">
             <small>Müşteri Bulundu !</small>

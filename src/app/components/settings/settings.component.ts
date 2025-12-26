@@ -21,7 +21,6 @@ import { RestaurantSettingsComponent } from './restaurant-settings/restaurant-se
     MenuSettingsComponent,
     RecipeSettingsComponent,
     ApplicationSettingsComponent,
-    PrinterSettingsComponent,
     RestaurantSettingsComponent
   ],
   selector: 'app-settings',

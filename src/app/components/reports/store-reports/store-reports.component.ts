@@ -16,7 +16,7 @@ import { NgxMaskPipe } from 'ngx-mask';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, PricePipe, GeneralPipe, TimeAgoPipe, NgxMaskPipe],
+  imports: [CommonModule, FormsModule, PricePipe, GeneralPipe],
   selector: 'app-store-reports',
   templateUrl: './store-reports.component.html',
   styleUrls: ['./store-reports.component.scss'],

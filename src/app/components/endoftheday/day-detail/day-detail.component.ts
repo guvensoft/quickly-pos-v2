@@ -16,7 +16,7 @@ import { BaseChartDirective } from 'ng2-charts';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, PricePipe, BaseChartDirective, GeneralPipe, TimeAgoPipe, TruncatePipe],
+  imports: [CommonModule, PricePipe, BaseChartDirective, GeneralPipe],
   selector: 'app-day-detail',
   templateUrl: './day-detail.component.html',
   styleUrls: ['./day-detail.component.scss']

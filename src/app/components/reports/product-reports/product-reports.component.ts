@@ -14,7 +14,7 @@ import { ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 @Component({
   standalone: true,
-  imports: [CommonModule, BaseChartDirective, GeneralPipe, PricePipe, TimeAgoPipe],
+  imports: [CommonModule, BaseChartDirective, GeneralPipe, PricePipe],
   selector: 'app-product-reports',
   templateUrl: './product-reports.component.html',
   styleUrls: ['./product-reports.component.scss'],

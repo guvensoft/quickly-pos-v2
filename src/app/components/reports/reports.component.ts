@@ -18,7 +18,7 @@ import { NotificationsReportsComponent } from './notifications-reports/notificat
 
 @Component({
   standalone: true,
-  imports: [CommonModule, BaseChartDirective, GeneralPipe, PricePipe, StoreReportsComponent, ProductReportsComponent, TableReportsComponent, StockReportsComponent, UserReportsComponent, CashboxReportsComponent, ActivityReportsComponent, NotificationsReportsComponent],
+  imports: [CommonModule, BaseChartDirective, PricePipe, StoreReportsComponent, ProductReportsComponent, TableReportsComponent, StockReportsComponent, UserReportsComponent, CashboxReportsComponent, ActivityReportsComponent, NotificationsReportsComponent],
   selector: 'app-reports',
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.scss'],

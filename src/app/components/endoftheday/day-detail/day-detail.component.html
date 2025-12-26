@@ -453,13 +453,13 @@
           <div *ngIf="(checkDetail?.discount || 0) > 0" class="card-footer">
             <b>
               <i class="fa fa-arrow-down" aria-hidden="true"></i> Toplam İndirim Tutarı:
-              <span class="pull-right">{{checkDetail?.discount || 0 | price }} </span>
+              <span class="pull-right">{{checkDetail.discount || 0 | price }} </span>
             </b>
           </div>
           <div class="card-footer">
             <b>
               <i class="fa fa-check" aria-hidden="true"></i> Ödenen Miktar:
-              <span class="pull-right">{{checkDetail?.total_price || 0 | price }} </span>
+              <span class="pull-right">{{checkDetail.total_price || 0 | price }} </span>
             </b>
           </div>
         </div>
@@ -475,7 +475,7 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title" id="modelTitleId">{{cashDetail?.type}} Hareketi</h4>
+        <h4 class="modal-title" id="modelTitleId">{{cashDetail.type}} Hareketi</h4>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -483,7 +483,7 @@
       <div class="modal-body p-0">
         <div class="card">
           <div class="card-header">
-            <h5 class="mb-0">{{cashDetail?.description}}</h5>
+            <h5 class="mb-0">{{cashDetail.description}}</h5>
           </div>
           <div class="card-body p-0">
             <strong>
@@ -495,7 +495,7 @@
                     </td>
                     <td>Nakit:</td>
                     <td width="20%">
-                      <span class="pull-right">{{cashDetail?.cash || 0 | price }} </span>
+                      <span class="pull-right">{{cashDetail.cash || 0 | price }} </span>
                     </td>
                   </tr>
                   <tr class="table-warning">
@@ -504,7 +504,7 @@
                     </td>
                     <td>Kart:</td>
                     <td width="20%">
-                      <span class="pull-right">{{cashDetail?.card || 0 | price }} </span>
+                      <span class="pull-right">{{cashDetail.card || 0 | price }} </span>
                     </td>
                   </tr>
                   <tr class="table-info">
@@ -513,7 +513,7 @@
                     </td>
                     <td>Kupon:</td>
                     <td width="20%">
-                      <span class="pull-right">{{cashDetail?.coupon || 0 | price }} </span>
+                      <span class="pull-right">{{cashDetail.coupon || 0 | price }} </span>
                     </td>
                   </tr>
                   <tr>
@@ -533,9 +533,9 @@
             </strong>
           </div>
           <div class="card-footer">
-            <i class="fa fa-user" aria-hidden="true"></i> {{cashDetail?.user}}
+            <i class="fa fa-user" aria-hidden="true"></i> {{cashDetail.user}}
             <span class="pull-right">
-              {{cashDetail?.timestamp | date:'HH:mm'}}
+              {{cashDetail.timestamp | date:'HH:mm'}}
             </span>
           </div>
         </div>

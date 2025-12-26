@@ -534,7 +534,7 @@
                   Ödeme Tutarı
                 </div>
               </div>
-              <input type="number" class="form-control form-control-lg" name="amount" [ngModel]="selectedPayment?.amount">
+              <input type="number" class="form-control form-control-lg" name="amount" [ngModel]="selectedPayment.amount">
               <div class="input-group-append">
                 <div class="input-group-text">
                     <i class="fa fa-turkish-lira fa-2x" aria-hidden="true"></i>
@@ -547,7 +547,7 @@
               <div class="input-group-prepend">
                 <div class="input-group-text">Ödeme Tipi</div>
               </div>
-              <select name="method" class="form-control form-control-lg" [ngModel]="selectedPayment?.method">
+              <select name="method" class="form-control form-control-lg" [ngModel]="selectedPayment.method">
                 <option>Nakit</option>
                 <option>Kart</option>
                 <option>Kupon</option>

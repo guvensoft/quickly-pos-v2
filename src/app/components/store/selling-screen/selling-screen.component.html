@@ -36,7 +36,7 @@
             <div class="row">
               <div class="col-lg-4 pr-1 pl-1">
                 <button data-toggle="modal" (click)="onProductChange = false" data-target="#splitTable"
-                  [disabled]="(tablesView?.length ?? 0) === 0 || (check?.products?.length ?? 0) === 0 || (check?.status ?? 0) === 0"
+                  [disabled]="tablesView.length === 0 || (check?.products?.length ?? 0) === 0 || (check?.status ?? 0) === 0"
                   class="btn btn-danger btn-block btn-sm">
                   <strong>Masa Değiştir</strong>
                 </button>
@@ -50,7 +50,7 @@
               <div class="col-lg-4 pr-1 pl-1">
                 <button data-toggle="modal" data-target="#qrPrintersModal"
                   class="btn btn-secondary text-info border-info btn-block btn-sm "
-                  [disabled]="(tablesView?.length ?? 0) === 0 || check?.type === 2">
+                  [disabled]="tablesView.length === 0 || check?.type === 2">
                   <i class="fa fa-qrcode"></i>
                   <strong>QR Yazdır</strong>
                 </button>
@@ -362,7 +362,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title" id="modelTitleId">Not Ekle ( {{selectedProduct?.name}} )
+          <h4 class="modal-title" id="modelTitleId">Not Ekle ( {{selectedProduct.name}} )
           </h4>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -374,7 +374,7 @@
               <input #noteInput type="text" placeholder="Notunuz..." name="description"
                 class="form-control form-control-lg" ngModel>
             </div>
-            <div *ngIf="(readyNotes?.length ?? 0) > 0" class="row pr-0 pl-0">
+            <div *ngIf="readyNotes.length > 0" class="row pr-0 pl-0">
               <div *ngFor="let note of readyNotes" class="col-lg-4 mb-2">
                 <button type="button" class="btn bg-teal btn-lg btn-block" (click)="addReadyNotes(note)">
                   {{note}}
@@ -398,13 +398,13 @@
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title">{{selectedProduct?.name}}
+          <h4 class="modal-title">{{selectedProduct.name}}
           </h4>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div *ngIf="(productSpecs.length ?? 0) > 0" class="modal-body">
+        <div *ngIf="productSpecs.length > 0" class="modal-body">
           <div class="row">
             <div *ngFor="let spec of productSpecs" class="col pr-2 pl-2 mb-2">
               <button class="btn btn-warning btn-lg btn-block btn-specs" (click)="changeSpecs(spec)">
@@ -428,7 +428,7 @@
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div *ngIf="(printers.length ?? 0) > 0" class="modal-body">
+        <div *ngIf="printers.length > 0" class="modal-body">
           <div class="row">
             <ng-container *ngFor="let printer of printers">
               <div *ngIf="printer.mission === 'Adisyon'" class="col pr-2 pl-2 mb-2">
@@ -452,7 +452,7 @@
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div *ngIf="(printers.length ?? 0) > 0" class="modal-body">
+        <div *ngIf="printers.length > 0" class="modal-body">
           <div class="row">
             <ng-container *ngFor="let printer of printers">
               <div *ngIf="printer.mission === 'Adisyon'" class="col pr-2 pl-2 mb-2">
