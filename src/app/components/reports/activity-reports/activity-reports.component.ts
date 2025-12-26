@@ -144,7 +144,7 @@ export class ActivityReportsComponent implements OnInit {
 
   fillData() {
     this.mainService.getAllBy('reports', { type: 'Activity' }).then(res => {
-      this.sellingActivity = res.docs[0];
+      this.sellingActivity = res.docs[0] as any;
       this.dailySalesActivity();
     });
   }

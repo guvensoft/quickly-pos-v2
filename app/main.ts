@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, screen, session } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -19,14 +19,28 @@ function createWindow(): BrowserWindow {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: false,
+      webSecurity: false,
       allowRunningInsecureContent: serve,
       preload: path.join(__dirname, 'preload.js')
     },
   });
 
-   import('electron-debug').then(debug => {
-      debug.default({ isEnabled: true, showDevTools: true });
+  // Bypass CORS
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Access-Control-Allow-Origin': ['*'],
+        'Access-Control-Allow-Headers': ['*'],
+        'Access-Control-Allow-Methods': ['*']
+      }
     });
+  });
+
+  import('electron-debug').then(debug => {
+    debug.default({ isEnabled: true, showDevTools: true });
+  });
 
 
   if (serve) {

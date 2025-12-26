@@ -524,6 +524,14 @@ export class MainService {
         }
       };
     }
+    if (!this.RemoteDB) {
+      console.warn('MainService: RemoteDB not initialized yet. Skipping syncToRemote.');
+      const dummy = {
+        on: (event: string, fn: (...args: any[]) => void) => { return dummy; },
+        cancel: () => { }
+      };
+      return dummy;
+    }
     return PouchDB.sync(this.LocalDB['allData'], this.RemoteDB, rOpts)
       .on('change', (sync: any) => { this.handleChanges(sync); })
       .on('error', (err: any) => { console.log('Sync Error:', err); });

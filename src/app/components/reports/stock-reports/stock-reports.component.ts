@@ -42,7 +42,7 @@ export class StockReportsComponent implements OnInit {
       this.allCats = result.docs as any;
     });
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.stockLogs = res.docs.filter((obj: any) => obj.type >= logType.STOCK_CREATED && obj.type <= logType.STOCK_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp);
+      this.stockLogs = (res.docs.filter((obj: any) => obj.type >= logType.STOCK_CREATED && obj.type <= logType.STOCK_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as any;
     });
   }
 }

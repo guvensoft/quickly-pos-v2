@@ -26,7 +26,7 @@
                     <div class="input-group-text humanIcon"><i class="fa fa-search" aria-hidden="true"></i></div>
                   </div>
                   <input #productName type="text" style="font-size: 17px;" placeholder="Ürün Adı Giriniz.."
-                    (keydown)="filterProducts(productName.value)" (click)="subCatsView = undefined;"
+                    (keydown)="filterProducts(productName.value)" (click)="subCatsView = [];"
                     class="form-control form-contol-sm">
                 </div>
               </div>
@@ -79,7 +79,7 @@
                         class="col-xl-3 col-lg-4 col-card">
                         <div class="card mb-1 mt-1 catCard">
                           <div class="card-body">
-                            <h2 class="card-title text-center">{{cat.name}}</h2>
+                            <h2 class="card-title text-center">{{cat?.name}}</h2>
                           </div>
                         </div>
                       </div>
@@ -101,7 +101,7 @@
                           <div *ngFor="let item of subCatsView" class="col p-0 pr-1 pl-1 mb-1">
                             <button (click)="getProductsBySubCat(item._id!)"
                               class="btn btn-md btn-warning text-dark btn-block">
-                              <b>{{item.name}}</b>
+                              <b>{{item?.name}}</b>
                             </button>
                           </div>
                         </ng-container>
@@ -114,14 +114,15 @@
                         class="col-xl-3 col-lg-4 col-card">
                         <div class="card mb-1 mt-1 proCard">
                           <div class="card-body">
-                            <h2 class="card-title" [ngClass]="{'long-name': product.name.length > 12 }">{{product.name}}
+                            <h2 class="card-title" [ngClass]="{'long-name': (product?.name?.length ?? 0) > 12 }">
+                              {{product?.name}}
                             </h2>
                             <p class="card-text text-danger">
                               <span class="price">
-                                <b> {{product.price | price }} </b>
+                                <b> {{product?.price | price }} </b>
                               </span>
                               <small class="category mt-1 text-white">
-                                {{catName(product.cat_id)}}
+                                {{catName(product?.cat_id ?? "")}}
                                 <!-- {{product.cat_id | general:'categories':'name'| async}} -->
                               </small>
                             </p>
@@ -199,10 +200,10 @@
                     style="cursor:pointer" (click)="selectProduct(i)" class="check-product">
                     <div class="product-name">
                       <i *ngIf="item.status === 3" class="fa fa-times-rectangle text-danger" aria-hidden="true"></i>
-                      {{item.name}}
+                      {{item?.name}}
                       <small *ngIf="item.note !== '' && item.note !== undefined">({{item.note}})</small>
                     </div>
-                    <div class="product-price">{{item.price | price }} </div>
+                    <div class="product-price">{{item?.price | price }} </div>
                     <div *ngIf="selectedIndex === i && item.status !== 1"
                       style="font-size: 13px; padding-bottom: 0.25rem;">
                       <i class="fa fa-user" aria-hidden="true"></i> {{item.owner | general:'users' | async }}
@@ -229,7 +230,7 @@
                     style="text-transform: capitalize;">
                     <small>
                       <strong>
-                        {{product.name}}
+                        {{product?.name}}
                         <span class="pull-right">{{product.price | price}} </span>
                       </strong>
                     </small>
@@ -362,7 +363,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title" id="modelTitleId">Not Ekle ( {{selectedProduct.name}} )
+          <h4 class="modal-title" id="modelTitleId">Not Ekle ( {{selectedProduct?.name ?? ''}} )
           </h4>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -398,7 +399,7 @@
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title">{{selectedProduct.name}}
+          <h4 class="modal-title">{{selectedProduct?.name ?? ''}}
           </h4>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -433,7 +434,7 @@
             <ng-container *ngFor="let printer of printers">
               <div *ngIf="printer.mission === 'Adisyon'" class="col pr-2 pl-2 mb-2">
                 <button class="btn btn-warning btn-lg btn-block btn-specs"
-                  (click)="printCheck(printer)">{{printer.name}}</button>
+                  (click)="printCheck(printer)">{{printer?.name}}</button>
               </div>
             </ng-container>
           </div>
@@ -457,7 +458,7 @@
             <ng-container *ngFor="let printer of printers">
               <div *ngIf="printer.mission === 'Adisyon'" class="col pr-2 pl-2 mb-2">
                 <button class="btn btn-warning btn-lg btn-block btn-specs"
-                  (click)="qrCode(printer)">{{printer.name}}</button>
+                  (click)="qrCode(printer)">{{printer?.name}}</button>
               </div>
             </ng-container>
           </div>
@@ -534,7 +535,7 @@
                     (click)="selectTable(item)" class="card tableCard">
                     <div class="card-body p-3">
                       <h4 class="card-title" style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">
-                        {{item.name}}</h4>
+                        {{item?.name}}</h4>
                       <p class="card-text">
                         <i class="fa fa-user" aria-hidden="true"></i> {{item.capacity}}
                       </p>
@@ -553,7 +554,7 @@
               <div *ngFor="let floor of floors" [ngClass]="{'bg-danger text-white':selectedFloor === floor?._id}"
                 (click)="filterTables(floor?._id!)" class="card mb-2 dark-bg">
                 <div class="card-body p-2 pt-3">
-                  <h2 style="font-size:1.7vw; font-weight:bold;">{{floor.name}}</h2>
+                  <h2 style="font-size:1.7vw; font-weight:bold;">{{floor?.name}}</h2>
                 </div>
               </div>
             </div>
@@ -645,7 +646,7 @@
                 (click)="closeCheck(method.name)" class="btn btn-secondary btn-block btn-lg sellButton">
                 <i class="fa {{method.icon}}"></i>
                 <p class="mt-1 mb-1">
-                  <b>{{method.name}}</b>
+                  <b>{{method?.name}}</b>
                 </p>
               </button>
             </div>

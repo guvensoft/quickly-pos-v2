@@ -112,9 +112,9 @@ export class UserSettingsComponent implements OnInit {
       this.mainService.removeData('users_group', id!).then(() => {
         this.mainService.getAllBy('users', { role_id: id }).then(result => {
           const data = result.docs
-          for (const prop in data) {
-            if (data[prop]._id) {
-              this.mainService.removeData('users', data[prop]._id!).then((result) => {
+          data.forEach((element: any) => {
+            if (element._id) {
+              this.mainService.removeData('users', element._id).then((result) => {
                 this.mainService.getAllBy('reports', { connection_id: result.id }).then(res => {
                   if (res.docs[0]?._id) {
                     this.mainService.removeData('reports', res.docs[0]._id);
@@ -122,7 +122,7 @@ export class UserSettingsComponent implements OnInit {
                 });
               });
             }
-          }
+          });
           this.messageService.sendMessage('Grup ve Kullanıcılar Silindi.');
           this.selectedGroup = undefined;
           this.fillData();

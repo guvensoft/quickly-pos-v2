@@ -58,8 +58,10 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-lg btn-secondary" data-dismiss="modal">Kapat</button>
-        <button *ngIf="customer" (click)="openCheck()" type="button" class="btn btn-lg btn-info"><i class="fa fa-sticky-note" aria-hidden="true"></i> Hesap Aç</button>
-        <button *ngIf="!customer" (click)="saveCustomer(customerForm)" type="button" class="btn btn-lg btn-info"><i class="fa fa-sticky-note" aria-hidden="true"></i> Müşteriyi Kaydet ve Hesap Aç</button>
+        <button *ngIf="customer" (click)="openCheck()" type="button" class="btn btn-lg btn-info"><i
+            class="fa fa-sticky-note" aria-hidden="true"></i> Hesap Aç</button>
+        <button *ngIf="!customer" (click)="saveCustomer(customerForm)" type="button" class="btn btn-lg btn-info"><i
+            class="fa fa-sticky-note" aria-hidden="true"></i> Müşteriyi Kaydet ve Hesap Aç</button>
       </div>
     </div>
   </div>

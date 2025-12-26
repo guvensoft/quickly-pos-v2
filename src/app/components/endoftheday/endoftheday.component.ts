@@ -102,7 +102,7 @@ export class EndofthedayComponent implements OnInit {
 
       if (this.day == 1) {
         this.mainService.getAllBy('reports', {}).then(res => {
-          const reports = res.docs.filter((obj: any) => obj.type !== 'Activity');
+          const reports = res.docs.filter((obj: any) => obj.type !== 'Activity') as any;
           reports.forEach((element: any) => {
             this.mainService.changeData('reports', element._id, (doc: any) => {
               doc.weekly = [0, 0, 0, 0, 0, 0, 0];
@@ -247,7 +247,7 @@ export class EndofthedayComponent implements OnInit {
   stepReports() {
     this.mainService.getAllBy('reports', {}).then(res => {
       this.progress = 'Raporlar Yedekleniyor...';
-      this.reports = res.docs.filter((obj: any) => obj.type !== 'Activity');
+      this.reports = (res.docs.filter((obj: any) => obj.type !== 'Activity')) as any;
       const reportsBackup = new BackupData('reports', res.docs);
       this.backupData.push(reportsBackup);
       const activities = res.docs.filter((obj: any) => obj.type == 'Activity');

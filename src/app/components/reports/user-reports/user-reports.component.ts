@@ -150,7 +150,7 @@ export class UserReportsComponent implements OnInit {
 
   getLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.userLogs = res.docs.filter((obj: any) => obj.type >= logType.USER_CREATED && obj.type <= logType.USER_CHECKPOINT || obj.type == logType.ORDER_CREATED).sort((a: any, b: any) => b.timestamp - a.timestamp);
+      this.userLogs = (res.docs.filter((obj: any) => obj.type >= logType.USER_CREATED && obj.type <= logType.USER_CHECKPOINT || obj.type == logType.ORDER_CREATED).sort((a: any, b: any) => b.timestamp - a.timestamp)) as any;
     });
   }
 
@@ -161,7 +161,7 @@ export class UserReportsComponent implements OnInit {
     this.ChartData = [];
     this.ChartLoaded = false;
     this.mainService.getAllBy('reports', { type: 'User' }).then(res => {
-      this.generalList = res.docs.sort((a: any, b: any) => b.count - a.count);
+      this.generalList = (res.docs.sort((a: any, b: any) => b.count - a.count)) as any;
       this.usersList = JSON.parse(JSON.stringify(this.generalList));
       const chartTable = this.usersList.slice(0, 5);
       chartTable.forEach((obj, index) => {

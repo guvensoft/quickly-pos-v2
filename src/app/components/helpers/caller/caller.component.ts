@@ -19,7 +19,7 @@ import { Call } from '../../../core/models/caller.model';
   styleUrls: ['./caller.component.scss']
 })
 export class CallerComponent implements OnInit {
-  call!: Call;
+  call: Call = {} as Call;
   customer!: Customer | null;
   owner: any;
   onUpdate: boolean = false;

@@ -157,7 +157,7 @@ export class TableReportsComponent implements OnInit {
       default:
         break;
     }
-    newArray = newArray.sort((a: any, b: any) => b.count - a.count);
+    newArray = newArray.sort((a: any, b: any) => b.count - a.count) as any;
     this.tablesList = newArray;
     if (this.selectedCat) {
       this.mainService.getAllBy('tables', { floor_id: this.selectedCat }).then(res => {
@@ -177,7 +177,7 @@ export class TableReportsComponent implements OnInit {
 
   getLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.tableLogs = res.docs.filter((obj: any) => obj.type >= logType.TABLE_CREATED && obj.type <= logType.TABLE_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp);
+      this.tableLogs = (res.docs.filter((obj: any) => obj.type >= logType.TABLE_CREATED && obj.type <= logType.TABLE_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as any;
     });
   }
 
@@ -186,7 +186,7 @@ export class TableReportsComponent implements OnInit {
     this.ChartData = [];
     this.ChartLoaded = false;
     this.mainService.getAllBy('reports', { type: 'Table' }).then(res => {
-      this.generalList = res.docs.sort((a: any, b: any) => b.count - a.count);
+      this.generalList = (res.docs.sort((a: any, b: any) => b.count - a.count)) as any;
       this.tablesList = JSON.parse(JSON.stringify(this.generalList));
       const chartTable = this.tablesList.slice(0, 5);
       chartTable.forEach((obj, index) => {

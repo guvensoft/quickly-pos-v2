@@ -144,11 +144,11 @@ export class StockSettingsComponent implements OnInit {
         this.mainService.getAllBy('stocks', { cat_id: id }).then(result => {
           const data = result.docs
           if (data.length > 0) {
-            for (const prop in data) {
-              if (data[prop]._id) {
-                this.mainService.removeData('stocks', data[prop]._id!);
+            data.forEach((element: any) => {
+              if (element._id) {
+                this.mainService.removeData('stocks', element._id);
               }
-            }
+            });
           }
           this.messageService.sendMessage('Stok Kategorisi ve Bağlı Stoklar Silindi.');
           this.selectedCat = undefined;

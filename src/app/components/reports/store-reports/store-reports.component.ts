@@ -275,7 +275,7 @@ export class StoreReportsComponent implements OnInit {
 
   getLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.sellingLogs = res.docs.filter((obj: any) => obj.type >= logType.CHECK_CREATED && obj.type <= logType.ORDER_MOVED || obj.type == logType.DISCOUNT).sort((a: any, b: any) => b.timestamp - a.timestamp);
+      this.sellingLogs = (res.docs.filter((obj: any) => obj.type >= logType.CHECK_CREATED && obj.type <= logType.ORDER_MOVED || obj.type == logType.DISCOUNT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as any;
     });
   }
 

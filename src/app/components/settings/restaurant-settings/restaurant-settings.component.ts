@@ -97,16 +97,16 @@ export class RestaurantSettingsComponent implements OnInit {
       this.mainService.removeData('floors', this.selectedFloor!).then(() => {
         this.mainService.getAllBy('tables', { floor_id: this.selectedFloor! }).then(result => {
           const data = result.docs
-          for (const prop in data) {
-            if (data[prop]._id) {
-              this.mainService.removeData('tables', data[prop]._id!).then(result => {
+          data.forEach((element: any) => {
+            if (element._id) {
+              this.mainService.removeData('tables', element._id).then(result => {
                 this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
                   if (res.docs.length > 0 && res.docs[0]._id)
                     this.mainService.removeData('reports', res.docs[0]._id);
                 });
               });
             }
-          }
+          });
           this.messageService.sendMessage('Bölüm ve Masalar Silindi!')
           this.selectedFloor = undefined;
           this.fillData();

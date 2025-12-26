@@ -166,7 +166,7 @@ export class ProductReportsComponent implements OnInit {
       default:
         break;
     }
-    newArray = newArray.sort((a, b) => b.count - a.count);
+    newArray = newArray.sort((a, b) => b.count - a.count) as any;
     this.productList = newArray;
     if (this.selectedCat) {
       this.mainService.getAllBy('products', { cat_id: this.selectedCat }).then(res => {
@@ -209,7 +209,7 @@ export class ProductReportsComponent implements OnInit {
     this.ChartData = [];
     this.ChartLoaded = false;
     this.mainService.getAllBy('reports', { type: 'Product' }).then(res => {
-      this.generalList = res.docs.sort((a: any, b: any) => b.count - a.count);
+      this.generalList = (res.docs.sort((a: any, b: any) => b.count - a.count)) as any;
       this.productList = JSON.parse(JSON.stringify(this.generalList));
       this.chartList = this.productList.slice(0, 5);
       this.chartList.forEach((obj, index) => {
@@ -231,7 +231,7 @@ export class ProductReportsComponent implements OnInit {
       this.categoriesList.sort((a: any, b: any) => b.order - a.order);
     })
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.productLogs = res.docs.filter((obj: any) => obj.type >= logType.PRODUCT_CREATED && obj.type <= logType.PRODUCT_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp);
+      this.productLogs = (res.docs.filter((obj: any) => obj.type >= logType.PRODUCT_CREATED && obj.type <= logType.PRODUCT_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as any;
     });
   }
 }

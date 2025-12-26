@@ -69,7 +69,7 @@
     "jquery": "3.2.1",
     "ng2-charts": "8.0.0",
     "ngx-mask": "20.0.3",
-    "popper.js": "1.12.9",
+    "popper.js": "1.16.1",
     "pouch-resolve-conflicts": "1.2.0",
     "pouchdb-adapter-idb": "9.0.0",
     "pouchdb-browser": "9.0.0",

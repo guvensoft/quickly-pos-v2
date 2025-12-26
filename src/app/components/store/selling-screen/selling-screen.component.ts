@@ -34,13 +34,13 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 export class SellingScreenComponent implements OnInit, OnDestroy {
   id!: string;
   type!: string;
-  categories!: Array<Category>;
-  sub_categories!: Array<SubCategory>;
-  subCatsView?: Array<SubCategory>;
-  products!: Array<Product>;
-  productsView!: Array<Product>;
+  categories: Array<Category> = [];
+  sub_categories: Array<SubCategory> = [];
+  subCatsView: Array<SubCategory> = [];
+  products: Array<Product> = [];
+  productsView: Array<Product> = [];
   checks!: Array<any>;
-  floors!: Array<Floor>;
+  floors: Array<Floor> = [];
   selectedFloor?: string;
   tables: Array<Table> = [];
   selectedTable: any;
@@ -49,7 +49,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
   check: any = {};
   check_id!: string;
   selectedCat?: string;
-  selectedProduct!: CheckProduct;
+  selectedProduct: CheckProduct | undefined;
   selectedIndex!: number;
   noteForm!: NgForm;
   owner!: string;
@@ -691,7 +691,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
       this.selectedProduct = this.check.products[index];
       this.selectedIndex = index;
       try {
-        this.readyNotes = this.products.find((obj: any) => obj._id == this.selectedProduct.id)?.notes?.split(',') || [];
+        this.readyNotes = this.products.find((obj: any) => obj._id == this.selectedProduct!.id)?.notes?.split(',') || [];
       } catch (error) {
         this.readyNotes = [];
       }
@@ -708,6 +708,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
   }
 
   changeSpecs(spec: any) {
+    if (!this.selectedProduct) return;
     const oldPrice = this.selectedProduct.price;
     if (![0.5, 1.5].includes(this.selectedQuantity)) {
       this.selectedProduct.name = this.selectedProduct.name + ' ' + spec.spec_name;
@@ -788,9 +789,9 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
               const pCat = this.categories.find((obj: any) => obj._id == this.check.products[this.selectedIndex].cat_id)!;
               const device = this.printers.find((obj: any) => obj.name == pCat.printer);
               this.printerService.printCancel(device, this.check.products[this.selectedIndex], reason, this.table.name, this.owner);
-              this.logService.createLog(logType.ORDER_CANCELED, this.check._id, `${this.table.name} Masasından ${this.selectedProduct.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
+              this.logService.createLog(logType.ORDER_CANCELED, this.check._id, `${this.table.name} Masasından ${this.selectedProduct!.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
             } else {
-              this.logService.createLog(logType.ORDER_CANCELED, this.check._id, `${this.check.note} Hesabından ${this.selectedProduct.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
+              this.logService.createLog(logType.ORDER_CANCELED, this.check._id, `${this.check.note} Hesabından ${this.selectedProduct!.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
             }
             this.check._rev = res.rev;
             this.message.sendMessage('Ürün İptal Edildi');
@@ -1098,14 +1099,15 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
   }
 
   splitProduct() {
+    if (!this.selectedProduct) return;
     if (this.selectedTable.status == TableStatus.ACTIVE) {
       this.message.sendConfirm(`${this.selectedProduct.name}, ${this.selectedTable.name} Masasına Aktarılacak ve Yeni Hesap Açılacak.`).then(isOk => {
         if (isOk) {
-          const newCheck = new Check(this.selectedTable._id, this.selectedProduct.price, 0, this.owner, '', 1, [this.selectedProduct], Date.now(), CheckType.NORMAL, CheckNo());
+          const newCheck = new Check(this.selectedTable._id, this.selectedProduct!.price, 0, this.owner, '', 1, [this.selectedProduct!], Date.now(), CheckType.NORMAL, CheckNo());
           this.mainService.addData('checks', newCheck).then(res => {
             if (res.ok) {
               this.check.products.splice(this.selectedIndex, 1);
-              this.check.total_price -= this.selectedProduct.price;
+              this.check.total_price -= this.selectedProduct!.price;
               this.mainService.updateData('tables', this.selectedTable._id, { status: 2, timestamp: Date.now() }).then((res: any) => {
                 if (res.ok) {
                   if (this.check.products.length == 0) {
@@ -1157,9 +1159,9 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
     } else {
       this.mainService.getAllBy('checks', { table_id: this.selectedTable._id! }).then((res: any) => {
         const otherCheck: Check = res.docs[0];
-        otherCheck.products.push(this.selectedProduct);
-        otherCheck.total_price += this.selectedProduct.price;
-        this.check.total_price -= this.selectedProduct.price;
+        otherCheck.products.push(this.selectedProduct!);
+        otherCheck.total_price += this.selectedProduct!.price;
+        this.check.total_price -= this.selectedProduct!.price;
         this.check.products.splice(this.selectedIndex, 1);
         this.mainService.updateData('checks', otherCheck._id!, otherCheck).then((res: any) => {
           if (res.ok) {
@@ -1204,7 +1206,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
               });
             }
           }
-          this.logService.createLog(logType.ORDER_MOVED, this.selectedProduct.id, `${this.selectedProduct.name} siparişi ${this.table.name} masasından ${this.selectedTable.name} masasına aktarıldı`)
+          this.logService.createLog(logType.ORDER_MOVED, this.selectedProduct!.id, `${this.selectedProduct!.name} siparişi ${this.table.name} masasından ${this.selectedTable.name} masasına aktarıldı`)
         });
       });
     }

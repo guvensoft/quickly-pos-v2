@@ -214,16 +214,16 @@ export class CustomerSettingsComponent implements OnInit {
   filterCustomers(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('customers', { name: { $regex: regexp } }).then((res: any) => {
-      this.customers = res.docs as any;
+      this.customers = res.docs;
     });
   }
 
   fillData() {
     this.mainService.getAllBy('customers', {}).then((result: any) => {
-      this.customers = result.docs as any;
+      this.customers = result.docs;
     });
     this.mainService.getAllBy('credits', {}).then((res: any) => {
-      this.credits = res.docs as any;
+      this.credits = res.docs;
       this.creditsView = this.credits.sort((a: any, b: any) => a.timestamp - b.timestamp);
     })
   }
