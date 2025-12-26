@@ -46,9 +46,14 @@ export class EndofthedayComponent implements OnInit {
   restaurantID!: string;
 
   constructor(private electronService: ElectronService, private printerService: PrinterService, private mainService: MainService, private messageService: MessageService, private settingsService: SettingsService, private httpService: HttpService, private conflictService: ConflictService) {
-    this.token = localStorage.getItem("AccessToken") as string;
+    this.token = localStorage.getItem("AccessToken") || '';
     this.owner = this.settingsService.getUser('id') || '';
-    this.permissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
+    try {
+      this.permissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
+    } catch (error) {
+      console.error('Error parsing userPermissions:', error);
+      this.permissions = {};
+    }
   }
 
   ngOnInit() {
@@ -148,14 +153,30 @@ export class EndofthedayComponent implements OnInit {
 
   StoreSalesReport = (checks: Array<ClosedCheck>) => {
     const SalesReport = { cash: 0, card: 0, coupon: 0, free: 0, canceled: 0, discount: 0, checks: checks.length, customers: { male: 0, female: 0 } };
-    SalesReport.cash = checks.filter(obj => obj.payment_method == 'Nakit').map(obj => obj.total_price).reduce((a, b) => a + b, 0);
-    SalesReport.card = checks.filter(obj => obj.payment_method == 'Kart').map(obj => obj.total_price).reduce((a, b) => a + b, 0);
-    SalesReport.coupon = checks.filter(obj => obj.payment_method == 'Kupon').map(obj => obj.total_price).reduce((a, b) => a + b, 0);
-    SalesReport.free = checks.filter(obj => obj.type !== CheckType.CANCELED && obj.payment_method == 'İkram').map(obj => obj.total_price).reduce((a, b) => a + b, 0);
-    SalesReport.canceled = checks.filter(obj => obj.type == CheckType.CANCELED).map(obj => obj.total_price).reduce((a, b) => a + b, 0);
-    SalesReport.discount = checks.filter(obj => obj.type !== CheckType.CANCELED).map(obj => obj.discount).reduce((a, b) => a + b, 0);
-    SalesReport.customers.male = checks.filter(obj => obj.type !== CheckType.CANCELED && obj.hasOwnProperty('occupation') && obj.occupation).map(obj => obj.occupation!.male).reduce((a, b) => a + b, 0);
-    SalesReport.customers.female = checks.filter(obj => obj.type !== CheckType.CANCELED && obj.hasOwnProperty('occupation') && obj.occupation).map(obj => obj.occupation!.female).reduce((a, b) => a + b, 0);
+
+    const cashChecks = checks.filter(obj => obj.payment_method == 'Nakit');
+    SalesReport.cash = cashChecks.length > 0 ? cashChecks.map(obj => obj.total_price).reduce((a, b) => a + b, 0) : 0;
+
+    const cardChecks = checks.filter(obj => obj.payment_method == 'Kart');
+    SalesReport.card = cardChecks.length > 0 ? cardChecks.map(obj => obj.total_price).reduce((a, b) => a + b, 0) : 0;
+
+    const couponChecks = checks.filter(obj => obj.payment_method == 'Kupon');
+    SalesReport.coupon = couponChecks.length > 0 ? couponChecks.map(obj => obj.total_price).reduce((a, b) => a + b, 0) : 0;
+
+    const freeChecks = checks.filter(obj => obj.type !== CheckType.CANCELED && obj.payment_method == 'İkram');
+    SalesReport.free = freeChecks.length > 0 ? freeChecks.map(obj => obj.total_price).reduce((a, b) => a + b, 0) : 0;
+
+    const canceledChecks = checks.filter(obj => obj.type == CheckType.CANCELED);
+    SalesReport.canceled = canceledChecks.length > 0 ? canceledChecks.map(obj => obj.total_price).reduce((a, b) => a + b, 0) : 0;
+
+    const discountChecks = checks.filter(obj => obj.type !== CheckType.CANCELED);
+    SalesReport.discount = discountChecks.length > 0 ? discountChecks.map(obj => obj.discount).reduce((a, b) => a + b, 0) : 0;
+
+    const maleChecks = checks.filter(obj => obj.type !== CheckType.CANCELED && obj.hasOwnProperty('occupation') && obj.occupation);
+    SalesReport.customers.male = maleChecks.length > 0 ? maleChecks.map(obj => obj.occupation!.male).reduce((a, b) => a + b, 0) : 0;
+
+    const femaleChecks = checks.filter(obj => obj.type !== CheckType.CANCELED && obj.hasOwnProperty('occupation') && obj.occupation);
+    SalesReport.customers.female = femaleChecks.length > 0 ? femaleChecks.map(obj => obj.occupation!.female).reduce((a, b) => a + b, 0) : 0;
     const partial = checks.filter(obj => obj.payment_method == 'Parçalı');
     partial.forEach(element => {
       SalesReport.discount += element.discount;
@@ -221,17 +242,21 @@ export class EndofthedayComponent implements OnInit {
       this.cashbox = res.docs as any;
       const cashboxBackup = new BackupData('cashbox', this.cashbox);
       this.backupData.push(cashboxBackup);
-      try {
-        incomes = this.cashbox.filter(obj => obj.type == 'Gelir').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b);
+
+      const incomeItems = this.cashbox.filter(obj => obj.type == 'Gelir');
+      if (incomeItems.length > 0) {
+        incomes = incomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
         this.endDayReport.incomes = incomes;
-      } catch (error) {
+      } else {
         this.endDayReport.incomes = 0;
         console.log('Kasa Geliri Yok..');
       }
-      try {
-        outcomes = this.cashbox.filter(obj => obj.type == 'Gider').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b);
+
+      const outcomeItems = this.cashbox.filter(obj => obj.type == 'Gider');
+      if (outcomeItems.length > 0) {
+        outcomes = outcomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
         this.endDayReport.outcomes = outcomes;
-      } catch (error) {
+      } else {
         this.endDayReport.outcomes = 0;
         console.log('Kasa Gideri Yok..');
       }

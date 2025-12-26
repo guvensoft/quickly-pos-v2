@@ -107,50 +107,78 @@ export class DayDetailComponent implements OnInit {
       switch (section) {
         case 'Checks':
           this.detailTitle = 'Kapatılan Hesap Detayları';
-          if (filter == 'All') {
-            this.checksTable = this.oldChecks.docs.sort((a: any, b: any) => a.timestamp - b.timestamp);
-          } else if (filter == 'İptal') {
-            this.checksTable = this.oldChecks.docs.filter((obj: any) => obj.type == 3).sort((a: any, b: any) => a.timestamp - b.timestamp);
+          if (this.oldChecks && this.oldChecks.docs) {
+            if (filter == 'All') {
+              this.checksTable = this.oldChecks.docs.sort((a: any, b: any) => a.timestamp - b.timestamp);
+            } else if (filter == 'İptal') {
+              this.checksTable = this.oldChecks.docs.filter((obj: any) => obj.type == 3).sort((a: any, b: any) => a.timestamp - b.timestamp);
+            } else {
+              this.checksTable = this.oldChecks.docs.filter((obj: any) => obj.type !== 3).sort((a: any, b: any) => a.timestamp - b.timestamp);
+              this.checksTable = this.oldChecks.docs.filter((obj: any) => obj.payment_method == filter).sort((a: any, b: any) => a.timestamp - b.timestamp);
+            }
           } else {
-            this.checksTable = this.oldChecks.docs.filter((obj: any) => obj.type !== 3).sort((a: any, b: any) => a.timestamp - b.timestamp);
-            this.checksTable = this.oldChecks.docs.filter((obj: any) => obj.payment_method == filter).sort((a: any, b: any) => a.timestamp - b.timestamp);
+            this.checksTable = [];
           }
           break;
         case 'Cashbox':
           this.detailTitle = 'Kasa Gelir-Gider Detayları';
-          if (filter == 'All') {
-            this.cashboxTable = this.oldCashbox.docs;
-          }
-          else if (filter == 'Gelir') {
-            this.cashboxTable = this.oldCashbox.docs.filter((obj: any) => obj.type == 'Gelir').sort((a: any, b: any) => a.timestamp - b.timestamp);
-          } else if (filter == 'Gider') {
-            this.cashboxTable = this.oldCashbox.docs.filter((obj: any) => obj.type == 'Gider').sort((a: any, b: any) => a.timestamp - b.timestamp);
+          if (this.oldCashbox && this.oldCashbox.docs) {
+            if (filter == 'All') {
+              this.cashboxTable = this.oldCashbox.docs;
+            }
+            else if (filter == 'Gelir') {
+              this.cashboxTable = this.oldCashbox.docs.filter((obj: any) => obj.type == 'Gelir').sort((a: any, b: any) => a.timestamp - b.timestamp);
+            } else if (filter == 'Gider') {
+              this.cashboxTable = this.oldCashbox.docs.filter((obj: any) => obj.type == 'Gider').sort((a: any, b: any) => a.timestamp - b.timestamp);
+            }
+          } else {
+            this.cashboxTable = [];
           }
           break;
         case 'Products':
           this.detailTitle = 'Güne Ait Ürün Satış Detayları';
-          this.productsTable = this.oldReports.docs.filter((obj: any) => obj.type == 'Product').sort((a: any, b: any) => b.weekly[this.detailDay] - a.weekly[this.detailDay]);
-          this.productsTable = this.productsTable.filter((obj: any) => obj.weekly[this.detailDay] !== 0);
+          if (this.oldReports && this.oldReports.docs) {
+            this.productsTable = this.oldReports.docs.filter((obj: any) => obj.type == 'Product').sort((a: any, b: any) => b.weekly[this.detailDay] - a.weekly[this.detailDay]);
+            this.productsTable = this.productsTable.filter((obj: any) => obj.weekly[this.detailDay] !== 0);
+          } else {
+            this.productsTable = [];
+          }
           break;
         case 'Users':
           this.detailTitle = 'Güne Ait Kullanıcı Satış Detayları';
-          this.usersTable = this.oldReports.docs.filter((obj: any) => obj.type == 'User').sort((a: any, b: any) => b.weekly[this.detailDay] - a.weekly[this.detailDay]);
-          this.usersTable = this.usersTable.filter((obj: any) => obj.weekly[this.detailDay] !== 0);
+          if (this.oldReports && this.oldReports.docs) {
+            this.usersTable = this.oldReports.docs.filter((obj: any) => obj.type == 'User').sort((a: any, b: any) => b.weekly[this.detailDay] - a.weekly[this.detailDay]);
+            this.usersTable = this.usersTable.filter((obj: any) => obj.weekly[this.detailDay] !== 0);
+          } else {
+            this.usersTable = [];
+          }
           break;
         case 'Tables':
           this.detailTitle = 'Güne Ait Masa Satış Detayları';
-          this.tablesTable = this.oldReports.docs.filter((obj: any) => obj.type == 'Table').sort((a: any, b: any) => b.weekly[this.detailDay] - a.weekly[this.detailDay]);
-          this.tablesTable = this.tablesTable.filter((obj: any) => obj.weekly[this.detailDay] !== 0);
+          if (this.oldReports && this.oldReports.docs) {
+            this.tablesTable = this.oldReports.docs.filter((obj: any) => obj.type == 'Table').sort((a: any, b: any) => b.weekly[this.detailDay] - a.weekly[this.detailDay]);
+            this.tablesTable = this.tablesTable.filter((obj: any) => obj.weekly[this.detailDay] !== 0);
+          } else {
+            this.tablesTable = [];
+          }
           break;
         case 'Logs':
           this.detailTitle = 'Güne Ait Sistem Kayıtları';
-          this.logsTable = this.oldLogs.docs.sort((a: any, b: any) => b.timestamp - a.timestamp);
+          if (this.oldLogs && this.oldLogs.docs) {
+            this.logsTable = this.oldLogs.docs.sort((a: any, b: any) => b.timestamp - a.timestamp);
+          } else {
+            this.logsTable = [];
+          }
           break;
         case 'Activity':
           this.detailTitle = 'Güne Ait Aktivite Grafiği';
-          const sellingActivity = this.oldReports.docs.find((obj: any) => obj.type == 'Activity');
-          this.activityData = [{ data: sellingActivity.activity, label: 'Gelir Endeksi' }, { data: sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
-          this.activityLabels = sellingActivity.activity_time;
+          if (this.oldReports && this.oldReports.docs) {
+            const sellingActivity = this.oldReports.docs.find((obj: any) => obj.type == 'Activity');
+            if (sellingActivity) {
+              this.activityData = [{ data: sellingActivity.activity, label: 'Gelir Endeksi' }, { data: sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
+              this.activityLabels = sellingActivity.activity_time;
+            }
+          }
           break;
 
         default:
@@ -162,7 +190,11 @@ export class DayDetailComponent implements OnInit {
   }
 
   printEndday() {
-    this.printerService.printEndDay(this.printers[0], this.detailData);
+    if (this.printers && this.printers.length > 0) {
+      this.printerService.printEndDay(this.printers[0], this.detailData);
+    } else {
+      console.warn('No printers available');
+    }
   }
 
   showCheckDetail(check: any) {
@@ -181,14 +213,20 @@ export class DayDetailComponent implements OnInit {
     this.pieData.push(this.detailData.cash_total, this.detailData.card_total, this.detailData.coupon_total, this.detailData.free_total);
     this.detailDay = new Date(this.detailData.timestamp).getDay();
     this.electronService.readBackupData(this.detailData.data_file).then((result: Array<BackupData>) => {
-      this.oldBackupData = result;
-      this.oldChecks = this.oldBackupData[0];
-      this.oldCashbox = this.oldBackupData[1];
-      this.oldReports = this.oldBackupData[2];
-      this.oldLogs = this.oldBackupData[3];
-      this.syncStatus = true;
+      if (result && Array.isArray(result) && result.length >= 4) {
+        this.oldBackupData = result;
+        this.oldChecks = this.oldBackupData[0];
+        this.oldCashbox = this.oldBackupData[1];
+        this.oldReports = this.oldBackupData[2];
+        this.oldLogs = this.oldBackupData[3];
+        this.syncStatus = true;
+      } else {
+        console.warn('Invalid backup data structure');
+        this.oldBackupData = [];
+        this.syncStatus = false;
+      }
     }).catch(err => {
-      console.log(err);
+      console.error('Error reading backup data:', err);
       this.oldBackupData = [];
       this.syncStatus = false;
     });

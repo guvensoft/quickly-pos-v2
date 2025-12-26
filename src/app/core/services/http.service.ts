@@ -27,7 +27,11 @@ export class HttpService {
     // this.baseUrl = 'http://192.168.0.29:3000';
 
     this.mainService.getAllBy('settings', { key: 'RestaurantInfo' }).then(res => {
-      this.store_id = res.docs[0].value._id;
+      if (res && res.docs && res.docs.length > 0 && res.docs[0].value) {
+        this.store_id = res.docs[0].value._id;
+      }
+    }).catch(err => {
+      console.error('HttpService: Error loading RestaurantInfo:', err);
     });
   }
 

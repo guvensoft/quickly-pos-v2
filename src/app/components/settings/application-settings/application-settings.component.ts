@@ -42,21 +42,29 @@ export class ApplicationSettingsComponent implements OnInit {
   ngOnInit() {
     this.currentSection = 'AppSettings';
     this.settings.AppSettings.subscribe((res: any) => {
-      this.appSettings = res.value
-      this.settingsForm.setValue(this.appSettings);
+      if (res && res.value) {
+        this.appSettings = res.value;
+        if (this.settingsForm) {
+          this.settingsForm.setValue(this.appSettings);
+        }
+      }
     });
     this.settings.RestaurantInfo.subscribe((res: any) => {
-      delete res.value.auth;
-      delete res.value.remote;
-      delete res.value.settings;
-      this.restInfo = res.value
-      this.restMap = res.value.geolocation;
-      this.appLogo = this.restInfo.logo;
-      // if (this.restInfo.last_seen) delete this.restInfo.last_seen;
-      // this.restaurantForm.setValue(this.restInfo);
+      if (res && res.value) {
+        delete res.value.auth;
+        delete res.value.remote;
+        delete res.value.settings;
+        this.restInfo = res.value;
+        this.restMap = res.value.geolocation;
+        this.appLogo = this.restInfo.logo;
+        // if (this.restInfo.last_seen) delete this.restInfo.last_seen;
+        // this.restaurantForm.setValue(this.restInfo);
+      }
     });
     this.settings.ServerSettings.subscribe((res: any) => {
-      this.serverSettingsForm.setValue(res.value);
+      if (res && res.value && this.serverSettingsForm) {
+        this.serverSettingsForm.setValue(res.value);
+      }
     })
   }
 
@@ -98,14 +106,18 @@ export class ApplicationSettingsComponent implements OnInit {
 
   getPrinterDetail(printer: Printer) {
     this.choosenPrinter = printer;
-    this.printerDetailForm.setValue(printer);
+    if (this.printerDetailForm) {
+      this.printerDetailForm.setValue(printer);
+    }
   }
 
   addPrinter(Form: NgForm) {
     const form = Form.value;
     let address;
     if (form.port_number == undefined) {
-      address = this.selectedPrinter.portNumbers[0];
+      if (this.selectedPrinter && this.selectedPrinter.portNumbers && this.selectedPrinter.portNumbers.length > 0) {
+        address = this.selectedPrinter.portNumbers[0];
+      }
     }
     if (form.name) {
       if (this.printerProcess == 'LAN') {
@@ -117,14 +129,21 @@ export class ApplicationSettingsComponent implements OnInit {
         }
       }
       const printer = new Printer(form.name, this.printerProcess, form.note, address, form.mission);
-      const printersData = this.printers.filter(obj => obj.name == form.name);
-      if (printersData.length == 0) {
+      if (this.printers && Array.isArray(this.printers)) {
+        const printersData = this.printers.filter(obj => obj.name == form.name);
+        if (printersData.length == 0) {
+          this.settings.addPrinter(printer);
+          (window as any).$('#printerModal').modal('hide');
+          this.message.sendMessage('Yazıcı Oluşturuldu.');
+          this.fillData();
+        } else {
+          this.message.sendMessage('Farklı Bir İsim Girmek Zorundasınız');
+        }
+      } else {
         this.settings.addPrinter(printer);
         (window as any).$('#printerModal').modal('hide');
         this.message.sendMessage('Yazıcı Oluşturuldu.');
         this.fillData();
-      } else {
-        this.message.sendMessage('Farklı Bir İsim Girmek Zorundasınız');
       }
     } else {
       this.message.sendMessage('Yazıcı Adı Girmek Zorundasınız.');
@@ -150,9 +169,10 @@ export class ApplicationSettingsComponent implements OnInit {
   getPrinters(Type: string) {
     switch (Type) {
       case 'USB':
-        if (this.printerService.getUSBPrinters().length > 0) {
+        const usbPrinters = this.printerService.getUSBPrinters();
+        if (usbPrinters && Array.isArray(usbPrinters) && usbPrinters.length > 0) {
           this.printerProcess = 'USB';
-          this.printersFound = this.printerService.getUSBPrinters();
+          this.printersFound = usbPrinters;
         } else {
           this.message.sendMessage('USB portlarında takılı yazıcı bulunamadı..');
           return false;
@@ -165,7 +185,8 @@ export class ApplicationSettingsComponent implements OnInit {
         break;
       case 'SERIAL':
         this.printerProcess = 'SERIAL';
-        this.printersFound = this.printerService.getSerialPrinters('/dev/ttyS0');
+        const serialPrinters = this.printerService.getSerialPrinters('/dev/ttyS0');
+        this.printersFound = serialPrinters || [];
         this.selectedPrinter = {};
         break;
       case 'BLUETOOTH':
@@ -200,6 +221,12 @@ export class ApplicationSettingsComponent implements OnInit {
   }
 
   fillData() {
-    this.settings.getPrinters().subscribe((res: any) => this.printers = res.value);
+    this.settings.getPrinters().subscribe((res: any) => {
+      if (res && res.value) {
+        this.printers = res.value;
+      } else {
+        this.printers = [];
+      }
+    });
   }
 }

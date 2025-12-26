@@ -137,8 +137,8 @@ export class UserReportsComponent implements OnInit {
       case 'Haftalık':
         newArray = JSON.parse(JSON.stringify(this.generalList));
         newArray.filter((obj) => {
-          obj.count = obj.weekly_count.reduce((a: number, b: number) => a + b);
-          obj.amount = obj.weekly.reduce((a: number, b: number) => a + b);
+          obj.count = obj.weekly_count.reduce((a: number, b: number) => a + b, 0);
+          obj.amount = obj.weekly.reduce((a: number, b: number) => a + b, 0);
         });
         break;
       default:

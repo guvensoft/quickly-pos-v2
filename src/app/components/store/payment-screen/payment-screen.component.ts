@@ -69,7 +69,13 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
       new PaymentMethod('Kupon', 'İndirim Kuponu veya Yemek Çeki', '#5bc0de', 'fa-bookmark', 3, 1),
       new PaymentMethod('İkram', 'İkram Hesap', '#c9302c', 'fa-handshake-o', 4, 1)
     ];
-    this.permissions = JSON.parse(localStorage['userPermissions']);
+    try {
+      const userPermissions = localStorage.getItem('userPermissions');
+      this.permissions = userPermissions ? JSON.parse(userPermissions) : {};
+    } catch (error) {
+      console.error('Error parsing userPermissions:', error);
+      this.permissions = {};
+    }
     this.settingsService.DateSettings.subscribe((res: any) => {
       this.day = res.value.day;
     })
@@ -99,13 +105,17 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.changes.cancel();
-    if (this.onClosing) {
+    if (this.changes) {
+      this.changes.cancel();
+    }
+    if (this.onClosing && this.check && this.productsWillPay) {
       this.productsWillPay.forEach(element => {
         this.check.products.push(element);
         this.check.total_price += element.price;
       });
-      this.mainService.updateData('checks', this.check._id!, this.check);
+      if (this.check._id) {
+        this.mainService.updateData('checks', this.check._id, this.check);
+      }
     }
   }
 
@@ -129,16 +139,21 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
           this.payedPrice = this.payedPrice + this.discountAmount;
         }
         if (isAnyEqual) {
-          const equalProduct = this.productsWillPay.filter(obj => obj.price == this.payedPrice)[0];
-          const indexOfEqual = this.productsWillPay.findIndex(obj => obj == equalProduct);
-          newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), [equalProduct]);
-          this.productsWillPay.splice(indexOfEqual, 1);
+          const equalProduct = this.productsWillPay.find(obj => obj.price == this.payedPrice);
+          if (equalProduct) {
+            const indexOfEqual = this.productsWillPay.findIndex(obj => obj == equalProduct);
+            newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), [equalProduct]);
+            this.productsWillPay.splice(indexOfEqual, 1);
+          }
         } else if (isAnyGreat) {
-          const greatOne = this.productsWillPay.sort((a: any, b: any) => b.price - a.price)[0];
-          const greatOneCopy = Object.assign({}, greatOne);
-          greatOneCopy.price = this.payedPrice;
-          newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), [greatOneCopy]);
-          greatOne.price -= this.payedPrice;
+          const sortedProducts = [...this.productsWillPay].sort((a: any, b: any) => b.price - a.price);
+          const greatOne = sortedProducts[0];
+          if (greatOne) {
+            const greatOneCopy = Object.assign({}, greatOne);
+            greatOneCopy.price = this.payedPrice;
+            newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), [greatOneCopy]);
+            greatOne.price -= this.payedPrice;
+          }
         } else if (isAnyLittle) {
           newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), []);
           let priceCount = this.payedPrice;
@@ -203,8 +218,12 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
       const lastPayment = new PaymentStatus(this.userName, realMethod, this.currentAmount, this.discountAmount, Date.now(), this.productsWillPay);
       this.check.payment_flow.push(lastPayment);
       this.check.discount += this.priceWillPay;
-      total_discounts = this.check.payment_flow.map(obj => obj.discount).reduce((a: number, b: number) => a + b);
-      const total_price = this.check.payment_flow.map(obj => obj.amount).reduce((a: number, b: number) => a + b);
+      total_discounts = this.check.payment_flow.length > 0
+        ? this.check.payment_flow.map(obj => obj.discount).reduce((a: number, b: number) => a + b, 0)
+        : 0;
+      const total_price = this.check.payment_flow.length > 0
+        ? this.check.payment_flow.map(obj => obj.amount).reduce((a: number, b: number) => a + b, 0)
+        : 0;
       checkWillClose = new ClosedCheck(this.check.table_id, total_price, total_discounts, this.userName, this.check.note, this.check.status, this.check.products, Date.now(), this.check.type, method, this.check.payment_flow, undefined, this.check.occupation);
     } else {
       total_discounts = this.discountAmount;

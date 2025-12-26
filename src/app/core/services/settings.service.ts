@@ -23,6 +23,12 @@ export class SettingsService {
   constructor() {
     // Constructor'da mainService kullanımı - İş mantığı AYNEN
     this.mainService.getAllBy('settings', {}).then((res) => {
+      if (!res || !res.docs) {
+        console.warn('SettingsService: No settings data available');
+        this.Settings = [];
+        return;
+      }
+
       this.Settings = res.docs;
 
       const appSettings = this.Settings.find((setting) => setting.key == 'AppSettings');
@@ -63,6 +69,7 @@ export class SettingsService {
       }
     }).catch(err => {
       console.log('SettingsService: Ayarlar yüklenemedi (İlk kurulum olabilir)', err);
+      this.Settings = [];
     });
   }
 
@@ -115,7 +122,7 @@ export class SettingsService {
 
   addPrinter(printerData: any): void {
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
-      if (res.docs.length > 0 && res.docs[0]._id) {
+      if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
         res.docs[0].value.push(printerData);
         this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
         this.Printers.next(res.docs[0]);
@@ -124,27 +131,33 @@ export class SettingsService {
         this.mainService.addData('settings', printerSettings);
         this.Printers.next(printerSettings);
       }
+    }).catch(err => {
+      console.error('SettingsService: Error adding printer:', err);
     });
   }
 
   updatePrinter(newPrinter: any, oldPrinter: any): void {
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
-      if (res.docs[0]?._id) {
+      if (res && res.docs && res.docs[0]?._id) {
         res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== oldPrinter.name);
         res.docs[0].value.push(newPrinter);
         this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
         this.Printers.next(res.docs[0]);
       }
+    }).catch(err => {
+      console.error('SettingsService: Error updating printer:', err);
     });
   }
 
   removePrinter(printer: any): void {
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
-      if (res.docs[0]?._id) {
+      if (res && res.docs && res.docs[0]?._id) {
         res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== printer.name);
         this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
         this.Printers.next(res.docs[0]);
       }
+    }).catch(err => {
+      console.error('SettingsService: Error removing printer:', err);
     });
   }
 

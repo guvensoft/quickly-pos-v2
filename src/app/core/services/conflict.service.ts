@@ -15,7 +15,7 @@ export class ConflictService {
   conflictListener(): any {
     return setInterval(() => {
       this.getConflicts().then(conflicts => {
-        if (conflicts.length > 0) {
+        if (conflicts && conflicts.length > 0) {
           conflicts.forEach(conflicted_document => {
             this.getPreRevision(conflicted_document)
               .then(older_document => {
@@ -26,24 +26,47 @@ export class ConflictService {
               });
           });
         }
+      }).catch(err => {
+        console.error('ConflictService: Error getting conflicts:', err);
       });
     }, 60000);
   }
 
   conflictResolver(conflicted_document: any, older_document?: any): void {
+    if (!this.mainService.ServerDB) {
+      console.warn('ConflictService: ServerDB not initialized');
+      return;
+    }
     this.mainService.ServerDB.resolveConflicts(conflicted_document, (a: any, b: any) => {
       return this.diffResolver(a, b, older_document);
-    }).catch((err: any) => {});
+    }).catch((err: any) => {
+      console.error('ConflictService: Error resolving conflict:', err);
+    });
   }
 
   getConflicts(): Promise<any[]> {
+    if (!this.mainService.ServerDB) {
+      return Promise.resolve([]);
+    }
     return this.mainService.ServerDB.allDocs({ include_docs: true, conflicts: true, revs: true }).then((res: any) => {
-      return res.rows.map((obj: any) => obj.doc).filter((obj: any) => obj.hasOwnProperty('_conflicts'));
+      if (!res || !res.rows) {
+        return [];
+      }
+      return res.rows.map((obj: any) => obj.doc).filter((obj: any) => obj && obj.hasOwnProperty('_conflicts'));
+    }).catch((err: any) => {
+      console.error('ConflictService: Error in getConflicts:', err);
+      return [];
     });
   }
 
   getPreRevision(conflicted_document: any): Promise<any> {
+    if (!this.mainService.ServerDB) {
+      return Promise.reject('ServerDB not initialized');
+    }
     return this.mainService.ServerDB.get(conflicted_document._id, { revs: true }).then((res: any) => {
+      if (!res || !res._revisions || !res._revisions.ids || res._revisions.ids.length < 2) {
+        return Promise.reject('Invalid revision data');
+      }
       const revToGet = `${res._revisions.start - 1}-${res._revisions.ids[1]}`;
       return this.mainService.ServerDB.get(res._id, { rev: revToGet });
     });

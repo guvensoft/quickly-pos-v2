@@ -43,7 +43,14 @@ export class AdminComponent implements OnInit {
   showDatabase(db_name: string) {
     this.selectedDB = db_name;
     this.mainService.getAllBy(db_name as any, {}).then((res: any) => {
-      this.documents = res.docs;
+      if (res && res.docs) {
+        this.documents = res.docs;
+      } else {
+        this.documents = [];
+      }
+    }).catch(err => {
+      console.error('Error showing database:', err);
+      this.documents = [];
     });
   }
 
@@ -54,34 +61,54 @@ export class AdminComponent implements OnInit {
   }
 
   editDocument(document: any) {
-    const newDocument = JSON.parse(document);
-    let db_name: string;
-    if (this.selectedDB == 'allData') {
-      db_name = document.db_name;
-    } else {
-      db_name = this.selectedDB;
+    try {
+      const newDocument = JSON.parse(document);
+      let db_name: string;
+      if (this.selectedDB == 'allData') {
+        db_name = newDocument.db_name;
+      } else {
+        db_name = this.selectedDB;
+      }
+      this.mainService.updateData(db_name as any, newDocument._id, newDocument).then((res: any) => {
+        (window as any).$('#docModal').modal('hide');
+        console.log('Döküman Güncellendi');
+        if (this.editArea) {
+          this.editArea.nativeElement.value = '';
+        }
+        this.selectedDoc = undefined!;
+        this.showDatabase(this.selectedDB);
+      }).catch(err => {
+        console.error('Error updating document:', err);
+        alert('Döküman güncellenemedi: ' + err.message);
+      });
+    } catch (error) {
+      console.error('Error parsing document JSON:', error);
+      alert('Geçersiz JSON formatı');
     }
-    this.mainService.updateData(db_name as any, newDocument._id, newDocument).then((res: any) => {
-      (window as any).$('#docModal').modal('hide');
-      console.log('Döküman Güncellendi');
-      this.editArea.nativeElement.value = '';
-      this.selectedDoc = undefined!;
-      this.showDatabase(this.selectedDB);
-    });
   }
 
 
   createDocument(document: any) {
-    const newDocument = JSON.parse(document);
-    this.mainService.addData(this.selectedDB as any, newDocument).then((res: any) => {
-      if (res.ok) {
-        (window as any).$('#docModal').modal('hide');
-        console.log('Döküman Güncellendi');
-        this.editArea.nativeElement.value = '';
-        this.selectedDoc = undefined!;
-        this.showDatabase(this.selectedDB);
-      }
-    });
+    try {
+      const newDocument = JSON.parse(document);
+      this.mainService.addData(this.selectedDB as any, newDocument).then((res: any) => {
+        if (res.ok) {
+          (window as any).$('#docModal').modal('hide');
+          console.log('Döküman Oluşturuldu');
+          if (this.editArea) {
+            this.editArea.nativeElement.value = '';
+          }
+          this.selectedDoc = undefined!;
+          this.showDatabase(this.selectedDB);
+        }
+      }).catch(err => {
+        console.error('Error creating document:', err);
+        alert('Döküman oluşturulamadı: ' + err.message);
+      });
+    } catch (error) {
+      console.error('Error parsing document JSON:', error);
+      alert('Geçersiz JSON formatı');
+    }
   }
 
   getByFilter(key: string, value: any) {
@@ -89,7 +116,14 @@ export class AdminComponent implements OnInit {
     filter[key] = value;
     if (this.selectedDB) {
       this.mainService.getAllBy(this.selectedDB as any, filter).then((res: any) => {
-        this.documents = res.docs;
+        if (res && res.docs) {
+          this.documents = res.docs;
+        } else {
+          this.documents = [];
+        }
+      }).catch(err => {
+        console.error('Error filtering documents:', err);
+        this.documents = [];
       });
     }
   }
@@ -100,11 +134,18 @@ export class AdminComponent implements OnInit {
       console.log('Döküman Silindi');
       this.selectedDoc = undefined!;
       this.showDatabase(this.selectedDB);
+    }).catch(err => {
+      console.error('Error removing document:', err);
+      alert('Döküman silinemedi: ' + err.message);
     });
   }
 
   resetReports() {
     this.mainService.getAllBy('reports', {}).then((res: any) => {
+      if (!res || !res.docs || res.docs.length === 0) {
+        console.warn('No reports found');
+        return;
+      }
       console.warn(res.docs.length);
       const reports = (res.docs as any[]).filter(obj => obj.type !== 'Activity');
       reports.forEach((element, index) => {
@@ -117,6 +158,8 @@ export class AdminComponent implements OnInit {
         });
       });
       this.mainService.localSyncBeforeRemote('reports');
+    }).catch(err => {
+      console.error('Error resetting reports:', err);
     });
   }
 
@@ -130,10 +173,16 @@ export class AdminComponent implements OnInit {
 
   clearDB() {
     this.mainService.getAllBy(this.selectedDB as any, {}).then((res: any) => {
+      if (!res || !res.docs || res.docs.length === 0) {
+        console.warn('No documents to clear');
+        return;
+      }
       res.docs.forEach((element: any, index: number) => {
         this.mainService.removeData(this.selectedDB as any, element._id);
         console.log(index);
       });
+    }).catch(err => {
+      console.error('Error clearing database:', err);
     });
   }
 
@@ -141,8 +190,8 @@ export class AdminComponent implements OnInit {
     // let username = prompt('username');
     // let password = prompt('password');
 
-    const oldToken = localStorage['AccessToken'];
-    this.httpService.post('/store/refresh', null, oldToken).toPromise().then((res: any) => {
+    const oldToken = localStorage.getItem('AccessToken');
+    this.httpService.post('/store/refresh', null, oldToken || undefined).toPromise().then((res: any) => {
       if (res.ok) {
         let data = res;
         if ((res).json && typeof (res).json === 'function') {
@@ -153,6 +202,7 @@ export class AdminComponent implements OnInit {
         alert('İşlem Başarılı');
       }
     }).catch((err: any) => {
+      console.error('Token refresh error:', err);
       this.httpService.post('/store/login', { username: 'quickly', password: 'asdtd155+1' }).toPromise().then((res: any) => {
         if (res.ok) {
           let data = res;
@@ -165,12 +215,19 @@ export class AdminComponent implements OnInit {
         } else {
           alert('Başarısız');
         }
-      })
-    })
+      }).catch(err => {
+        console.error('Login error:', err);
+        alert('Giriş başarısız');
+      });
+    });
   }
 
   resolveDB() {
     this.mainService.LocalDB[this.selectedDB].allDocs({ include_docs: true, conflicts: true }).then((res: any) => {
+      if (!res || !res.rows || res.rows.length === 0) {
+        console.warn('No documents to resolve');
+        return;
+      }
       const test = res.rows.map((obj: any) => { return obj.doc });
       test.forEach((element: any) => {
         if (element.hasOwnProperty('_conflicts')) {
@@ -194,7 +251,9 @@ export class AdminComponent implements OnInit {
           })
         }
       });
-    })
+    }).catch(err => {
+      console.error('Error resolving conflicts:', err);
+    });
   }
 
   updateProgram() {
@@ -391,10 +450,22 @@ export class AdminComponent implements OnInit {
   }
 
   testEndDay() {
-    const token = localStorage.getItem("AccessToken") || '';
-    const restaurantID = JSON.parse(localStorage['RestaurantInfo']).id;
-    this.httpService.post(`v1/management/restaurants/${restaurantID}/report_generator/`, { timestamp: Date.now(), data: { hello: 'test' } }, token).subscribe((res: any) => {
-      console.log(res);
-    });
+    try {
+      const token = localStorage.getItem("AccessToken") || '';
+      const restaurantInfoStr = localStorage.getItem('RestaurantInfo');
+      if (!restaurantInfoStr) {
+        console.error('RestaurantInfo not found in localStorage');
+        return;
+      }
+      const restaurantInfo = JSON.parse(restaurantInfoStr);
+      const restaurantID = restaurantInfo.id;
+      this.httpService.post(`v1/management/restaurants/${restaurantID}/report_generator/`, { timestamp: Date.now(), data: { hello: 'test' } }, token).subscribe((res: any) => {
+        console.log(res);
+      }, err => {
+        console.error('Error in testEndDay:', err);
+      });
+    } catch (error) {
+      console.error('Error parsing RestaurantInfo:', error);
+    }
   }
 }

@@ -158,10 +158,24 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
         this.takeaway = true;
       }
     })
-    this.permissions = JSON.parse(localStorage['userPermissions']);
+    try {
+      const userPermissions = localStorage.getItem('userPermissions');
+      this.permissions = userPermissions ? JSON.parse(userPermissions) : {};
+    } catch (error) {
+      console.error('Error parsing userPermissions:', error);
+      this.permissions = {};
+    }
+
     this.settingsService.getPrinters().subscribe((res: any) => this.printers = res.value);
-    if (localStorage.getItem('selectedFloor')) {
-      this.selectedFloor = JSON.parse(localStorage['selectedFloor']);
+
+    try {
+      const selectedFloor = localStorage.getItem('selectedFloor');
+      if (selectedFloor) {
+        this.selectedFloor = JSON.parse(selectedFloor);
+      }
+    } catch (error) {
+      console.error('Error parsing selectedFloor:', error);
+      this.selectedFloor = undefined;
     }
     this.tareNumber = 0;
   }
@@ -213,7 +227,29 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.changes.cancel();
+    if (this.changes) {
+      this.changes.cancel();
+    }
+
+    // Unsubscribe scaler listener to prevent memory leak
+    if (this.scalerListener && typeof this.scalerListener.unsubscribe === 'function') {
+      this.scalerListener.unsubscribe();
+    }
+
+    // Clean up jQuery modal event listeners
+    const $ = (window as any).$;
+    if ($ && typeof $ === 'function') {
+      const productSpecsModal = $('#productSpecs');
+      if (productSpecsModal.length) {
+        productSpecsModal.off('hide.bs.modal');
+      }
+
+      const specsModal = $('#specsModal');
+      if (specsModal.length) {
+        specsModal.off('hide.bs.modal');
+      }
+    }
+
     if (this.check.type == CheckType.ORDER && this.check.status == CheckStatus.PASSIVE) {
       if (this.check.products.length == 0 && !this.check.hasOwnProperty('payment_flow')) {
         this.mainService.removeData('checks', this.check._id);
@@ -402,7 +438,9 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
             newOrder.items.push(orderItem);
           })
           this.mainService.addData('orders', newOrder).then((res: any) => {
-            const pricesTotal = this.newOrders.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b);
+            const pricesTotal = this.newOrders.length > 0
+              ? this.newOrders.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+              : 0;
             if (this.check.type == CheckType.NORMAL) {
               this.logService.createLog(logType.CHECK_UPDATED, this.check._id, `${this.table.name} hesabına ${pricesTotal} TL tutarında sipariş eklendi.`);
             } else {
@@ -499,7 +537,9 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
           this.check.status = CheckStatus.READY;
           this.mainService.updateData('checks', this.check._id, this.check).then((res: any) => {
             if (res.ok) {
-              const pricesTotal = this.newOrders.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b);
+              const pricesTotal = this.newOrders.length > 0
+                ? this.newOrders.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+                : 0;
               this.logService.createLog(logType.CHECK_UPDATED, this.check._id, `${this.check.note} hesabına ${pricesTotal} TL tutarında sipariş eklendi.`);
             }
           });
@@ -704,7 +744,10 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
 
 
   recalculateTotal() {
-    this.check.total_price = this.check.products.filter((obj: any) => obj.status != 3).map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0);
+    const activeProducts = this.check.products.filter((obj: any) => obj.status != 3);
+    this.check.total_price = activeProducts.length > 0
+      ? activeProducts.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+      : 0;
   }
 
   changeSpecs(spec: any) {
@@ -786,9 +829,13 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
         this.mainService.updateData(this.check.type == CheckType.ORDER ? 'closed_checks' : 'checks', this.check_id, this.check).then((res: any) => {
           if (res.ok) {
             if (this.check.type == CheckType.NORMAL) {
-              const pCat = this.categories.find((obj: any) => obj._id == this.check.products[this.selectedIndex].cat_id)!;
-              const device = this.printers.find((obj: any) => obj.name == pCat.printer);
-              this.printerService.printCancel(device, this.check.products[this.selectedIndex], reason, this.table.name, this.owner);
+              const pCat = this.categories.find((obj: any) => obj._id == this.check.products[this.selectedIndex].cat_id);
+              if (pCat) {
+                const device = this.printers.find((obj: any) => obj.name == pCat.printer);
+                if (device) {
+                  this.printerService.printCancel(device, this.check.products[this.selectedIndex], reason, this.table.name, this.owner);
+                }
+              }
               this.logService.createLog(logType.ORDER_CANCELED, this.check._id, `${this.table.name} Masasından ${this.selectedProduct!.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
             } else {
               this.logService.createLog(logType.ORDER_CANCELED, this.check._id, `${this.check.note} Hesabından ${this.selectedProduct!.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
@@ -805,7 +852,9 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
         });
       } else {
         (window as any).$('#cancelProduct').modal('hide');
-        const canceledTotalPrice = this.check.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b);
+        const canceledTotalPrice = this.check.products.length > 0
+          ? this.check.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+          : 0;
         const checkToCancel = new ClosedCheck(this.check.table_id, canceledTotalPrice, 0, this.owner, this.check.note, 3, this.check.products, Date.now(), 3, 'İkram', [], undefined, this.check.occupation);
         checkToCancel.description = 'Bütün Ürünler İptal Edildi';
         this.mainService.addData('closed_checks', checkToCancel).then((res: any) => {
@@ -921,7 +970,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
 
   updateUserReport() {
     if (this.newOrders.length > 0) {
-      const pricesTotal = this.newOrders.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b);
+      const pricesTotal = this.newOrders.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0);
       if (this.check.type == CheckType.NORMAL) {
         this.logService.createLog(logType.ORDER_CREATED, this.check._id, `'${this.owner}' ${this.table.name} masasına ${pricesTotal} TL tutarında sipariş girdi.`);
       } else {
@@ -1030,15 +1079,18 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
       if (orders.length > 0) {
         const splitPrintArray: Array<any> = [];
         orders.forEach((obj: any, index: number) => {
-          const catPrinter = this.categories.filter(cat => cat._id == obj.cat_id)[0].printer || this.printers[0].name;
+          const category = this.categories.find(cat => cat._id == obj.cat_id);
+          const catPrinter = category?.printer || this.printers[0]?.name || 'default';
           const contains = splitPrintArray.some(element => element.printer.name == catPrinter);
           if (contains) {
             const index = splitPrintArray.findIndex(p_name => p_name.printer.name == catPrinter);
             splitPrintArray[index].products.push(obj);
           } else {
-            const thePrinter = this.printers.filter((obj: any) => obj.name == catPrinter)[0];
-            const splitPrintOrder = { printer: thePrinter, products: [obj] };
-            splitPrintArray.push(splitPrintOrder);
+            const thePrinter = this.printers.find((printer: any) => printer.name == catPrinter);
+            if (thePrinter) {
+              const splitPrintOrder = { printer: thePrinter, products: [obj] };
+              splitPrintArray.push(splitPrintOrder);
+            }
           }
           if (index == orders.length - 1) {
             let table_name: string;
@@ -1060,7 +1112,9 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
     (window as any).$('#printersModal').modal('hide');
     if (this.check.type == CheckType.NORMAL) {
       this.check.products = this.check.products.filter((obj: any) => obj.status == 2);
-      this.check.total_price = this.check.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b);
+      this.check.total_price = this.check.products.length > 0
+        ? this.check.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+        : 0;
       if (this.table.status !== TableStatus.WILL_READY) {
         this.printerService.printCheck(selectedPrinter, this.table.name, this.check);
         if (this.check.status !== CheckStatus.PASSIVE) {
@@ -1079,7 +1133,9 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
         });
       }
     } else if (this.check.type == CheckType.FAST) {
-      this.check.total_price = this.check.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b);
+      this.check.total_price = this.check.products.length > 0
+        ? this.check.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+        : 0;
       this.printerService.printCheck(selectedPrinter, this.check.note, this.check);
     }
   }
@@ -1288,11 +1344,8 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
   }
 
   catName(cat_id: string) {
-    try {
-      return this.categories.find((obj: any) => obj._id == cat_id)!.name;
-    } catch (error) {
-      return '';
-    }
+    const category = this.categories?.find((obj: any) => obj._id == cat_id);
+    return category?.name || '';
   }
 
   filterProducts(value: string) {
@@ -1337,7 +1390,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
     });
     this.mainService.getAllBy('tables', {}).then((res: any) => {
       this.tables = res.docs;
-      this.table = this.tables.filter((obj: any) => obj._id == this.id)[0];
+      this.table = this.tables.find((obj: any) => obj._id == this.id) || {};
       this.tables = this.tables.filter((obj: any) => obj._id !== this.id).filter((obj: any) => obj.status !== 3).sort((a: any, b: any) => a.name.localeCompare(b.name));
       if (this.selectedFloor) {
         this.tablesView = this.tables.filter((obj: any) => obj.floor_id == this.selectedFloor);

@@ -126,7 +126,9 @@ export class CustomerSettingsComponent implements OnInit {
       this.mainService.removeData('customers', id).then((result: any) => {
         this.logService.createLog(logType.CUSTOMER_DELETED, result.id, `${this.customerForm.value.name} Adlı Müşteri Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id! }).then((res: any) => {
-          this.mainService.removeData('reports', res.docs[0]._id);
+          if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
+            this.mainService.removeData('reports', res.docs[0]._id);
+          }
         });
         this.messageService.sendMessage('Müşteri Silindi!');
         this.fillData();
@@ -175,10 +177,16 @@ export class CustomerSettingsComponent implements OnInit {
 
   rePrintCheck(check: any) {
     this.mainService.getData('tables', check.table_id).then((res: any) => {
-      if (check.products.length > 0) {
+      if (check.products && check.products.length > 0) {
         this.printerService.printCheck(this.printers[0], res.name, check);
       } else {
-        check.products = check.payment_flow.reduce((a: any, b: any) => a.payed_products.concat(b.payed_products));
+        if (check.payment_flow && Array.isArray(check.payment_flow)) {
+          check.products = check.payment_flow.reduce((a: any, b: any) => {
+            return a.concat(b.payed_products || []);
+          }, []);
+        } else {
+          check.products = [];
+        }
         this.printerService.printCheck(this.printers[0], res.name, check);
       }
     }).catch(err => {

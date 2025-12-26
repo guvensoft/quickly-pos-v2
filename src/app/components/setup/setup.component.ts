@@ -45,7 +45,7 @@ export class SetupComponent implements OnInit {
       }, 5000)
     }
     this.settingsService.ActivationStatus.subscribe(res => {
-      if (res) {
+      if (res && res.value) {
         this.router.navigate(['']);
       }
     })
@@ -96,32 +96,44 @@ export class SetupComponent implements OnInit {
   makeLogin(loginForm: NgForm) {
     const Form = loginForm.value;
     this.http.post(this.baseUrl + '/store/login/', { username: Form.username, password: Form.password }, this.options).subscribe((res: any) => {
-      localStorage.setItem('AccessToken', res.token);
-      this.headers = this.headers.append('Authorization', res.token);
-      this.http.get(this.baseUrl + '/store/list/', { headers: this.headers }).subscribe((body: any) => {
-        this.message.sendMessage('Giriş Başarılı!');
-        // Angular 21 HttpClient returns parsed JSON by default
-        let data = body;
-        if (typeof body.json === 'function') {
-          data = body.json();
-        }
+      if (res && res.token) {
+        localStorage.setItem('AccessToken', res.token);
+        this.headers = this.headers.append('Authorization', res.token);
+        this.http.get(this.baseUrl + '/store/list/', { headers: this.headers }).subscribe((body: any) => {
+          this.message.sendMessage('Giriş Başarılı!');
+          // Angular 21 HttpClient returns parsed JSON by default
+          let data = body;
+          if (typeof body.json === 'function') {
+            data = body.json();
+          }
 
-        if (data.length > 1) {
-          this.stores = data;
-          this.setupStep = 2;
-        } else {
-          this.makeAuth(data[0]);
-        }
-      }, (err: any) => {
-        this.message.sendMessage('Giriş Başarısız!');
-      });
-    }, (err: any) => {
-      let response = err._body
-      response = JSON.parse(response)
-      if (response.non_field_errors) {
-        this.message.sendMessage(response.non_field_errors)
+          if (data && Array.isArray(data)) {
+            if (data.length > 1) {
+              this.stores = data;
+              this.setupStep = 2;
+            } else if (data.length === 1) {
+              this.makeAuth(data[0]);
+            }
+          }
+        }, (err: any) => {
+          this.message.sendMessage('Giriş Başarısız!');
+        });
       }
-      else {
+    }, (err: any) => {
+      try {
+        let response = err._body;
+        if (response) {
+          response = JSON.parse(response);
+          if (response.non_field_errors) {
+            this.message.sendMessage(response.non_field_errors);
+          } else {
+            this.message.sendMessage("Geçerli bir kullanıcı adı ve şifre giriniz.");
+          }
+        } else {
+          this.message.sendMessage("Geçerli bir kullanıcı adı ve şifre giriniz.");
+        }
+      } catch (error) {
+        console.error('Error parsing login error response:', error);
         this.message.sendMessage("Geçerli bir kullanıcı adı ve şifre giriniz.");
       }
     });
@@ -155,11 +167,19 @@ export class SetupComponent implements OnInit {
     const Form = adminForm.value;
     const userAuth = new UserAuth(new ComponentsAuth(true, true, true, true, true), true, true, true, true, true);
     this.mainService.addData('users_group', new UserGroup('Yönetici', 'Yönetici Grubu', userAuth, 1, Date.now()) as any).then(res => {
+      if (!res || !res.id) {
+        console.error('Failed to create user group');
+        return;
+      }
       this.mainService.addData('users', new User(Form.admin_name, 'Yönetici', res.id, parseInt(Form.admin_pass), 1, Date.now()) as any).then((user) => {
-        this.mainService.addData('reports', new Report('User', user.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), (user as any).name, Date.now()) as any);
-        localStorage.setItem('userName', Form.admin_name);
-        localStorage.setItem('userType', 'Yönetici');
-        localStorage.setItem('userAuth', res.id);
+        if (user && user.id) {
+          this.mainService.addData('reports', new Report('User', user.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), (user as any).name, Date.now()) as any);
+          localStorage.setItem('userName', Form.admin_name);
+          localStorage.setItem('userType', 'Yönetici');
+          localStorage.setItem('userAuth', res.id);
+        }
+      }).catch(err => {
+        console.error('Error creating user:', err);
       });
     }).then(() => {
       this.mainService.addData('reports', new Report('Store', 'Nakit', 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), 'Nakit Satış Raporu', Date.now()) as any);

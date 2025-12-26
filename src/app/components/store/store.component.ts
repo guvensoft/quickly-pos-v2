@@ -67,8 +67,8 @@ export class StoreComponent implements OnInit, OnDestroy {
     this.ownerId = this.settingsService.getUser('id') as string;
 
     this.fillData();
-    if (localStorage.getItem('selectedSection')) {
-      const selectedSection = localStorage['selectedSection'];
+    const selectedSection = localStorage.getItem('selectedSection');
+    if (selectedSection) {
       this.section = selectedSection;
     } else {
       this.section = 'Masalar';
@@ -79,9 +79,14 @@ export class StoreComponent implements OnInit, OnDestroy {
     this.checkChanges = this.mainService.LocalDB['checks'].changes({ since: 'now', live: true }).on('change', (change: any) => {
       this.mainService.getAllBy('checks', {}).then((result: any) => {
         this.checks = result.docs;
-        if (localStorage.getItem('selectedFloor')) {
-          const selectedID = JSON.parse(localStorage.getItem('selectedFloor')!);
-          this.getTablesBy(selectedID);
+        const selectedFloor = localStorage.getItem('selectedFloor');
+        if (selectedFloor) {
+          try {
+            const selectedID = JSON.parse(selectedFloor);
+            this.getTablesBy(selectedID);
+          } catch (error) {
+            console.error('Error parsing selectedFloor:', error);
+          }
         }
       });
     });
@@ -104,19 +109,32 @@ export class StoreComponent implements OnInit, OnDestroy {
         this.tables = result.docs;
         this.tables = this.tables.sort((a: any, b: any) => a.name.localeCompare(b.name, 'tr', { numeric: true, sensitivity: 'base' }));
         this.tableViews = this.tables;
-        if (localStorage.getItem('selectedFloor')) {
-          const selectedID = JSON.parse(localStorage.getItem('selectedFloor')!);
-          this.getTablesBy(selectedID);
+        const selectedFloor = localStorage.getItem('selectedFloor');
+        if (selectedFloor) {
+          try {
+            const selectedID = JSON.parse(selectedFloor);
+            this.getTablesBy(selectedID);
+          } catch (error) {
+            console.error('Error parsing selectedFloor:', error);
+          }
         }
       });
     });
   }
 
   ngOnDestroy() {
-    this.tableChanges.cancel();
-    this.checkChanges.cancel();
-    this.orderChanges.cancel();
-    this.receiptChanges.cancel();
+    if (this.tableChanges) {
+      this.tableChanges.cancel();
+    }
+    if (this.checkChanges) {
+      this.checkChanges.cancel();
+    }
+    if (this.orderChanges) {
+      this.orderChanges.cancel();
+    }
+    if (this.receiptChanges) {
+      this.receiptChanges.cancel();
+    }
   }
 
   changeSection(section: any) {
@@ -253,7 +271,11 @@ export class StoreComponent implements OnInit, OnDestroy {
     // const orderRequestType: any = this.checks.find(check => check._id == receipt.check);
     // switch (receipt.type == ReceiptType.) {
     // case 'checks':
-    const Check: Check = this.checks.find(check => check._id == receipt.check) as Check;
+    const Check = this.checks.find(check => check._id == receipt.check);
+    if (!Check) {
+      console.error('Check not found for receipt:', receipt.check);
+      return;
+    }
     const User: User = receipt.user;
     const userItems = receipt.orders.filter(order => order.status == OrderStatus.APPROVED);
 
@@ -275,7 +297,9 @@ export class StoreComponent implements OnInit, OnDestroy {
     Check.payment_flow.push(newPayment);
     Check.discount += newPayment.amount;
     Check.products = Check.products.filter(product => !productsWillPay.includes(product));
-    Check.total_price = Check.products.map(product => product.price).reduce((a: number, b: number) => a + b, 0);
+    Check.total_price = Check.products.length > 0
+      ? Check.products.map(product => product.price).reduce((a: number, b: number) => a + b, 0)
+      : 0;
 
 
     receipt.status = ReceiptStatus.APPROVED;
@@ -411,9 +435,14 @@ export class StoreComponent implements OnInit, OnDestroy {
         return obj;
       });
       this.tableViews = this.tables;
-      if (localStorage.getItem('selectedFloor')) {
-        const selectedID = JSON.parse(localStorage['selectedFloor']);
-        this.getTablesBy(selectedID);
+      const selectedFloor = localStorage.getItem('selectedFloor');
+      if (selectedFloor) {
+        try {
+          const selectedID = JSON.parse(selectedFloor);
+          this.getTablesBy(selectedID);
+        } catch (error) {
+          console.error('Error parsing selectedFloor:', error);
+        }
       }
     });
   }

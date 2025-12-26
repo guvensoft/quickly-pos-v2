@@ -65,7 +65,9 @@ export class MenuSettingsComponent implements OnInit {
 
   getCategory(category: any) {
     this.selectedCat = category;
-    this.catDetails.setValue(category);
+    if (this.catDetails) {
+      this.catDetails.setValue(category);
+    }
     this.mainService.getAllBy('sub_categories', { cat_id: category._id }).then((res: any) => {
       this.subCats = res.docs;
     });
@@ -185,7 +187,9 @@ export class MenuSettingsComponent implements OnInit {
   updateSubCategory(subCat: SubCategory) {
     this.selectedSubCat = subCat;
     this.onUpdate = true;
-    this.subCatForm.setValue(subCat);
+    if (this.subCatForm) {
+      this.subCatForm.setValue(subCat);
+    }
     (window as any).$('#subCatModal').modal('show');
   }
 
@@ -272,7 +276,9 @@ export class MenuSettingsComponent implements OnInit {
         result.notes = '';
       }
       this.productType = result.type;
-      this.productForm.setValue(result);
+      if (this.productForm) {
+        this.productForm.setValue(result);
+      }
       (window as any).$('#productModal').modal('show');
     });
     this.mainService.getAllBy('recipes', { product_id: id }).then((result: any) => {
@@ -435,10 +441,19 @@ export class MenuSettingsComponent implements OnInit {
     this.selectedId = undefined!;
     this.onUpdate = false;
     this.hasRecipe = false;
-    this.productForm.reset();
-    this.catDetails.reset();
-    this.categoryForm.reset();
-    this.subCatForm.reset();
+
+    if (this.productForm) {
+      this.productForm.reset();
+    }
+    if (this.catDetails) {
+      this.catDetails.reset();
+    }
+    if (this.categoryForm) {
+      this.categoryForm.reset();
+    }
+    if (this.subCatForm) {
+      this.subCatForm.reset();
+    }
   }
 
   fillData() {
@@ -448,6 +463,12 @@ export class MenuSettingsComponent implements OnInit {
       this.products = this.products.sort((a: any, b: any) => a.price - b.price);
     });
     this.mainService.getAllBy('stocks', {}).then((result: any) => this.stocks = result.docs);
-    this.mainService.getAllBy('settings', { key: 'Printers' }).then((res: any) => this.printers = res.docs[0].value);
+    this.mainService.getAllBy('settings', { key: 'Printers' }).then((res: any) => {
+      if (res.docs && res.docs.length > 0) {
+        this.printers = res.docs[0].value;
+      } else {
+        this.printers = [];
+      }
+    });
   }
 }

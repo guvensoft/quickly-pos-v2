@@ -53,7 +53,13 @@ export class StoreReportsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.permissions = JSON.parse(localStorage['userPermissions']);
+    try {
+      const userPermissions = localStorage.getItem('userPermissions');
+      this.permissions = userPermissions ? JSON.parse(userPermissions) : {};
+    } catch (error) {
+      console.error('Error parsing userPermissions:', error);
+      this.permissions = {};
+    }
   }
 
   getDetail(check: any) {
@@ -103,10 +109,16 @@ export class StoreReportsComponent implements OnInit {
 
   rePrintCheck(check: any) {
     this.mainService.getData('tables', check.table_id).then(res => {
-      if (check.products.length > 0) {
+      if (check.products && check.products.length > 0) {
         this.printerService.printCheck(this.printers[0], res.name, check);
       } else {
-        check.products = check.payment_flow.reduce((a: any, b: any) => a.payed_products.concat(b.payed_products));
+        if (check.payment_flow && Array.isArray(check.payment_flow)) {
+          check.products = check.payment_flow.reduce((a: any, b: any) => {
+            return a.concat(b.payed_products || []);
+          }, []);
+        } else {
+          check.products = [];
+        }
         this.printerService.printCheck(this.printers[0], res.name, check);
       }
     }).catch(err => {
@@ -134,19 +146,23 @@ export class StoreReportsComponent implements OnInit {
     });
     if (check.payment_method !== 'Parçalı') {
       this.mainService.getAllBy('reports', { connection_id: check.payment_method }).then(res => {
-        this.mainService.changeData('reports', res.docs[0]._id!, (doc: any) => {
-          doc.weekly[this.day] -= check.total_price;
-          doc.weekly_count[this.day]--;
-          return doc;
-        });
+        if (res && res.docs && res.docs.length > 0) {
+          this.mainService.changeData('reports', res.docs[0]._id!, (doc: any) => {
+            doc.weekly[this.day] -= check.total_price;
+            doc.weekly_count[this.day]--;
+            return doc;
+          });
+        }
       });
     } else {
       check.payment_flow!.forEach((element: any) => {
         this.mainService.getAllBy('reports', { connection_id: element.method }).then(res => {
-          this.mainService.changeData('reports', res.docs[0]._id!, (doc: any) => {
-            doc.weekly[this.day] -= element.amount;
-            return doc;
-          });
+          if (res && res.docs && res.docs.length > 0) {
+            this.mainService.changeData('reports', res.docs[0]._id!, (doc: any) => {
+              doc.weekly[this.day] -= element.amount;
+              return doc;
+            });
+          }
         });
       });
     }
@@ -156,20 +172,24 @@ export class StoreReportsComponent implements OnInit {
     const Form = form.value;
     if (this.checkDetail.payment_method !== Form.payment_method) {
       this.mainService.getAllBy('reports', { connection_id: this.checkDetail.payment_method }).then(res => {
-        const docReport = res.docs[0];
-        this.mainService.changeData('reports', docReport._id!, (doc: any) => {
-          doc.weekly[this.day] -= this.checkDetail.total_price;
-          doc.weekly_count[this.day]--
-          return doc;
-        });
+        if (res && res.docs && res.docs.length > 0) {
+          const docReport = res.docs[0];
+          this.mainService.changeData('reports', docReport._id!, (doc: any) => {
+            doc.weekly[this.day] -= this.checkDetail.total_price;
+            doc.weekly_count[this.day]--
+            return doc;
+          });
+        }
       });
       this.mainService.getAllBy('reports', { connection_id: Form.payment_method }).then(res => {
-        const docReport = res.docs[0];
-        this.mainService.changeData('reports', docReport._id!, (doc: any) => {
-          doc.weekly[this.day] += Form.total_price;
-          doc.weekly_count[this.day]++
-          return doc;
-        });
+        if (res && res.docs && res.docs.length > 0) {
+          const docReport = res.docs[0];
+          this.mainService.changeData('reports', docReport._id!, (doc: any) => {
+            doc.weekly[this.day] += Form.total_price;
+            doc.weekly_count[this.day]++
+            return doc;
+          });
+        }
       });
       this.mainService.updateData('closed_checks', this.checkDetail._id, { total_price: Form.total_price, payment_method: Form.payment_method }).then(res => {
         this.messageService.sendMessage('Hesap Düzenlendi!');
@@ -179,12 +199,14 @@ export class StoreReportsComponent implements OnInit {
     } else {
       if (this.checkDetail.total_price !== Form.total_price) {
         this.mainService.getAllBy('reports', { connection_id: this.checkDetail.payment_method }).then(res => {
-          const docReport = res.docs[0];
-          this.mainService.changeData('reports', docReport._id!, (doc: any) => {
-            doc.weekly[this.day] -= this.checkDetail.total_price;
-            doc.weekly[this.day] += Form.total_price;
-            return doc;
-          });
+          if (res && res.docs && res.docs.length > 0) {
+            const docReport = res.docs[0];
+            this.mainService.changeData('reports', docReport._id!, (doc: any) => {
+              doc.weekly[this.day] -= this.checkDetail.total_price;
+              doc.weekly[this.day] += Form.total_price;
+              return doc;
+            });
+          }
         });
         this.mainService.updateData('closed_checks', this.checkDetail._id, { total_price: Form.total_price }).then(res => {
           this.messageService.sendMessage('Hesap Düzenlendi!');
@@ -221,19 +243,23 @@ export class StoreReportsComponent implements OnInit {
     const Form = paymentDetail.value;
     if (Form.method !== this.selectedPayment.method) {
       this.mainService.getAllBy('reports', { connection_id: this.selectedPayment.method }).then(res => {
-        const docReport = res.docs[0];
-        this.mainService.changeData('reports', docReport._id!, (doc: any) => {
-          doc.weekly[this.day] -= this.selectedPayment.amount;
-          doc.weekly_count[this.day]--
-          return doc;
-        });
-        this.mainService.getAllBy('reports', { connection_id: Form.method }).then(res => {
+        if (res && res.docs && res.docs.length > 0) {
           const docReport = res.docs[0];
           this.mainService.changeData('reports', docReport._id!, (doc: any) => {
-            doc.weekly[this.day] += Form.amount;
-            doc.weekly_count[this.day]++
+            doc.weekly[this.day] -= this.selectedPayment.amount;
+            doc.weekly_count[this.day]--
             return doc;
           });
+        }
+        this.mainService.getAllBy('reports', { connection_id: Form.method }).then(res => {
+          if (res && res.docs && res.docs.length > 0) {
+            const docReport = res.docs[0];
+            this.mainService.changeData('reports', docReport._id!, (doc: any) => {
+              doc.weekly[this.day] += Form.amount;
+              doc.weekly_count[this.day]++
+              return doc;
+            });
+          }
         }).then(res => {
           this.checkDetail.total_price -= this.selectedPayment.amount;
           this.checkDetail.total_price += Form.amount;
@@ -250,23 +276,26 @@ export class StoreReportsComponent implements OnInit {
     } else {
       if (this.selectedPayment.amount !== Form.amount) {
         this.mainService.getAllBy('reports', { connection_id: this.selectedPayment.method }).then(res => {
-          const docReport = res.docs[0];
-          this.mainService.changeData('reports', docReport._id!, (doc: any) => {
-            doc.weekly[this.day] -= this.selectedPayment.amount;
-            doc.weekly[this.day] += Form.amount;
-            return doc;
-          }).then(res => {
-            this.checkDetail.total_price -= this.selectedPayment.amount;
-            this.checkDetail.total_price += Form.amount;
-            this.selectedPayment.amount = Form.amount;
-            this.mainService.updateData('closed_checks', this.checkDetail._id, { total_price: this.checkDetail.total_price, payment_flow: this.checkDetail.payment_flow }).then(res => {
-              this.messageService.sendMessage('Hesap Düzenlendi!');
-              this.fillData();
-              (window as any).$('#editCheck').modal('show');
-              (window as any).$('#paymentDetail').modal('hide');
-            });
+          if (res && res.docs && res.docs.length > 0) {
+            const docReport = res.docs[0];
+            this.mainService.changeData('reports', docReport._id!, (doc: any) => {
+              doc.weekly[this.day] -= this.selectedPayment.amount;
+              doc.weekly[this.day] += Form.amount;
+              return doc;
+            })
+          }
+        }).then(res => {
+          this.checkDetail.total_price -= this.selectedPayment.amount;
+          this.checkDetail.total_price += Form.amount;
+          this.selectedPayment.amount = Form.amount;
+          this.mainService.updateData('closed_checks', this.checkDetail._id, { total_price: this.checkDetail.total_price, payment_flow: this.checkDetail.payment_flow }).then(res => {
+            this.messageService.sendMessage('Hesap Düzenlendi!');
+            this.fillData();
+            (window as any).$('#editCheck').modal('show');
+            (window as any).$('#paymentDetail').modal('hide');
           });
         });
+
       } else {
         return false;
       }
@@ -283,14 +312,14 @@ export class StoreReportsComponent implements OnInit {
     this.mainService.getAllBy('closed_checks', {}).then(res => {
       if (res.docs.length > 0) {
         this.AllChecks = res.docs as any;
-        this.AllChecks.sort((a: any, b: any) => b.timestamp - a.timestamp);
-        this.NotPayedChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.CANCELED);
-        this.FastChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.FAST);
-        this.NormalChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.NORMAL);
-        this.DeliveryChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.ORDER)
-        this.NormalTotal = this.NormalChecks.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
-        this.FastTotal = this.FastChecks.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
-        this.DeliveryTotal = this.DeliveryChecks.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
+        this.AllChecks!.sort((a: any, b: any) => b.timestamp - a.timestamp);
+        this.NotPayedChecks = this.AllChecks!.filter((obj: any) => obj.type == CheckType.CANCELED);
+        this.FastChecks = this.AllChecks!.filter((obj: any) => obj.type == CheckType.FAST);
+        this.NormalChecks = this.AllChecks!.filter((obj: any) => obj.type == CheckType.NORMAL);
+        this.DeliveryChecks = this.AllChecks!.filter((obj: any) => obj.type == CheckType.ORDER)
+        this.NormalTotal = this.NormalChecks!.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
+        this.FastTotal = this.FastChecks!.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
+        this.DeliveryTotal = this.DeliveryChecks!.filter((obj: any) => obj.payment_method !== 'İkram').map((obj: any) => obj.total_price).reduce((a: any, b: any) => a + b, 0);
       }
     });
   }
