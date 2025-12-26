@@ -45,7 +45,7 @@
                   <button (click)="getSettingsDetail('ServerSettings')" [ngClass]="{'list-group-item-warning' : currentSection === 'ServerSettings'}" type="button" class="list-group-item list-group-item-action">
                     Sunucu Ayarları
                   </button>
-                  <!-- <button (click)="getSettingsDetail('AccountSettings')" [ngClass]="{'list-group-item-warning' : currentSection == 'AccountSettings'}" type="button" class="list-group-item list-group-item-action">
+                  <!-- <button (click)="getSettingsDetail('AccountSettings')" [ngClass]="{'list-group-item-warning' : currentSection === 'AccountSettings'}" type="button" class="list-group-item list-group-item-action">
                     Hesap Ayarları
                   </button> -->
                 </div>
@@ -328,7 +328,7 @@
                   Detaylar
                 </div>
                 <div class="card-body flow p-2">
-                  <section [hidden]="choosenPrinter == undefined" id="detailForm">
+                  <section [hidden]="choosenPrinter === undefined" id="detailForm">
                     <div class="form-group mb-2">
                       <div class="input-group">
                         <div class="input-group-prepend">
@@ -373,9 +373,9 @@
                       </div>
                     </div>
                   </section>
-                  <h1 *ngIf="choosenPrinter == undefined" class="text-center mt-5">Listeden Yazıcı Seçiniz</h1>
+                  <h1 *ngIf="choosenPrinter === undefined" class="text-center mt-5">Listeden Yazıcı Seçiniz</h1>
                 </div>
-                <div class="card-footer" [hidden]="choosenPrinter == undefined">
+                <div class="card-footer" [hidden]="choosenPrinter === undefined">
                   <div class="row">
                     <div class="col-lg-4 pr-1">
                       <button type="button" (click)="removePrinter(choosenPrinter)" class="btn btn-md btn-danger btn-block ">
@@ -452,7 +452,7 @@
       </div>
       <form #printerForm="ngForm" (ngSubmit)="addPrinter(printerForm)">
         <div class="modal-body">
-          <section *ngIf="printerProcess == undefined" id="selection">
+          <section *ngIf="printerProcess === undefined" id="selection">
             <p class="text-muted">Lütfen eklemek istediğiniz yazıcı tipini seçiniz.</p>
             <div class="row">
               <div class="col-lg-6 pr-2">
@@ -476,7 +476,7 @@
             </div>
           </section>
           <section *ngIf="printerProcess !== undefined" id="form">
-            <section *ngIf="printersFound !== undefined && selectedPrinter == undefined" id="usbPrinters">
+            <section *ngIf="printersFound !== undefined && selectedPrinter === undefined" id="usbPrinters">
               <p class="text-muted">Kurulum yapmak istediğiniz yazıcıyı seçiniz.</p>
               <div class="row">
                 <div *ngFor="let item of printersFound" class="col">

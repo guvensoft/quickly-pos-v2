@@ -56,7 +56,16 @@
               "node_modules/popper.js/dist/umd/popper.min.js",
               "node_modules/bootstrap/dist/js/bootstrap.min.js"
             ],
-            "browser": "src/main.ts"
+            "browser": "src/main.ts",
+            "allowedCommonJsDependencies": [
+              "jquery",
+              "sweetalert",
+              "pouchdb-upsert",
+              "pouch-resolve-conflicts",
+              "spark-md5",
+              "vuvuzela",
+              "events"
+            ]
           },
           "configurations": {
             "dev": {

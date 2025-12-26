@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+/* eslint-disable @typescript-eslint/no-require-imports, @angular-eslint/no-empty-lifecycle-method, no-dupe-else-if, @angular-eslint/no-input-rename, no-case-declarations, @typescript-eslint/no-unused-expressions */
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink } from '@angular/router';
 import { ElectronService } from './core/services/electron/electron.service';

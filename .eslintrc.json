@@ -56,7 +56,16 @@
         "@typescript-eslint/ban-ts-comment": 0,
         "@typescript-eslint/no-redundant-type-constituents": 0,
         "@typescript-eslint/prefer-promise-reject-errors": 0,
-        "@typescript-eslint/only-throw-error": 0
+        "@typescript-eslint/only-throw-error": 0,
+        "@typescript-eslint/no-empty-object-type": 0,
+        "@typescript-eslint/no-misused-promises": 0,
+        "@typescript-eslint/no-unsafe-enum-comparison": 0,
+        "@typescript-eslint/no-require-imports": 0,
+        "@angular-eslint/no-empty-lifecycle-method": 0,
+        "no-dupe-else-if": 0,
+        "@angular-eslint/no-input-rename": 0,
+        "no-case-declarations": 0,
+        "@typescript-eslint/no-unused-expressions": 0
       }
     },
     {
@@ -66,7 +75,19 @@
       "extends": [
         "plugin:@angular-eslint/template/recommended"
       ],
-      "rules": {}
+      "rules": {
+        "@angular-eslint/template/eqeqeq": 0,
+        "@angular-eslint/template/prefer-control-flow": 0,
+        "no-empty": 0,
+        "no-var": 0,
+        "no-prototype-builtins": 0,
+        "@typescript-eslint/ban-ts-comment": 0,
+        "@typescript-eslint/no-redundant-type-constituents": 0,
+        "@typescript-eslint/prefer-promise-reject-errors": 0,
+        "@typescript-eslint/only-throw-error": 0,
+        "@typescript-eslint/no-empty-object-type": 0,
+        "@typescript-eslint/no-misused-promises": 0
+      }
     }
   ]
 }

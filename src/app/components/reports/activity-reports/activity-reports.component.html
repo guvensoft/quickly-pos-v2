@@ -55,7 +55,7 @@
           </div>
         </div>
         <div class="card-body tab-height p-0">
-          <h1 *ngIf="monthlyData?.length == 0">Yıla Ait Veri Bulunamadı</h1>
+          <h1 *ngIf="monthlyData?.length === 0">Yıla Ait Veri Bulunamadı</h1>
           <canvas *ngIf="monthlyLoaded" baseChart style="height: 468px; width:77vw; margin:auto;" [datasets]="monthlyData" [labels]="monthlyLabels" [options]="ChartOptions" [legend]="monthlyLegends" [colors]="ChartColors" [chartType]="ChartType"></canvas>
         </div>
         <div class="card-footer">

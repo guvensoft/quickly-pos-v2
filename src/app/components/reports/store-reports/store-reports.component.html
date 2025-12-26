@@ -90,7 +90,7 @@
                     </tr>
                   </tbody>
                 </table>
-                <h3 *ngIf="NormalChecks == undefined || NormalChecks.length == 0" class="text-center mt-5">Eşleşen
+                <h3 *ngIf="NormalChecks === undefined || NormalChecks.length === 0" class="text-center mt-5">Eşleşen
                   Hesap Bulunamadı</h3>
               </div>
               <div class="card-footer">
@@ -177,7 +177,7 @@
                     </tr>
                   </tbody>
                 </table>
-                <h3 *ngIf="FastChecks == undefined || FastChecks.length == 0" class="text-center mt-5">Eşleşen Hesap
+                <h3 *ngIf="FastChecks === undefined || FastChecks.length === 0" class="text-center mt-5">Eşleşen Hesap
                   Bulunamadı</h3>
               </div>
               <div class="card-footer">
@@ -306,7 +306,7 @@
                     </tr>
                   </tbody>
                 </table>
-                <h3 *ngIf="DeliveryChecks == undefined || DeliveryChecks.length == 0" class="text-center mt-5">Eşleşen Hesap
+                <h3 *ngIf="DeliveryChecks === undefined || DeliveryChecks.length === 0" class="text-center mt-5">Eşleşen Hesap
                   Bulunamadı</h3>
               </div>
               <div class="card-footer">
@@ -354,7 +354,7 @@
                 <th width="17%">Fiyat</th>
               </thead>
               <tbody>
-                <tr *ngFor="let item of checkDetail?.products; let i = index;" [ngClass]="{'table-danger': item.status == 3}">
+                <tr *ngFor="let item of checkDetail?.products; let i = index;" [ngClass]="{'table-danger': item.status === 3}">
                   <td>{{i+1}}</td>
                   <td>{{item.name}}
                     <small *ngIf="item.note !== '' && item.note !== undefined" class="text-muted">({{item.note}})</small>
@@ -380,7 +380,7 @@
                     <td colspan="3">İndirim Tutarı</td>
                     <td>{{item.discount | price }} </td>
                   </tr>
-                  <tr *ngFor="let product of item.payed_products; let i = index;" [ngClass]="{'table-danger': product.status == 3}">
+                  <tr *ngFor="let product of item.payed_products; let i = index;" [ngClass]="{'table-danger': product.status === 3}">
                     <td width="4%">{{i+1}}</td>
                     <td width="48%">{{product.name}}
                       <small *ngIf="product.note !== '' && product.note !== undefined" class="text-muted">({{product.note}})</small>
