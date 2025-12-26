@@ -181,10 +181,10 @@ export class ReportsComponent implements OnInit {
               const monthWillProcess = Days.filter((obj: any) => obj.month == index2);
               if (monthWillProcess.length > 1) {
                 cash.data[index2] = monthWillProcess.map((obj: any) => obj.cash).reduce((a: number, b: number) => a + b, 0);
-                card.data[index2] = monthWillProcess.map((obj: any) => obj.card).reduce((a: number, b: number) => a + b);
-                coupon.data[index2] = monthWillProcess.map((obj: any) => obj.coupon).reduce((a: number, b: number) => a + b);
-                free.data[index2] = monthWillProcess.map((obj: any) => obj.free).reduce((a: number, b: number) => a + b);
-                total.data[index2] = monthWillProcess.map((obj: any) => obj.total).reduce((a: number, b: number) => a + b);
+                card.data[index2] = monthWillProcess.map((obj: any) => obj.card).reduce((a: number, b: number) => a + b, 0);
+                coupon.data[index2] = monthWillProcess.map((obj: any) => obj.coupon).reduce((a: number, b: number) => a + b, 0);
+                free.data[index2] = monthWillProcess.map((obj: any) => obj.free).reduce((a: number, b: number) => a + b, 0);
+                total.data[index2] = monthWillProcess.map((obj: any) => obj.total).reduce((a: number, b: number) => a + b, 0);
               } else if (monthWillProcess.length == 1) {
                 cash.data[index2] = monthWillProcess[0].cash;
                 card.data[index2] = monthWillProcess[0].card;
@@ -218,34 +218,42 @@ export class ReportsComponent implements OnInit {
     this.pieLabels = [];
     this.ChartLoaded = false;
     this.mainService.getAllBy('reports', { type: 'Activity' }).then((res: any) => {
-      this.sellingActivity = res.docs[0];
-      this.activityData = [{ data: this.sellingActivity.activity, label: 'Gelir Endeksi' }, { data: this.sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
-      this.activityLabels = this.sellingActivity.activity_time;
+      if (res && res.docs && res.docs.length > 0) {
+        this.sellingActivity = res.docs[0];
+        this.activityData = [{ data: this.sellingActivity.activity, label: 'Gelir Endeksi' }, { data: this.sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
+        this.activityLabels = this.sellingActivity.activity_time;
+      }
     });
     this.mainService.getAllBy('reports', { type: 'Store' }).then((res: any) => {
-      let report: Array<Report> = res.docs;
-      report = report.filter(obj => obj.connection_id !== 'Genel').sort((a, b) => b.connection_id.localeCompare(a.connection_id));
-      report.forEach((element: any, index: number) => {
-        element.weekly = this.normalWeekOrder(element.weekly);
-        const chartObj = { data: element.weekly, label: element.connection_id };
-        this.ChartData.push(chartObj);
-        if (report.length - 1 == index) {
-          this.ChartLoaded = true;
-        };
-      });
+      if (res && res.docs) {
+        let report: Array<Report> = res.docs;
+        report = report.filter(obj => obj.connection_id !== 'Genel').sort((a, b) => b.connection_id.localeCompare(a.connection_id));
+        report.forEach((element: any, index: number) => {
+          element.weekly = this.normalWeekOrder(element.weekly);
+          const chartObj = { data: element.weekly, label: element.connection_id };
+          this.ChartData.push(chartObj);
+          if (report.length - 1 == index) {
+            this.ChartLoaded = true;
+          };
+        });
+      }
     });
     this.mainService.getAllBy('closed_checks', { type: 3 }).then((res: any) => {
-      if (res.docs.length > 0) {
-        this.canceledTotal = res.docs.map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b);
+      if (res && res.docs && res.docs.length > 0) {
+        this.canceledTotal = res.docs.map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
+      } else {
+        this.canceledTotal = 0;
       }
     });
   }
 
   dailySalesActivity() {
     this.mainService.getAllBy('reports', { type: 'Activity' }).then((res: any) => {
-      this.sellingActivity = res.docs[0];
-      this.activityData = [{ data: this.sellingActivity.activity, label: 'Gelir Endeksi' }, { data: this.sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
-      this.activityLabels = this.sellingActivity.activity_time;
+      if (res && res.docs && res.docs.length > 0) {
+        this.sellingActivity = res.docs[0];
+        this.activityData = [{ data: this.sellingActivity.activity, label: 'Gelir Endeksi' }, { data: this.sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
+        this.activityLabels = this.sellingActivity.activity_time;
+      }
     });
   }
 
