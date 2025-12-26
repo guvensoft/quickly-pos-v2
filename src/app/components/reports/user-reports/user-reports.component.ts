@@ -156,7 +156,7 @@ export class UserReportsComponent implements OnInit {
 
   fillData(daily: boolean) {
     this.mainService.getAllBy('reports', { type: 'User' }).then(res => {
-      this.usersList = res.docs;
+      this.usersList = res.docs as any;
     });
     this.ChartData = [];
     this.ChartLoaded = false;

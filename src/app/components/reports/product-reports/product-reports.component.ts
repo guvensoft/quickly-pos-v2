@@ -227,7 +227,7 @@ export class ProductReportsComponent implements OnInit {
       });
     });
     this.mainService.getAllBy('categories', {}).then(res => {
-      this.categoriesList = res.docs;
+      this.categoriesList = res.docs as any;
       this.categoriesList.sort((a: any, b: any) => b.order - a.order);
     })
     this.mainService.getAllBy('logs', {}).then(res => {

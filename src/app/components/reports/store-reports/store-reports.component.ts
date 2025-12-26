@@ -282,7 +282,7 @@ export class StoreReportsComponent implements OnInit {
   fillData() {
     this.mainService.getAllBy('closed_checks', {}).then(res => {
       if (res.docs.length > 0) {
-        this.AllChecks = res.docs;
+        this.AllChecks = res.docs as any;
         this.AllChecks.sort((a: any, b: any) => b.timestamp - a.timestamp);
         this.NotPayedChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.CANCELED);
         this.FastChecks = this.AllChecks.filter((obj: any) => obj.type == CheckType.FAST);

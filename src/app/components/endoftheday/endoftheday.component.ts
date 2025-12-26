@@ -183,7 +183,7 @@ export class EndofthedayComponent implements OnInit {
     this.mainService.getAllBy('closed_checks', {}).then(res => {
 
       this.progress = 'Kapatılan Hesaplar Yedekleniyor...';
-      this.checks = res.docs;
+      this.checks = res.docs as any;
       const checksBackup = new BackupData('closed_checks', this.checks);
       this.backupData.push(checksBackup);
 
@@ -218,7 +218,7 @@ export class EndofthedayComponent implements OnInit {
     let outcomes = 0;
     this.mainService.getAllBy('cashbox', {}).then(res => {
       this.progress = 'Kasa Verileri Yedekleniyor...';
-      this.cashbox = res.docs;
+      this.cashbox = res.docs as any;
       const cashboxBackup = new BackupData('cashbox', this.cashbox);
       this.backupData.push(cashboxBackup);
       try {
@@ -281,7 +281,7 @@ export class EndofthedayComponent implements OnInit {
   stepLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
       this.progress = 'Kayıtlar Yedekleniyor...';
-      this.logs = res.docs;
+      this.logs = res.docs as any;
       const logsBackup = new BackupData('logs', this.logs);
       this.backupData.push(logsBackup);
       this.mainService.removeAll('prints', {}).then(() => {
@@ -300,7 +300,7 @@ export class EndofthedayComponent implements OnInit {
   stepOrders() {
     this.mainService.getAllBy('orders', {}).then(res => {
       this.progress = 'Siparişler Yedekleniyor...';
-      this.logs = res.docs;
+      this.logs = res.docs as any;
       const logsBackup = new BackupData('orders', this.logs);
       this.backupData.push(logsBackup);
       this.mainService.removeAll('orders', {}).then(() => {
@@ -317,7 +317,7 @@ export class EndofthedayComponent implements OnInit {
   stepReceipts() {
     this.mainService.getAllBy('receipts', {}).then(res => {
       this.progress = 'Ödemeler Yedekleniyor...';
-      this.logs = res.docs;
+      this.logs = res.docs as any;
       const logsBackup = new BackupData('receipts', this.logs);
       this.backupData.push(logsBackup);
       this.mainService.removeAll('receipts', {}).then(() => {
@@ -487,7 +487,7 @@ export class EndofthedayComponent implements OnInit {
 
   fillData() {
     this.mainService.getAllBy('endday', {}).then((result) => {
-      this.endDayData = result.docs;
+      this.endDayData = result.docs as any;
       this.endDayData = this.endDayData.sort((a, b) => b.timestamp - a.timestamp).filter(obj => obj.total_income !== 0);
     });
   }
