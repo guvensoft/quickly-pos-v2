@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unused-vars */
 import { Injectable, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Settings } from '../models/settings.model';

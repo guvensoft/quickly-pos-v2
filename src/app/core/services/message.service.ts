@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars */
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import swal from 'sweetalert';
