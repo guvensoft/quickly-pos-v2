@@ -16,14 +16,14 @@ import { BaseChartDirective } from 'ng2-charts';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, PricePipe, BaseChartDirective, GeneralPipe, TimeAgoPipe, TruncatePipe],
+  imports: [CommonModule, PricePipe, BaseChartDirective, GeneralPipe],
   selector: 'app-day-detail',
   templateUrl: './day-detail.component.html',
   styleUrls: ['./day-detail.component.scss']
 })
 export class DayDetailComponent implements OnInit {
   @Input('data') detailData!: EndDay;
-  @Input('printers') printers: any;
+  @Input() printers: any;
   oldBackupData!: Array<BackupData>;
   oldChecks: any;
   oldCashbox: any;
@@ -148,7 +148,7 @@ export class DayDetailComponent implements OnInit {
           break;
         case 'Activity':
           this.detailTitle = 'Güne Ait Aktivite Grafiği';
-          let sellingActivity = this.oldReports.docs.find((obj: any) => obj.type == 'Activity');
+          const sellingActivity = this.oldReports.docs.find((obj: any) => obj.type == 'Activity');
           this.activityData = [{ data: sellingActivity.activity, label: 'Gelir Endeksi' }, { data: sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
           this.activityLabels = sellingActivity.activity_time;
           break;

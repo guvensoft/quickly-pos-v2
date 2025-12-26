@@ -29,9 +29,9 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let cash of cashboxData; let i=index" (click)="updateData(cash)" [ngClass]="{'table-danger': cash.type == 'Gider', 'table-success': cash.type == 'Gelir'}">
+            <tr *ngFor="let cash of cashboxData; let i=index" (click)="updateData(cash)" [ngClass]="{'table-danger': cash.type === 'Gider', 'table-success': cash.type === 'Gelir'}">
               <td>
-                <i class="fa" [ngClass]="{'fa-arrow-up': cash.type == 'Gider' , 'fa-arrow-down': cash.type == 'Gelir'}"></i>
+                <i class="fa" [ngClass]="{'fa-arrow-up': cash.type === 'Gider' , 'fa-arrow-down': cash.type === 'Gelir'}"></i>
               </td>
               <td>{{cash.description}}</td>
               <td>{{cash.user}}</td>

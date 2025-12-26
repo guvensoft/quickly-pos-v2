@@ -44,7 +44,7 @@
                 <div class="list-group">
                   <div *ngFor="let cat of categories" class="btn-group btn-group-justify">
                     <button (click)="getStockCatDetail(cat)"
-                      [ngClass]="{'list-group-item-warning' : selectedCat == cat}" type="button"
+                      [ngClass]="{'list-group-item-warning' : selectedCat === cat}" type="button"
                       class="list-group-item list-group-item-action">{{cat.name}}</button>
                   </div>
                 </div>
@@ -58,8 +58,8 @@
                   Ayrıntılar
                 </div>
                 <div class="card-body p-2 flow">
-                  <h1 *ngIf="selectedCat == undefined" class="text-center mt-5">Listeden Kategori Seçiniz</h1>
-                  <section [hidden]="selectedCat == undefined">
+                  <h1 *ngIf="selectedCat === undefined" class="text-center mt-5">Listeden Kategori Seçiniz</h1>
+                  <section [hidden]="selectedCat === undefined">
                     <input type="hidden" name="_id" ngModel>
                     <input type="hidden" name="_rev" ngModel>
                     <div class="form-group mb-2">
@@ -84,7 +84,7 @@
                     </div>
                   </section>
                 </div>
-                <div class="card-footer" [hidden]="selectedCat == undefined">
+                <div class="card-footer" [hidden]="selectedCat === undefined">
                   <div class="row">
                     <div class="col-lg-6 pr-1">
                       <button type="button" (click)="removeCategory(selectedCat!._id!)"
@@ -115,7 +115,7 @@
             <h5 class="mt-2">Stoklar</h5>
           </div>
           <div class="col-lg-4 pr-2 pl-0">
-            <button [disabled]="categories == undefined || categories.length == 0"
+            <button [disabled]="categories === undefined || categories.length === 0"
               class="btn btn-danger btn-md btn-block" (click)="setDefault()" data-toggle="modal" data-target="#stock">
               <i class="fa fa-plus"></i> Stok Ekle
             </button>
@@ -183,7 +183,7 @@
                       </tr>
                     </tbody>
                   </table>
-                  <div *ngIf="stocks == undefined || stocks.length == 0" class="row mt-5">
+                  <div *ngIf="stocks === undefined || stocks.length === 0" class="row mt-5">
                     <div class="col-lg-12 mt-5">
                       <h2 class="text-center mt-3">Eşleşen Stok Bulunamadı</h2>
                     </div>

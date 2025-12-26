@@ -25,11 +25,11 @@
             <div class="card tab-inside-height">
               <div class="card-header">Kategoriler</div>
               <div class="card-body p-0 flow">
-                <button type="button" (click)="fillData();" [ngClass]="{'list-group-item-warning' : selectedCat == undefined}"
+                <button type="button" (click)="fillData();" [ngClass]="{'list-group-item-warning' : selectedCat === undefined}"
                   class="list-group-item list-group-item-action list-eq">
                   Bütün Stoklar
                 </button>
-                <button *ngFor="let cat of allCats" type="button" [ngClass]="{'list-group-item-warning' : selectedCat == cat._id}"
+                <button *ngFor="let cat of allCats" type="button" [ngClass]="{'list-group-item-warning' : selectedCat === cat._id}"
                   (click)="getStocksByCategory(cat._id)" class="list-group-item list-group-item-action list-eq">
                   {{cat.name}}
                 </button>

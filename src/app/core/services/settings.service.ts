@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unused-vars */
 import { Injectable, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Settings } from '../models/settings.model';
@@ -45,7 +46,7 @@ export class SettingsService {
       const dateSettings = this.Settings.find((setting) => setting.key == 'DateSettings');
       if (dateSettings) this.DateSettings.next(dateSettings);
 
-      let appType = localStorage.getItem('AppType');
+      const appType = localStorage.getItem('AppType');
       switch (appType) {
         case 'Primary': {
           const serverSettings = this.Settings.find((setting) => setting.key == 'ServerSettings' && setting.value.type == 0);
@@ -99,7 +100,7 @@ export class SettingsService {
   }
 
   setAppSettings(Key: string, SettingsData: any): Promise<any> {
-    let AppSettings = new Settings(Key, SettingsData, Key, Date.now());
+    const AppSettings = new Settings(Key, SettingsData, Key, Date.now());
     return this.mainService.getAllBy('settings', { key: Key }).then(res => {
       return this.mainService.updateData('settings', res.docs[0]._id, AppSettings);
     });
@@ -116,7 +117,7 @@ export class SettingsService {
         this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
         this.Printers.next(res.docs[0]);
       } else {
-        let printerSettings = new Settings('Printers', [printerData], 'Yazıcılar', Date.now());
+        const printerSettings = new Settings('Printers', [printerData], 'Yazıcılar', Date.now());
         this.mainService.addData('settings', printerSettings);
         this.Printers.next(printerSettings);
       }

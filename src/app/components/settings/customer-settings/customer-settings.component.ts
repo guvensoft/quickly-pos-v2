@@ -57,7 +57,7 @@ export class CustomerSettingsComponent implements OnInit {
   }
 
   addCustomer(customerForm: NgForm) {
-    let form = customerForm.value;
+    const form = customerForm.value;
     if (form.name == undefined) {
       this.messageService.sendMessage('Müşteri Adı Girmek Zorundasınız.');
       return false;
@@ -81,10 +81,10 @@ export class CustomerSettingsComponent implements OnInit {
           this.messageService.sendMessage('Bu telefon numarası ile başka bir Müşteri kayıtlı. Lütfen başka bir numara deneyin.');
           customerForm.reset();
         } else {
-          let schema = new Customer(form.name, form.surname, form.phone_number, form.address, '', form.type, Date.now());
+          const schema = new Customer(form.name, form.surname, form.phone_number, form.address, '', form.type, Date.now());
           this.mainService.addData('customers', schema).then((response: any) => {
-            this.mainService.addData('reports', new Report('Customer', response.id!, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now())).then((res: any) => {
-              this.logService.createLog(logType.CUSTOMER_CREATED, res.id!, `${form.name} Adlı Müşteri Oluşturuldu`);
+            this.mainService.addData('reports', new Report('Customer', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now())).then((res: any) => {
+              this.logService.createLog(logType.CUSTOMER_CREATED, res.id, `${form.name} Adlı Müşteri Oluşturuldu`);
             });
             this.messageService.sendMessage('Müşteri Oluşturuldu!');
             this.fillData();
@@ -99,7 +99,7 @@ export class CustomerSettingsComponent implements OnInit {
           this.messageService.sendMessage('Bu telefon numarası ile başka bir Müşteri kayıtlı. Lütfen başka bir numara deneyin.');
         } else {
           this.mainService.updateData('customers', form._id, form).then((res: any) => {
-            this.logService.createLog(logType.CUSTOMER_UPDATED, res.id!, `${form.name} Adlı Müşteri Güncellendi`);
+            this.logService.createLog(logType.CUSTOMER_UPDATED, res.id, `${form.name} Adlı Müşteri Güncellendi`);
             this.messageService.sendMessage('Bilgiler Güncellendi!');
             this.fillData();
             customerForm.reset();
@@ -121,12 +121,12 @@ export class CustomerSettingsComponent implements OnInit {
   }
 
   removeCustomer(id: string) {
-    let isOk = confirm('Müşteriyi Silmek Üzerisiniz. Bu işlem Geri Alınamaz.');
+    const isOk = confirm('Müşteriyi Silmek Üzerisiniz. Bu işlem Geri Alınamaz.');
     if (isOk) {
       this.mainService.removeData('customers', id).then((result: any) => {
-        this.logService.createLog(logType.CUSTOMER_DELETED, result.id!, `${this.customerForm.value.name} Adlı Müşteri Silindi`);
+        this.logService.createLog(logType.CUSTOMER_DELETED, result.id, `${this.customerForm.value.name} Adlı Müşteri Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id! }).then((res: any) => {
-          this.mainService.removeData('reports', res.docs[0]._id!);
+          this.mainService.removeData('reports', res.docs[0]._id);
         });
         this.messageService.sendMessage('Müşteri Silindi!');
         this.fillData();
@@ -212,7 +212,7 @@ export class CustomerSettingsComponent implements OnInit {
   }
 
   filterCustomers(value: string) {
-    let regexp = new RegExp(value, 'i');
+    const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('customers', { name: { $regex: regexp } }).then((res: any) => {
       this.customers = res.docs;
     });

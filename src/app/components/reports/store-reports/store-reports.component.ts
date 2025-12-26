@@ -16,7 +16,7 @@ import { NgxMaskPipe } from 'ngx-mask';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, PricePipe, GeneralPipe, TimeAgoPipe, NgxMaskPipe],
+  imports: [CommonModule, FormsModule, PricePipe, GeneralPipe],
   selector: 'app-store-reports',
   templateUrl: './store-reports.component.html',
   styleUrls: ['./store-reports.component.scss'],
@@ -65,10 +65,10 @@ export class StoreReportsComponent implements OnInit {
     if (value == '' || null) {
       this.fillData();
     } else {
-      let regexp = new RegExp(value, 'i');
+      const regexp = new RegExp(value, 'i');
       this.mainService.getAllBy('tables', { name: { $regex: regexp } }).then(data => {
         if (data.docs.length > 0) {
-          let results = this.AllChecks.filter((obj: any) => obj.table_id == data.docs[0]._id);
+          const results = this.AllChecks.filter((obj: any) => obj.table_id == data.docs[0]._id);
           if (results.length > 0) {
             this.NormalChecks = results;
           }
@@ -153,10 +153,10 @@ export class StoreReportsComponent implements OnInit {
   }
 
   editCheck(form: NgForm) {
-    let Form = form.value;
+    const Form = form.value;
     if (this.checkDetail.payment_method !== Form.payment_method) {
       this.mainService.getAllBy('reports', { connection_id: this.checkDetail.payment_method }).then(res => {
-        let docReport = res.docs[0];
+        const docReport = res.docs[0];
         this.mainService.changeData('reports', docReport._id, (doc: any) => {
           doc.weekly[this.day] -= this.checkDetail.total_price;
           doc.weekly_count[this.day]--
@@ -164,7 +164,7 @@ export class StoreReportsComponent implements OnInit {
         });
       });
       this.mainService.getAllBy('reports', { connection_id: Form.payment_method }).then(res => {
-        let docReport = res.docs[0];
+        const docReport = res.docs[0];
         this.mainService.changeData('reports', docReport._id, (doc: any) => {
           doc.weekly[this.day] += Form.total_price;
           doc.weekly_count[this.day]++
@@ -179,7 +179,7 @@ export class StoreReportsComponent implements OnInit {
     } else {
       if (this.checkDetail.total_price !== Form.total_price) {
         this.mainService.getAllBy('reports', { connection_id: this.checkDetail.payment_method }).then(res => {
-          let docReport = res.docs[0];
+          const docReport = res.docs[0];
           this.mainService.changeData('reports', docReport._id, (doc: any) => {
             doc.weekly[this.day] -= this.checkDetail.total_price;
             doc.weekly[this.day] += Form.total_price;
@@ -218,17 +218,17 @@ export class StoreReportsComponent implements OnInit {
   }
 
   changePayment(paymentDetail: NgForm) {
-    let Form = paymentDetail.value;
+    const Form = paymentDetail.value;
     if (Form.method !== this.selectedPayment.method) {
       this.mainService.getAllBy('reports', { connection_id: this.selectedPayment.method }).then(res => {
-        let docReport = res.docs[0];
+        const docReport = res.docs[0];
         this.mainService.changeData('reports', docReport._id, (doc: any) => {
           doc.weekly[this.day] -= this.selectedPayment.amount;
           doc.weekly_count[this.day]--
           return doc;
         });
         this.mainService.getAllBy('reports', { connection_id: Form.method }).then(res => {
-          let docReport = res.docs[0];
+          const docReport = res.docs[0];
           this.mainService.changeData('reports', docReport._id, (doc: any) => {
             doc.weekly[this.day] += Form.amount;
             doc.weekly_count[this.day]++
@@ -250,7 +250,7 @@ export class StoreReportsComponent implements OnInit {
     } else {
       if (this.selectedPayment.amount !== Form.amount) {
         this.mainService.getAllBy('reports', { connection_id: this.selectedPayment.method }).then(res => {
-          let docReport = res.docs[0];
+          const docReport = res.docs[0];
           this.mainService.changeData('reports', docReport._id, (doc: any) => {
             doc.weekly[this.day] -= this.selectedPayment.amount;
             doc.weekly[this.day] += Form.amount;

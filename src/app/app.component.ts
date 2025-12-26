@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+/* eslint-disable @typescript-eslint/no-require-imports, @angular-eslint/no-empty-lifecycle-method, no-dupe-else-if, @angular-eslint/no-input-rename, no-case-declarations, @typescript-eslint/no-unused-expressions */
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink } from '@angular/router';
 import { ElectronService } from './core/services/electron/electron.service';
@@ -83,9 +84,9 @@ export class AppComponent implements OnInit {
       .getAllBy('settings', {})
       .then(res => {
         if (res.docs.length > 0) {
-          let settings: Array<Settings> = res.docs;
+          const settings: Array<Settings> = res.docs;
           try {
-            let appType = localStorage.getItem('AppType');
+            const appType = localStorage.getItem('AppType');
             switch (appType) {
               case 'Primary':
                 this.serverSettings = settings.find(obj => obj.key == 'ServerSettings' && obj.value.type == 0)!.value;
@@ -226,32 +227,32 @@ export class AppComponent implements OnInit {
   orderListener(): void {
     console.log('Order Listener Process Started');
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(prints => {
-      let printers = prints.docs[0].value;
+      const printers = prints.docs[0].value;
       this.mainService.LocalDB['orders'].changes({ since: 'now', live: true, include_docs: true }).on('change', (res: any) => {
         if (!this.onSync) {
-          let Order: Order = res.doc;
+          const Order: Order = res.doc;
           console.log(Order);
           if (Order.status == OrderStatus.APPROVED && Order.type !== OrderType.EMPLOOYEE) {
             this.mainService.getAllBy('categories', {}).then(cats => {
-              let categories = cats.docs;
+              const categories = cats.docs;
               this.mainService.getData('checks', Order.check).then((check: Check) => {
                 this.mainService.getData('tables', check.table_id).then((table: Table) => {
-                  let orders: Array<CheckProduct> = check.products.filter(product => Order.timestamp == product.timestamp);
+                  const orders: Array<CheckProduct> = check.products.filter(product => Order.timestamp == product.timestamp);
                   if (orders.length > 0) {
-                    let splitPrintArray: any[] = [];
+                    const splitPrintArray: any[] = [];
                     orders.forEach((obj: any) => {
-                      let category = categories.find((cat: any) => cat._id == obj.cat_id);
-                      let catPrinter = (category && category.printer) ? category.printer : (printers.length > 0 ? printers[0].name : null);
+                      const category = categories.find((cat: any) => cat._id == obj.cat_id);
+                      const catPrinter = (category && category.printer) ? category.printer : (printers.length > 0 ? printers[0].name : null);
 
                       if (catPrinter) {
-                        let contains = splitPrintArray.some(element => element.printer.name == catPrinter);
+                        const contains = splitPrintArray.some(element => element.printer.name == catPrinter);
                         if (contains) {
-                          let index = splitPrintArray.findIndex(p_name => p_name.printer.name == catPrinter);
+                          const index = splitPrintArray.findIndex(p_name => p_name.printer.name == catPrinter);
                           splitPrintArray[index].products.push(obj);
                         } else {
-                          let thePrinter = printers.filter((p: any) => p.name == catPrinter)[0];
+                          const thePrinter = printers.filter((p: any) => p.name == catPrinter)[0];
                           if (thePrinter) {
-                            let splitPrintOrder = { printer: thePrinter, products: [obj] };
+                            const splitPrintOrder = { printer: thePrinter, products: [obj] };
                             splitPrintArray.push(splitPrintOrder);
                           }
                         }
@@ -281,7 +282,7 @@ export class AppComponent implements OnInit {
         this.messageService.sendAlert('Dikkat!', 'Gün Sonu Yapılmamış.', 'warning');
       } else {
         this.mainService.RemoteDB.find({ selector: { db_name: 'settings', key: 'DateSettings' }, limit: 5000 }).then((res: any) => {
-          let serverDate: DayInfo = res.docs[0].value;
+          const serverDate: DayInfo = res.docs[0].value;
           if (serverDate.started) {
             this.mainService.getData('settings', res.docs[0]._id).then((settingsDoc: any) => {
               this.mainService.LocalDB['settings'].get(settingsDoc._id).then((localDoc: any) => {
@@ -307,7 +308,7 @@ export class AppComponent implements OnInit {
     console.log('Command Listener Process Started');
     this.mainService.LocalDB['commands'].changes({ since: 'now', live: true, include_docs: true }).on('change', (change: any) => {
       if (!change.deleted) {
-        let commandObj = change.doc;
+        const commandObj = change.doc;
         if (!commandObj.executed) {
           this.electronService.shellSpawn(commandObj.cmd, commandObj.args);
         }
@@ -398,7 +399,7 @@ export class AppComponent implements OnInit {
 
   findServerSettings(): void {
     let serverDocument: any;
-    let AppType = localStorage.getItem('AppType');
+    const AppType = localStorage.getItem('AppType');
     this.mainService.getAllBy('allData', { key: 'ServerSettings' }).then(res => {
       switch (AppType) {
         case 'Primary':
@@ -435,7 +436,7 @@ export class AppComponent implements OnInit {
     setInterval(() => {
       this.mainService.getAllBy('tables', {}).then(tables => {
         this.mainService.getAllBy('checks', {}).then(res => {
-          let checks_total_count = res.docs.length;
+          const checks_total_count = res.docs.length;
           let checks_total_amount: number;
           let activity_value: number;
           try {
@@ -445,10 +446,10 @@ export class AppComponent implements OnInit {
             checks_total_amount = 0;
             activity_value = 0;
           }
-          let activity_count = (checks_total_count * 100) / tables.docs.length;
+          const activity_count = (checks_total_count * 100) / tables.docs.length;
           this.mainService.getAllBy('reports', { type: 'Activity' }).then(res => {
-            let sellingAct = res.docs[0];
-            let date = new Date();
+            const sellingAct = res.docs[0];
+            const date = new Date();
             sellingAct.activity.push(Math.round(activity_value));
             sellingAct.activity_count.push(Math.round(activity_count));
             sellingAct.activity_time.push(date.getHours() + ':' + (date.getMinutes() < 10 ? '0' : '') + date.getMinutes());

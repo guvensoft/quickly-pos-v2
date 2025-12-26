@@ -44,7 +44,7 @@ export class CashboxComponent implements OnInit {
   }
 
   addData(cashboxForm: any) {
-    let form = cashboxForm.value;
+    const form = cashboxForm.value;
     if (form.description == '' || null) {
       this.messageService.sendMessage('Açıklama Girmek Zorundasınız.');
       return false;
@@ -57,14 +57,14 @@ export class CashboxComponent implements OnInit {
     if (form.card == null) { form.card = 0 }
     if (form.coupon == null) { form.coupon = 0 }
     if (!form._id) {
-      let schema = new Cashbox(this.type, form.description, Date.now(), form.cash, form.card, form.coupon, this.user);
+      const schema = new Cashbox(this.type, form.description, Date.now(), form.cash, form.card, form.coupon, this.user);
       this.mainService.addData('cashbox', schema).then(res => {
         this.logService.createLog(logType.CASHBOX_CREATED, res.id, `Kasaya ${(form.cash + form.card + form.coupon)} tutarında ${this.type} eklendi.`);
         this.fillData();
         this.messageService.sendMessage(this.type + ' Eklendi');
       });
     } else {
-      let schema = new Cashbox(this.type, form.description, Date.now(), form.cash, form.card, form.coupon, this.user, form._id, form._rev);
+      const schema = new Cashbox(this.type, form.description, Date.now(), form.cash, form.card, form.coupon, this.user, form._id, form._rev);
       this.mainService.updateData('cashbox', form._id, schema).then(res => {
         this.fillData();
         this.messageService.sendMessage(this.type + ' Düzenlendi');
@@ -115,7 +115,7 @@ export class CashboxComponent implements OnInit {
       } catch (error) {
         this.outcomes = 0;
       }
-      let left = this.incomes - this.outcomes;
+      const left = this.incomes - this.outcomes;
       this.mainService.getAllBy('reports', { type: 'Store' }).then(res => {
         let report = res.docs;
         report = report.filter((obj: any) => obj.connection_id !== 'Genel').sort((a: any, b: any) => b.connection_id.localeCompare(a.connection_id));

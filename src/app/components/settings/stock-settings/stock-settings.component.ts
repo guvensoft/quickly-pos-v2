@@ -77,14 +77,14 @@ export class StockSettingsComponent implements OnInit {
   addQuantity(value: any) {
     const old_quantity = this.selectedStock.left_total / this.selectedStock.total;
     const new_quantity = (old_quantity + parseFloat(value));
-    let after = { quantity: new_quantity, left_total: this.selectedStock.left_total + (this.selectedStock.total * parseFloat(value)), first_quantity: new_quantity, warning_limit: (this.selectedStock.total * new_quantity) * 25 / 100 };
+    const after = { quantity: new_quantity, left_total: this.selectedStock.left_total + (this.selectedStock.total * parseFloat(value)), first_quantity: new_quantity, warning_limit: (this.selectedStock.total * new_quantity) * 25 / 100 };
     this.stockForm.setValue(Object.assign(this.selectedStock, after));
     (window as any).$('#quantityModal').modal('hide');
     (window as any).$('#stock').modal('show');
   }
 
   addStock(stockForm: NgForm) {
-    let form = stockForm.value;
+    const form = stockForm.value;
     if (!form.name) {
       this.messageService.sendMessage('Stok Adı Belirtmelisiniz');
       return false;
@@ -93,7 +93,7 @@ export class StockSettingsComponent implements OnInit {
       return false;
     }
     if (form._id == undefined) {
-      let left_total = form.total * form.quantity;
+      const left_total = form.total * form.quantity;
       // let schema = new Stock(form.name, form.description, form.category, form.quantity, form.unit, form.total, left_total, form.quantity, (form.total * form.quantity) * form.warning_value / 100, form.warning_value, Date.now());
       // this.mainService.addData('stocks', schema).then((res) => {
       //   this.logService.createLog(logType.STOCK_CREATED, res.id, `${form.name} adlı Stok oluşturuldu.`);
@@ -114,12 +114,12 @@ export class StockSettingsComponent implements OnInit {
   }
 
   addCategory(stockCatForm: NgForm) {
-    let form = stockCatForm.value;
+    const form = stockCatForm.value;
     if (!form.name) {
       this.messageService.sendMessage('Kategori İsmi Belirtmelisiniz!');
       return false;
     }
-    let schema = new StockCategory(form.name, form.description);
+    const schema = new StockCategory(form.name, form.description);
     this.mainService.addData('stocks_cat', schema).then(() => {
       this.fillData();
       this.messageService.sendMessage('Stok Kategorisi Oluşturuldu.');
@@ -129,7 +129,7 @@ export class StockSettingsComponent implements OnInit {
   }
 
   updateCategory(Form: NgForm) {
-    let form = Form.value;
+    const form = Form.value;
     this.mainService.updateData('stocks_cat', form._id, form).then(() => {
       this.fillData();
       this.messageService.sendMessage('Stok Kategorisi Güncellendi.');
@@ -138,13 +138,13 @@ export class StockSettingsComponent implements OnInit {
   }
 
   removeCategory(id: string) {
-    let isOk = confirm('Kategoriyi Silmek Üzeresiniz. Kategoriye Dahil Olan Stoklarda Silinecektir.');
+    const isOk = confirm('Kategoriyi Silmek Üzeresiniz. Kategoriye Dahil Olan Stoklarda Silinecektir.');
     if (isOk) {
       this.mainService.removeData('stocks_cat', id).then(() => {
         this.mainService.getAllBy('stocks', { cat_id: id }).then(result => {
-          let data = result.docs
+          const data = result.docs
           if (data.length > 0) {
-            for (let prop in data) {
+            for (const prop in data) {
               this.mainService.removeData('stocks', data[prop]._id);
             }
           }
@@ -157,7 +157,7 @@ export class StockSettingsComponent implements OnInit {
   }
 
   filterStocks(value: string) {
-    let regexp = new RegExp(value, 'i');
+    const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('stocks', { name: { $regex: regexp } }).then(res => {
       this.stocks = res.docs;
       this.stocks = this.stocks.sort((a, b) => a.left_total - b.left_total);

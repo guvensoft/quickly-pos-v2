@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "qdrant-indexer": {
+      "type": "http",
+      "url": "http://localhost:8003/mcp"
+    },
+    "memory": {
+      "type": "http",
+      "url": "http://localhost:8002/mcp"
+    }
+  }
+}

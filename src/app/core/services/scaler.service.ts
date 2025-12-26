@@ -45,7 +45,7 @@ export class ScalerService {
     return this.scalerEvent.asObservable().pipe(
       map((obj: string) => {
         if (obj) {
-          let formatted = obj.replace('S', '').replace('U', '').replace('kg', '').replace('- ', '-').trim();
+          const formatted = obj.replace('S', '').replace('U', '').replace('kg', '').replace('- ', '-').trim();
           return parseFloat(formatted);
         }
         return null;

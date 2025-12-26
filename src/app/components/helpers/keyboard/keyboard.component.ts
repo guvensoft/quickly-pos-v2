@@ -91,7 +91,7 @@ export class KeyboardComponent implements OnInit {
     this.keyboardService.listenKeyboard().subscribe(signal => {
       if (signal == "Open") {
         this.onAir = true;
-        let dBody = document.getElementsByTagName("body");
+        const dBody = document.getElementsByTagName("body");
       } else if (signal == "Close") {
         this.onAir = false;
       }

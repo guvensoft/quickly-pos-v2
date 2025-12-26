@@ -78,12 +78,12 @@
               <div class="card-body p-0 flow">
                 <div class="list-group">
                   <button type="button" (click)="fillData(false);"
-                    [ngClass]="{'list-group-item-warning' : selectedCat == undefined}"
+                    [ngClass]="{'list-group-item-warning' : selectedCat === undefined}"
                     class="list-group-item list-group-item-action list-eq">
                     Bütün Ürünler
                   </button>
                   <button *ngFor="let cat of categoriesList" type="button"
-                    [ngClass]="{'list-group-item-warning' : selectedCat == cat._id}"
+                    [ngClass]="{'list-group-item-warning' : selectedCat === cat._id}"
                     (click)="getReportsByCategory(cat._id!)" class="list-group-item list-group-item-action list-eq">
                     {{cat.name}}
                   </button>
@@ -169,7 +169,7 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title" id="modelTitleId">{{ItemReport?.connection_id | general:'products' | async}}</h4>
+        <h4 class="modal-title" id="modelTitleId">{{ItemReport.connection_id | general:'products' | async}}</h4>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>

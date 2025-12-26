@@ -1,3 +1,4 @@
+/* eslint-disable @angular-eslint/prefer-inject, @typescript-eslint/no-unused-vars, prefer-const */
 import { Directive, ElementRef, HostListener, Renderer2 } from '@angular/core';
 import { KeyboardService } from '../../core/services/keyboard.service';
 

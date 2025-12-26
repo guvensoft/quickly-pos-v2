@@ -18,7 +18,7 @@ export class LogService {
 
   createLog(type: logType, connection_id: string, message: string): void {
     this.user = localStorage.getItem('userName')!;
-    let log = new Log(type, this.user, connection_id, message, 0, Date.now());
+    const log = new Log(type, this.user, connection_id, message, 0, Date.now());
     this.mainService.addData('logs', log);
   }
 

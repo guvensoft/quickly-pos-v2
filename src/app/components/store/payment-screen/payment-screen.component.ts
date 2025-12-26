@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,7 +23,7 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./payment-screen.component.scss'],
 })
 
-export class PaymentScreenComponent implements OnInit {
+export class PaymentScreenComponent implements OnInit, OnDestroy {
   id!: string;
   check!: Check;
   table!: string;
@@ -121,21 +121,21 @@ export class PaymentScreenComponent implements OnInit {
     } else {
       this.onClosing = true;
       let newPayment: PaymentStatus = undefined!;
-      let isAnyEqual = this.productsWillPay.some(obj => obj.price == (this.payedPrice + (this.discount ? this.discountAmount : 0)));
-      let isAnyGreat = this.productsWillPay.some(obj => obj.price > (this.payedPrice + (this.discount ? this.discountAmount : 0)));
-      let isAnyLittle = this.productsWillPay.some(obj => obj.price < (this.payedPrice + (this.discount ? this.discountAmount : 0)));
+      const isAnyEqual = this.productsWillPay.some(obj => obj.price == (this.payedPrice + (this.discount ? this.discountAmount : 0)));
+      const isAnyGreat = this.productsWillPay.some(obj => obj.price > (this.payedPrice + (this.discount ? this.discountAmount : 0)));
+      const isAnyLittle = this.productsWillPay.some(obj => obj.price < (this.payedPrice + (this.discount ? this.discountAmount : 0)));
       if (this.changePrice < 0) {
         if (this.discount) {
           this.payedPrice = this.payedPrice + this.discountAmount;
         }
         if (isAnyEqual) {
-          let equalProduct = this.productsWillPay.filter(obj => obj.price == this.payedPrice)[0];
-          let indexOfEqual = this.productsWillPay.findIndex(obj => obj == equalProduct);
+          const equalProduct = this.productsWillPay.filter(obj => obj.price == this.payedPrice)[0];
+          const indexOfEqual = this.productsWillPay.findIndex(obj => obj == equalProduct);
           newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), [equalProduct]);
           this.productsWillPay.splice(indexOfEqual, 1);
         } else if (isAnyGreat) {
-          let greatOne = this.productsWillPay.sort((a: any, b: any) => b.price - a.price)[0];
-          let greatOneCopy = Object.assign({}, greatOne);
+          const greatOne = this.productsWillPay.sort((a: any, b: any) => b.price - a.price)[0];
+          const greatOneCopy = Object.assign({}, greatOne);
           greatOneCopy.price = this.payedPrice;
           newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), [greatOneCopy]);
           greatOne.price -= this.payedPrice;
@@ -157,7 +157,7 @@ export class PaymentScreenComponent implements OnInit {
                 if (product.price - priceCount == 0) {
                   willRemove++;
                 } else {
-                  let pro = this.productsWillPay[index];
+                  const pro = this.productsWillPay[index];
                   pro.price -= priceCount;
                 }
                 priceCount = 0;
@@ -198,13 +198,13 @@ export class PaymentScreenComponent implements OnInit {
     let checkWillClose;
     this.onClosing = false;
     if (this.check.payment_flow !== undefined && this.check.payment_flow.length > 0) {
-      let realMethod = method;
+      const realMethod = method;
       method = 'Parçalı';
-      let lastPayment = new PaymentStatus(this.userName, realMethod, this.currentAmount, this.discountAmount, Date.now(), this.productsWillPay);
+      const lastPayment = new PaymentStatus(this.userName, realMethod, this.currentAmount, this.discountAmount, Date.now(), this.productsWillPay);
       this.check.payment_flow.push(lastPayment);
       this.check.discount += this.priceWillPay;
       total_discounts = this.check.payment_flow.map(obj => obj.discount).reduce((a: number, b: number) => a + b);
-      let total_price = this.check.payment_flow.map(obj => obj.amount).reduce((a: number, b: number) => a + b);
+      const total_price = this.check.payment_flow.map(obj => obj.amount).reduce((a: number, b: number) => a + b);
       checkWillClose = new ClosedCheck(this.check.table_id, total_price, total_discounts, this.userName, this.check.note, this.check.status, this.check.products, Date.now(), this.check.type, method, this.check.payment_flow, undefined, this.check.occupation);
     } else {
       total_discounts = this.discountAmount;
@@ -241,12 +241,12 @@ export class PaymentScreenComponent implements OnInit {
     if (this.check.payment_flow !== undefined) {
       let paymentMethod;
       (this.check.payment_flow.length > 0) ? paymentMethod = 'Parçalı' : paymentMethod = this.check.payment_flow[0].method;
-      let checkWillClose = new ClosedCheck(this.check.table_id, this.check.discount, 0, this.userName, '', this.check.status, this.check.products, Date.now(), this.check.type, paymentMethod, this.check.payment_flow, undefined, this.check.occupation);
+      const checkWillClose = new ClosedCheck(this.check.table_id, this.check.discount, 0, this.userName, '', this.check.status, this.check.products, Date.now(), this.check.type, paymentMethod, this.check.payment_flow, undefined, this.check.occupation);
       this.updateSellingReport(paymentMethod);
       this.updateTableReport(this.check, paymentMethod);
       this.mainService.addData('closed_checks', checkWillClose);
     }
-    let newCredit = new Check(customer, this.priceWillPay, CheckStatus.PASSIVE, this.userName, creditNote, 0, this.productsWillPay, Date.now(), CheckType.PASSIVE, CheckNo());
+    const newCredit = new Check(customer, this.priceWillPay, CheckStatus.PASSIVE, this.userName, creditNote, 0, this.productsWillPay, Date.now(), CheckType.PASSIVE, CheckNo());
     this.mainService.addData('credits', newCredit).then((res: any) => {
       if (res.ok) {
         if (this.check.type == 1) {
@@ -395,7 +395,7 @@ export class PaymentScreenComponent implements OnInit {
     if (method !== 'Parçalı') {
       this.mainService.getAllBy('reports', { connection_id: method }).then((res: any) => {
         if (res.docs.length > 0) {
-          let doc = res.docs[0];
+          const doc = res.docs[0];
           doc.count++;
           doc.weekly_count[this.day]++;
           doc.monthly_count[new Date().getMonth()]++;
@@ -403,14 +403,14 @@ export class PaymentScreenComponent implements OnInit {
           doc.weekly[this.day] += this.currentAmount;
           doc.monthly[new Date().getMonth()] += this.currentAmount;
           doc.timestamp = Date.now();
-          this.mainService.updateData('reports', doc._id!, doc);
+          this.mainService.updateData('reports', doc._id, doc);
         }
       });
     } else {
       this.mainService.getAllBy('reports', { type: "Store" }).then((res: any) => {
-        let sellingReports = res.docs;
+        const sellingReports = res.docs;
         this.check.payment_flow?.forEach((obj: any, index: number) => {
-          let reportWillChange = sellingReports.find((report: any) => report.connection_id == obj.method);
+          const reportWillChange = sellingReports.find((report: any) => report.connection_id == obj.method);
           if (reportWillChange) {
             reportWillChange.count++;
             reportWillChange.weekly_count[this.day]++;
@@ -423,7 +423,7 @@ export class PaymentScreenComponent implements OnInit {
           if (this.check.payment_flow?.length == index + 1) {
             sellingReports.forEach((report: any) => {
               if (this.check.payment_flow?.some((payflowObj: any) => payflowObj.method == report.connection_id)) {
-                this.mainService.updateData('reports', report._id!, report);
+                this.mainService.updateData('reports', report._id, report);
               }
             });
           }
@@ -434,7 +434,7 @@ export class PaymentScreenComponent implements OnInit {
 
   updateTableReport(check: Check, method: string) {
     this.mainService.getAllBy('reports', { connection_id: check.table_id }).then((res: any) => {
-      let report = res.docs[0];
+      const report = res.docs[0];
       if (method !== 'Parçalı') {
         report.count++;
         report.amount += this.currentAmount;
@@ -454,7 +454,7 @@ export class PaymentScreenComponent implements OnInit {
           report.monthly[new Date().getMonth()] += obj.amount;
         });
       }
-      this.mainService.updateData('reports', report._id!, report);
+      this.mainService.updateData('reports', report._id, report);
     });
   }
 

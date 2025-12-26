@@ -42,7 +42,7 @@
               <div class="card-body p-0 flow">
                 <div class="list-group">
                   <div *ngFor="let item of groups" class="btn-group btn-group-justify">
-                    <button (click)="getGroup(item._id)" [ngClass]="{'list-group-item-warning' : selectedGroup == item._id}"
+                    <button (click)="getGroup(item._id)" [ngClass]="{'list-group-item-warning' : selectedGroup === item._id}"
                       type="button" class="list-group-item list-group-item-action">{{item.name}}</button>
                   </div>
                 </div>
@@ -56,8 +56,8 @@
                   Ayrıntılar
                 </div>
                 <div class="card-body p-2 flow">
-                  <h1 *ngIf="selectedGroup == undefined" class="text-center mt-5">Listeden Grup Seçiniz</h1>
-                  <div [hidden]="selectedGroup == undefined">
+                  <h1 *ngIf="selectedGroup === undefined" class="text-center mt-5">Listeden Grup Seçiniz</h1>
+                  <div [hidden]="selectedGroup === undefined">
                     <input type="hidden" name="_id" ngModel />
                     <input type="hidden" name="_rev" ngModel />
                     <input type="hidden" name="status" ngModel />
@@ -142,7 +142,7 @@
                     </table>
                   </div>
                 </div>
-                <div class="card-footer" [hidden]="selectedGroup == undefined">
+                <div class="card-footer" [hidden]="selectedGroup === undefined">
                   <div class="row">
                     <div class="col pr-1">
                       <button type="button" (click)="removeGroup(selectedGroup)" class="btn btn-danger btn-md btn-block">
@@ -237,7 +237,7 @@
                     </tr>
                   </tbody>
                 </table>
-                <div *ngIf="users == undefined || users.length == 0" class="row mt-5">
+                <div *ngIf="users === undefined || users.length === 0" class="row mt-5">
                   <div class="col-lg-12 mt-5">
                     <h2 class="text-center mt-3">Eşleşen Kullanıcı Bulunamadı</h2>
                   </div>

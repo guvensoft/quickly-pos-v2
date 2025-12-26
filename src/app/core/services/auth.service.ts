@@ -17,8 +17,8 @@ export class AuthService {
   // ============================================
 
   parseJWT(token: string): any {
-    let base64Url = token.split('.')[1];
-    let base64 = base64Url.replace('-', '+').replace('_', '/');
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace('-', '+').replace('_', '/');
     return JSON.parse(atob(base64));
   }
 
@@ -47,7 +47,7 @@ export class AuthService {
   }
 
   isAnonymous(): boolean {
-    let token = this.getToken();
+    const token = this.getToken();
     if (token) {
       return false;
     } else {
@@ -61,7 +61,7 @@ export class AuthService {
   }
 
   setPermissions(): Promise<void> {
-    let auth = localStorage.getItem('userAuth');
+    const auth = localStorage.getItem('userAuth');
     if (auth) {
       return this.mainService.getData('users_group', auth).then(result => {
         delete result.auth.components;
@@ -72,7 +72,7 @@ export class AuthService {
   }
 
   isAuthed(url: string): Promise<boolean> | undefined {
-    let auth = localStorage.getItem('userAuth');
+    const auth = localStorage.getItem('userAuth');
     console.log('AuthService: checking auth for', url);
     if (auth) {
       // Handle URLs starting with / or not
@@ -82,7 +82,7 @@ export class AuthService {
       console.log('AuthService: main segment', mainSegment);
 
       return this.mainService.getData('users_group', auth).then(result => {
-        let guard = result.auth.components;
+        const guard = result.auth.components;
         console.log('AuthService: permissions', guard);
         switch (mainSegment) {
           case 'settings':

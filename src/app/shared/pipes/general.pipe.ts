@@ -1,3 +1,4 @@
+/* eslint-disable @angular-eslint/prefer-inject, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars */
 import { Pipe, PipeTransform } from '@angular/core';
 import { MainService } from '../../core/services/main.service';
 

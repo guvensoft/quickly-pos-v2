@@ -103,7 +103,7 @@ export class MenuSettingsComponent implements OnInit {
   }
 
   addCategory(categoryForm: NgForm) {
-    let form = categoryForm.value;
+    const form = categoryForm.value;
     if (!form.name) {
       this.messageService.sendMessage('Kategori Adı Belirtmelisiniz');
       return false;
@@ -111,7 +111,7 @@ export class MenuSettingsComponent implements OnInit {
     if (!form.printer) {
       form.printer = '';
     }
-    let schema = new Category(form.name, form.description, 1, form.printer, 0, form.tags);
+    const schema = new Category(form.name, form.description, 1, form.printer, 0, form.tags);
     this.mainService.addData('categories', schema).then(() => {
       this.fillData();
       this.messageService.sendMessage('Kategori Oluşturuldu');
@@ -121,7 +121,7 @@ export class MenuSettingsComponent implements OnInit {
   }
 
   updateCategory(catDetails: NgForm) {
-    let form = catDetails.value;
+    const form = catDetails.value;
     this.mainService.updateData('categories', form._id, form).then(() => {
       this.fillData();
       this.messageService.sendMessage('Kategori Düzenlendi');
@@ -130,12 +130,12 @@ export class MenuSettingsComponent implements OnInit {
   }
 
   removeCategory(id: string) {
-    let isOk = confirm('Kategoriyi Silmek Üzeresiniz. Kategoriye Dahil Olan Ürünlerde Silinecektir.');
+    const isOk = confirm('Kategoriyi Silmek Üzeresiniz. Kategoriye Dahil Olan Ürünlerde Silinecektir.');
     if (isOk) {
       this.mainService.getAllBy('products', { cat_id: id }).then((result: any) => {
-        let data = result.docs
+        const data = result.docs
         if (data.length > 0) {
-          for (let prop in data) {
+          for (const prop in data) {
             this.mainService.removeData('products', data[prop]._id);
             this.mainService.getAllBy('reports', { connection_id: data[prop]._id }).then((res: any) => {
               if (res.docs.length > 0)
@@ -149,9 +149,9 @@ export class MenuSettingsComponent implements OnInit {
         }
       });
       this.mainService.getAllBy('sub_categories', { cat_id: id }).then((res: any) => {
-        let data = res.docs;
+        const data = res.docs;
         if (data.length > 0) {
-          for (let prop in data) {
+          for (const prop in data) {
             this.mainService.removeData('sub_categories', data[prop]._id);
           }
         }
@@ -165,9 +165,9 @@ export class MenuSettingsComponent implements OnInit {
   }
 
   addSubCategory(subCatForm: NgForm) {
-    let form = subCatForm.value;
+    const form = subCatForm.value;
     if (form._id == '' || form._id == undefined || form._id == null) {
-      let schema = new SubCategory(this.selectedCat._id!, form.name, form.description, 1);
+      const schema = new SubCategory(this.selectedCat._id!, form.name, form.description, 1);
       this.mainService.addData('sub_categories', schema).then(res => {
         this.getCategory(this.selectedCat);
       });
@@ -199,7 +199,7 @@ export class MenuSettingsComponent implements OnInit {
   }
 
   addProduct(productForm: NgForm) {
-    let form = productForm.value;
+    const form = productForm.value;
     if (!form.name || !form.cat_id || !form.price || !form.tax_value) {
       this.messageService.sendMessage('Gerekli Alanları Doldurmalısınız');
       return false;
@@ -210,14 +210,14 @@ export class MenuSettingsComponent implements OnInit {
         return false;
       }
     }
-    let schema = new Product(form.cat_id, form.type, form.description, form.name, form.price, 1, form.tax_value, form.barcode, form.notes, form.subcat_id, this.productSpecs, form._id, form._rev);
+    const schema = new Product(form.cat_id, form.type, form.description, form.name, form.price, 1, form.tax_value, form.barcode, form.notes, form.subcat_id, this.productSpecs, form._id, form._rev);
     if (form._id == undefined) {
       this.mainService.addData('products', schema).then((response: any) => {
         this.mainService.addData('reports', new Report('Product', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), schema.name, Date.now())).then((res: any) => {
           this.logService.createLog(logType.PRODUCT_CREATED, res.id, `${form.name} adlı Ürün Oluşturuldu`)
         });
         if (this.productRecipe.length > 0) {
-          let schema = new Recipe(response.id, this.productRecipe);
+          const schema = new Recipe(response.id, this.productRecipe);
           this.mainService.addData('recipes', schema);
         }
         // this.fillData();
@@ -229,7 +229,7 @@ export class MenuSettingsComponent implements OnInit {
           this.logService.createLog(logType.PRODUCT_UPDATED, res.id, `${form.name} adlı Ürün Güncellendi`);
           if (this.productRecipe.length > 0) {
             if (this.recipe.length == 0) {
-              let schema = new Recipe(form._id, this.productRecipe);
+              const schema = new Recipe(form._id, this.productRecipe);
               this.mainService.addData('recipes', schema);
             } else {
               this.productRecipe = this.productRecipe.concat(this.recipe);
@@ -279,9 +279,9 @@ export class MenuSettingsComponent implements OnInit {
       if (result.docs.length > 0) {
         this.hasRecipe = true;
         this.recipeId = result.docs[0]._id;
-        let recipes = result.docs[0].recipe;
+        const recipes = result.docs[0].recipe;
         this.recipe = result.docs[0].recipe;
-        for (let prop in recipes) {
+        for (const prop in recipes) {
           this.mainService.getData('stocks', recipes[prop].stock_id).then((result: any) => {
             this.oldRecipes.push({ id: recipes[prop].stock_id, name: result.name, amount: recipes[prop].amount, unit: result.unit });
           });
@@ -293,17 +293,17 @@ export class MenuSettingsComponent implements OnInit {
   }
 
   removeProduct() {
-    let isOk = confirm('Ürünü Silmek Üzerisiniz..');
+    const isOk = confirm('Ürünü Silmek Üzerisiniz..');
     if (isOk) {
       this.mainService.removeData('products', this.selectedId).then((result) => {
         this.logService.createLog(logType.PRODUCT_DELETED, result.id, `${this.productForm.value.name} adlı Ürün Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id }).then((res: any) => {
           if (res.docs.length > 0)
-            this.mainService.removeData('reports', res.docs[0]._id!);
+            this.mainService.removeData('reports', res.docs[0]._id);
         });
         this.mainService.getAllBy('recipes', { product_id: result.id }).then((res: any) => {
           if (res.docs.length > 0)
-            this.mainService.removeData('recipes', res.docs[0]._id!);
+            this.mainService.removeData('recipes', res.docs[0]._id);
         });
         this.messageService.sendMessage('Ürün Silindi!');
         // this.fillData();
@@ -315,9 +315,9 @@ export class MenuSettingsComponent implements OnInit {
     this.productType = value;
     if (value == 2) {
       if (this.oldRecipes.length > 1) {
-        let isOK = confirm('Manuel Stok tipi için tek bir Stok kaydı girebilirsiniz. 2. Stok ve Ürün Durumları silinecektir.');
+        const isOK = confirm('Manuel Stok tipi için tek bir Stok kaydı girebilirsiniz. 2. Stok ve Ürün Durumları silinecektir.');
         if (isOK) {
-          let recipeWillLost = this.oldRecipes.pop();
+          const recipeWillLost = this.oldRecipes.pop();
           this.removeRecipe('old', recipeWillLost.id);
         } else {
           this.productType = 1;
@@ -333,12 +333,12 @@ export class MenuSettingsComponent implements OnInit {
   }
 
   addSpecies(speciesForm: NgForm) {
-    let form = speciesForm.value;
+    const form = speciesForm.value;
     if (form.spec_name == '' || form.spec_name == null || form.spec_price <= 0 || form.spec_price == undefined) {
       this.messageService.sendMessage('Durum Notu ve Fiyatı Boş Bırakılamaz');
       return false;
     }
-    let spec = new ProductSpecs(form.spec_name, form.spec_price);
+    const spec = new ProductSpecs(form.spec_name, form.spec_price);
     this.productSpecs.push(spec);
     speciesForm.reset();
   }
@@ -348,7 +348,7 @@ export class MenuSettingsComponent implements OnInit {
   }
 
   addRecipe(recipesForm: NgForm) {
-    let form = recipesForm.value;
+    const form = recipesForm.value;
     if (!form.stock_id) {
       this.messageService.sendMessage('Stok Seçimi Yapmalısınız!');
       return false;
@@ -357,7 +357,7 @@ export class MenuSettingsComponent implements OnInit {
       this.messageService.sendMessage('Birim Miktarı Girmelisiniz!');
       return false;
     }
-    let item = new Ingredient(form.stock_id, form.amount);
+    const item = new Ingredient(form.stock_id, form.amount);
     this.mainService.getData('stocks', form.stock_id).then((result: any) => {
       // if (form.amount < result.left_total) {
       if (this.productRecipe.find((item: any) => item.stock_id == form.stock_id)) {
@@ -414,7 +414,7 @@ export class MenuSettingsComponent implements OnInit {
   }
 
   filterProducts(value: string) {
-    let regexp = new RegExp(value, 'i');
+    const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('products', { name: { $regex: regexp } }).then((res: any) => {
       this.products = res.docs;
       this.products = this.products.sort((a: any, b: any) => a.price - b.price);

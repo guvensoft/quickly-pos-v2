@@ -52,8 +52,8 @@ export class SetupComponent implements OnInit {
   }
 
   getConfigrations(connectionForm: NgForm) {
-    let Form = connectionForm.value;
-    let serverSettings = new Settings('ServerSettings', { type: 1, status: 1, ip_address: Form.address, ip_port: parseInt(Form.port), key: Form.key }, 'Sunucu Ayarları', Date.now());
+    const Form = connectionForm.value;
+    const serverSettings = new Settings('ServerSettings', { type: 1, status: 1, ip_address: Form.address, ip_port: parseInt(Form.port), key: Form.key }, 'Sunucu Ayarları', Date.now());
     localStorage.setItem('AppType', 'Secondary');
     this.electron.openDevTools();
     this.mainService.replicateDB(serverSettings.value)
@@ -94,7 +94,7 @@ export class SetupComponent implements OnInit {
   }
 
   makeLogin(loginForm: NgForm) {
-    let Form = loginForm.value;
+    const Form = loginForm.value;
     this.http.post(this.baseUrl + '/store/login/', { username: Form.username, password: Form.password }, this.options).subscribe((res: any) => {
       localStorage.setItem('AccessToken', res.token);
       this.headers = this.headers.append('Authorization', res.token);
@@ -129,13 +129,13 @@ export class SetupComponent implements OnInit {
 
   makeAuth(Data: any) {
     this.electron.saveLogo(Data.logo);
-    let activationStatus = new Settings('ActivationStatus', true, Data.auth.database_name, Date.now());
-    let dateSettings = new Settings('DateSettings', { started: true, day: new Date().getDay(), time: Date.now() }, 'Tarih-Zaman Ayarları', Date.now());
-    let authInfo = new Settings('AuthInfo', new AuthInfo('31.210.51.22', '5984', Data.auth.database_name, Data.auth.database_user, Data.auth.database_password), 'Giriş Bilgileri Oluşturuldu', Date.now());
-    let restaurantInfo = new Settings('RestaurantInfo', Data, 'Restoran Bilgileri', Date.now());
-    let appSettings = new Settings('AppSettings', { timeout: 120, keyboard: 'Kapalı', takeaway: 'Açık', ask_print_order: 'Sor', ask_print_check: 'Sor', last_day: 0 }, 'Uygulama Ayarları', Date.now());
-    let serverSettings = new Settings('ServerSettings', { type: 0, status: 0, ip_address: this.electron.getLocalIP(), ip_port: 3000, key: Data.auth.database_id }, 'Sunucu Ayarları', Date.now());
-    let printerSettings = new Settings('Printers', [], 'Yazıcılar', Date.now());
+    const activationStatus = new Settings('ActivationStatus', true, Data.auth.database_name, Date.now());
+    const dateSettings = new Settings('DateSettings', { started: true, day: new Date().getDay(), time: Date.now() }, 'Tarih-Zaman Ayarları', Date.now());
+    const authInfo = new Settings('AuthInfo', new AuthInfo('31.210.51.22', '5984', Data.auth.database_name, Data.auth.database_user, Data.auth.database_password), 'Giriş Bilgileri Oluşturuldu', Date.now());
+    const restaurantInfo = new Settings('RestaurantInfo', Data, 'Restoran Bilgileri', Date.now());
+    const appSettings = new Settings('AppSettings', { timeout: 120, keyboard: 'Kapalı', takeaway: 'Açık', ask_print_order: 'Sor', ask_print_check: 'Sor', last_day: 0 }, 'Uygulama Ayarları', Date.now());
+    const serverSettings = new Settings('ServerSettings', { type: 0, status: 0, ip_address: this.electron.getLocalIP(), ip_port: 3000, key: Data.auth.database_id }, 'Sunucu Ayarları', Date.now());
+    const printerSettings = new Settings('Printers', [], 'Yazıcılar', Date.now());
     // let lastSeenSettings = new Settings('LastSeen', { last_seen: new Date().toLocaleString('tr-TR'), user: 'Setup' }, 'Son Görülme', Date.now());
     localStorage.setItem('AppType', 'Primary');
     this.mainService.addData('settings', restaurantInfo);
@@ -152,8 +152,8 @@ export class SetupComponent implements OnInit {
   }
 
   makeAdmin(adminForm: NgForm) {
-    let Form = adminForm.value;
-    let userAuth = new UserAuth(new ComponentsAuth(true, true, true, true, true), true, true, true, true, true);
+    const Form = adminForm.value;
+    const userAuth = new UserAuth(new ComponentsAuth(true, true, true, true, true), true, true, true, true, true);
     this.mainService.addData('users_group', new UserGroup('Yönetici', 'Yönetici Grubu', userAuth, 1, Date.now())).then(res => {
       this.mainService.addData('users', new User(Form.admin_name, 'Yönetici', res.id, parseInt(Form.admin_pass), 1, Date.now())).then((user) => {
         this.mainService.addData('reports', new Report('User', user.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), user.name, Date.now()));
@@ -182,7 +182,7 @@ export class SetupComponent implements OnInit {
   progressBar(step: number) {
     this.statusMessage = 'Program Ayarlanıyor...';
     this.setupStep = 5;
-    let stat = setInterval(() => {
+    const stat = setInterval(() => {
       this.progress = this.status + '%';
       this.status++;
       this.showMessage = true;

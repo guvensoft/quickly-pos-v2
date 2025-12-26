@@ -44,7 +44,7 @@
               <div class="card-body p-0 flow">
                 <div class="list-group">
                   <div *ngFor="let cat of categories" class="btn-group btn-group-justify">
-                    <button (click)="getCategory(cat)" [ngClass]="{'list-group-item-warning' : selectedCat == cat}"
+                    <button (click)="getCategory(cat)" [ngClass]="{'list-group-item-warning' : selectedCat === cat}"
                       type="button" class="list-group-item list-group-item-action">{{cat.name}}</button>
                   </div>
                 </div>
@@ -58,8 +58,8 @@
                   Ayrıntılar
                 </div>
                 <div class="card-body p-2 flow">
-                  <h1 *ngIf="selectedCat == undefined" class="text-center mt-5">Listeden Kategori Seçiniz</h1>
-                  <div [hidden]="selectedCat == undefined">
+                  <h1 *ngIf="selectedCat === undefined" class="text-center mt-5">Listeden Kategori Seçiniz</h1>
+                  <div [hidden]="selectedCat === undefined">
                     <input type="hidden" name="_id" ngModel>
                     <input type="hidden" name="_rev" ngModel>
                     <input type="hidden" name="order" ngModel>
@@ -101,7 +101,7 @@
                             Yazıcı
                           </div>
                         </div>
-                        <select [disabled]="printers?.length == 0" name="printer" class="form-control form-control-lg"
+                        <select [disabled]="printers.length === 0" name="printer" class="form-control form-control-lg"
                           ngModel>
                           <option *ngFor="let item of printers">{{item.name}}</option>
                         </select>
@@ -132,7 +132,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="card-footer" [hidden]="selectedCat == undefined">
+                <div class="card-footer" [hidden]="selectedCat === undefined">
                   <div class="row">
                     <div class="col pr-1 pl-2">
                       <button type="button" (click)="removeCategory(selectedCat._id!)"
@@ -141,7 +141,7 @@
                       </button>
                     </div>
                     <div class="col pr-1 pl-1">
-                      <button type="button" *ngIf="selectedCat !== undefined" [disabled]="subCats.length == 4"
+                      <button type="button" *ngIf="selectedCat !== undefined" [disabled]="subCats.length === 4"
                         (click)="onUpdate = false; subCatForm.reset();" class="btn btn-warning btn-block btn-md"
                         data-toggle="modal" data-target="#subCatModal">
                         <i class="fa fa-plus"></i> Alt Kategori Ekle
@@ -171,7 +171,7 @@
             <h5 class="mt-2">Ürün Ayarları</h5>
           </div>
           <div class="col-lg-4 pr-2 pl-0">
-            <button [disabled]="categories == undefined || categories.length == 0"
+            <button [disabled]="categories === undefined || categories.length === 0"
               class="btn btn-danger btn-md btn-block" (click)="setDefault()" data-toggle="modal"
               data-target="#productModal">
               <i class="fa fa-plus"></i> Ürün Ekle
@@ -250,7 +250,7 @@
                     </tbody>
                   </table>
                 </div>
-                <div *ngIf="products == undefined || products.length == 0" class="row mt-5">
+                <div *ngIf="products === undefined || products.length === 0" class="row mt-5">
                   <div class="col-lg-12 mt-5">
                     <h2 class="text-center mt-3">Eşleşen Ürün Bulunamadı</h2>
                   </div>
@@ -322,7 +322,7 @@
               <div class="input-group-prepend">
                 <div class="input-group-text">Yazıcı</div>
               </div>
-              <select [disabled]="printers?.length == 0" name="printer" class="form-control form-control-lg" ngModel>
+              <select [disabled]="printers.length === 0" name="printer" class="form-control form-control-lg" ngModel>
                 <option *ngFor="let item of printers">{{item.name}}</option>
               </select>
             </div>
@@ -429,7 +429,7 @@
                   <div class="input-group-prepend">
                     <div class="input-group-text">Alt Kategori</div>
                   </div>
-                  <select [disabled]="subCats.length == 0 || subCats == undefined" name="subcat_id"
+                  <select [disabled]="subCats.length === 0 || subCats === undefined" name="subcat_id"
                     class="form-control form-control-lg" ngModel>
                     <option *ngFor="let cat of subCats" [value]="cat._id">{{cat.name}}</option>
                   </select>
@@ -446,7 +446,7 @@
                 </div>
                 <div class="input-group">
                   <div class="input-group-prepend">
-                    <div class="input-group-text">{{ (productType == 2) ? 'Birim' : ''}} Fiyat</div>
+                    <div class="input-group-text">{{ (productType === 2) ? 'Birim' : ''}} Fiyat</div>
                   </div>
                   <input type="number" name="price" class="form-control form-control-lg" ngModel />
                   <div class="input-group-append">
@@ -491,7 +491,7 @@
                   <form #recipesForm="ngForm" (ngSubmit)="addRecipe(recipesForm)">
                     <div class="input-group">
                       <select placeholder="Stok Seçiniz..."
-                        [disabled]="stocks?.length == 0 || productType == 2 && productRecipe.length > 0 || productType == 2 && oldRecipes.length > 0"
+                        [disabled]="stocks.length === 0 || productType === 2 && productRecipe.length > 0 || productType === 2 && oldRecipes.length > 0"
                         name="stock_id" (change)="onStockChange($any($event.target).value)"
                         class="form-control form-control-lg" ngModel>
                         <option *ngFor="let stock of stocks" [value]="stock._id">{{stock.name}}</option>
@@ -499,12 +499,12 @@
                     </div>
                     <div class="input-group">
                       <input
-                        [disabled]="stocks?.length == 0 || productType == 2 && productRecipe.length > 0 || productType == 2 && oldRecipes.length > 0"
+                        [disabled]="stocks.length === 0 || productType === 2 && productRecipe.length > 0 || productType === 2 && oldRecipes.length > 0"
                         type="number" placeholder="0 {{stockUnit}}" name="amount" class="form-control form-control-lg"
                         ngModel />
                       <span class="input-group-append">
                         <button
-                          [disabled]="stocks?.length == 0 || productType == 2 && productRecipe.length > 0 || productType == 2 && oldRecipes.length > 0"
+                          [disabled]="stocks.length === 0 || productType === 2 && productRecipe.length > 0 || productType === 2 && oldRecipes.length > 0"
                           class="btn btn-success" type="submit">Ekle</button>
                       </span>
                     </div>
@@ -548,13 +548,13 @@
                 </div>
                 <div class="card-header p-0">
                   <form #speciesForm="ngForm" (ngSubmit)="addSpecies(speciesForm)">
-                    <input type="text" [disabled]="productType == 2" name="spec_name" placeholder="Durum Notu..."
+                    <input type="text" [disabled]="productType === 2" name="spec_name" placeholder="Durum Notu..."
                       class="form-control form-control-lg" ngModel />
                     <div class="input-group">
-                      <input type="number" [disabled]="productType == 2" name="spec_price" placeholder="Durum Fiyatı.."
+                      <input type="number" [disabled]="productType === 2" name="spec_price" placeholder="Durum Fiyatı.."
                         class="form-control form-control-lg" ngModel />
                       <div class="input-group-append">
-                        <button type="submit" [disabled]="productType == 2" class="btn btn-success">Ekle</button>
+                        <button type="submit" [disabled]="productType === 2" class="btn btn-success">Ekle</button>
                       </div>
                     </div>
                   </form>
