@@ -102,7 +102,10 @@ export class SettingsService {
   setAppSettings(Key: string, SettingsData: any): Promise<any> {
     const AppSettings = new Settings(Key, SettingsData, Key, Date.now());
     return this.mainService.getAllBy('settings', { key: Key }).then(res => {
-      return this.mainService.updateData('settings', res.docs[0]._id, AppSettings);
+      if (res.docs[0]?._id) {
+        return this.mainService.updateData('settings', res.docs[0]._id, AppSettings);
+      }
+      return Promise.reject('Settings document not found');
     });
   }
 
@@ -112,7 +115,7 @@ export class SettingsService {
 
   addPrinter(printerData: any): void {
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
-      if (res.docs.length > 0) {
+      if (res.docs.length > 0 && res.docs[0]._id) {
         res.docs[0].value.push(printerData);
         this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
         this.Printers.next(res.docs[0]);
@@ -126,18 +129,22 @@ export class SettingsService {
 
   updatePrinter(newPrinter: any, oldPrinter: any): void {
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
-      res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== oldPrinter.name);
-      res.docs[0].value.push(newPrinter);
-      this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
-      this.Printers.next(res.docs[0]);
+      if (res.docs[0]?._id) {
+        res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== oldPrinter.name);
+        res.docs[0].value.push(newPrinter);
+        this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
+        this.Printers.next(res.docs[0]);
+      }
     });
   }
 
   removePrinter(printer: any): void {
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
-      res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== printer.name);
-      this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
-      this.Printers.next(res.docs[0]);
+      if (res.docs[0]?._id) {
+        res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== printer.name);
+        this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
+        this.Printers.next(res.docs[0]);
+      }
     });
   }
 

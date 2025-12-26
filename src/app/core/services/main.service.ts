@@ -287,7 +287,7 @@ export class MainService {
   }
 
   removeAll(db: string, $schema: any): Promise<any> {
-    return this.getAllBy(db, $schema).then(res => {
+    return this.getAllBy(db as any, $schema).then(res => {
       return res.docs.map((obj: any) => {
         return { _id: obj._id, _rev: obj._rev, _deleted: true };
       });

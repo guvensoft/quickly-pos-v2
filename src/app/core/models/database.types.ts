@@ -208,6 +208,7 @@ export interface UserDocument extends PouchDBDocument {
     role: string;
     role_id: string;
     password: number;
+    pincode: number;
     status: number;
     timestamp: number;
 }
@@ -225,16 +226,16 @@ export interface UserGroupDocument extends PouchDBDocument {
 export interface ReportDocument extends PouchDBDocument {
     type: string;
     connection_id: string;
-    count: number;
-    amount: number;
-    discount: number;
-    weekly: number[];
-    weekly_count: number[];
-    monthly: number[];
-    monthly_count: number[];
-    month: number;
-    year: number;
-    name: string;
+    count?: number;
+    amount?: number;
+    discount?: number;
+    weekly?: number[];
+    weekly_count?: number[];
+    monthly?: number[];
+    monthly_count?: number[];
+    month?: number;
+    year?: number;
+    name?: string;
     timestamp: number;
     // Activity report için ek alanlar
     activity?: number[];
@@ -244,7 +245,7 @@ export interface ReportDocument extends PouchDBDocument {
 
 /** Log Document */
 export interface LogDocument extends PouchDBDocument {
-    type: string;
+    type: string | number; // logType enum veya string
     connection_id: string;
     description: string;
     timestamp: number;

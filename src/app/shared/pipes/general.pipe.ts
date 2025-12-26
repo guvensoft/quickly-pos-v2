@@ -11,7 +11,7 @@ export class GeneralPipe implements PipeTransform {
     constructor(private mainService: MainService) { }
 
     transform(value: any, args: string, property?: string): Promise<any> {
-        return this.mainService.getData(args, value).then((result: any) => {
+        return this.mainService.getData(args as any, value).then((result: any) => {
             if (property) {
                 return result[property];
             } else {
