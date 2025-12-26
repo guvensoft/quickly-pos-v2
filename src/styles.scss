@@ -1,7 +1,7 @@
 @import "../node_modules/animate.css/animate.min.css";
 
-$fa-font-path: "../fonts";
-@import "../node_modules/font-awesome/scss/font-awesome";
+// Font Awesome - using CSS instead of SCSS to avoid deprecation warnings
+// $fa-font-path is not needed when using the CSS version
 
 @font-face {
   font-family: "Quickly";
@@ -38,6 +38,7 @@ body {
 }
 
 @keyframes hue {
+
   0%,
   100% {
     -webkit-filter: hue-rotate(0deg);
@@ -306,6 +307,7 @@ input[disabled] {
     font-size: large;
   }
 }
+
 .col-card {
   padding-right: 5px !important;
   padding-left: 5px !important;
@@ -328,7 +330,7 @@ input[type="checkbox"] {
 }
 
 .btn-lg,
-.btn-group-lg > .btn {
+.btn-group-lg>.btn {
   padding: 0.55rem 1rem;
   font-size: 1.171875rem;
   line-height: 1.5;
