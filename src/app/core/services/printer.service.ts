@@ -52,8 +52,10 @@ export class PrinterService {
       const contains = ordersArray.some(obj => obj.name == element.name && obj.note == element.note);
       if (contains) {
         const index = ordersArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
-        ordersArray[index].price += element.price;
-        ordersArray[index].count++;
+        if (index !== -1) {
+          ordersArray[index].price += element.price;
+          ordersArray[index].count++;
+        }
       } else {
         const schema = { name: element.name, note: element.note, price: element.price, count: 1 };
         ordersArray.push(schema);
@@ -68,8 +70,10 @@ export class PrinterService {
       const contains = ordersArray.some(obj => obj.name == element.name && obj.note == element.note);
       if (contains) {
         const index = ordersArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
-        ordersArray[index].price += element.price;
-        ordersArray[index].count++;
+        if (index !== -1) {
+          ordersArray[index].price += element.price;
+          ordersArray[index].count++;
+        }
       } else {
         const schema = { name: element.name, note: element.note, price: element.price, count: 1 };
         ordersArray.push(schema);
@@ -86,8 +90,10 @@ export class PrinterService {
       const contains = productsArray.some(obj => obj.name == element.name && obj.note == element.note && obj.price == element.price);
       if (contains) {
         const index = productsArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
-        productsArray[index].total_price += element.price;
-        productsArray[index].count++;
+        if (index !== -1) {
+          productsArray[index].total_price += element.price;
+          productsArray[index].count++;
+        }
       } else {
         const schema = {
           name: element.name,
@@ -101,14 +107,16 @@ export class PrinterService {
       }
     });
 
-    if (check.payment_flow) {
+    if (check.payment_flow && check.payment_flow.length > 0) {
       let payed: any[] = [];
       if (check.payment_flow.length > 1) {
         const things = check.payment_flow.map((obj: any) => obj.payed_products);
         things.forEach((element: any) => {
-          payed = payed.concat(element);
+          if (element) {
+            payed = payed.concat(element);
+          }
         });
-      } else {
+      } else if (check.payment_flow[0] && check.payment_flow[0].payed_products) {
         payed = check.payment_flow[0].payed_products;
       }
 
@@ -116,8 +124,10 @@ export class PrinterService {
         const contains = payedArray.some(obj => obj.name == element.name && obj.note == element.note && obj.price == element.price);
         if (contains) {
           const index = payedArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
-          payedArray[index].total_price += element.price;
-          payedArray[index].count++;
+          if (index !== -1) {
+            payedArray[index].total_price += element.price;
+            payedArray[index].count++;
+          }
         } else {
           const schema = {
             name: element.name,
@@ -144,8 +154,10 @@ export class PrinterService {
       const contains = productsArray.some(obj => obj.name == element.name && obj.note == element.note);
       if (contains) {
         const index = productsArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
-        productsArray[index].total_price += element.price;
-        productsArray[index].count++;
+        if (index !== -1) {
+          productsArray[index].total_price += element.price;
+          productsArray[index].count++;
+        }
       } else {
         const schema = {
           name: element.name,

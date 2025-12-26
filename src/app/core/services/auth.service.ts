@@ -17,20 +17,29 @@ export class AuthService {
   // ============================================
 
   parseJWT(token: string): any {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace('-', '+').replace('_', '/');
-    return JSON.parse(atob(base64));
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) {
+        throw new Error('Invalid JWT format');
+      }
+      const base64Url = parts[1];
+      const base64 = base64Url.replace('-', '+').replace('_', '/');
+      return JSON.parse(atob(base64));
+    } catch (error) {
+      console.error('AuthService: Error parsing JWT', error);
+      return null;
+    }
   }
 
   saveToken(userType: string): void {
-    localStorage['userType'] = userType;
+    localStorage.setItem('userType', userType);
   }
 
   login(user: any): void {
-    localStorage['userName'] = user.name;
-    localStorage['userType'] = user.role;
-    localStorage['userAuth'] = user.role_id;
-    localStorage['userID'] = user._id;
+    localStorage.setItem('userName', user.name);
+    localStorage.setItem('userType', user.role);
+    localStorage.setItem('userAuth', user.role_id);
+    localStorage.setItem('userID', user._id);
     this.subject.next({ name: user.name, type: user.role });
   }
 
@@ -64,8 +73,12 @@ export class AuthService {
     const auth = localStorage.getItem('userAuth');
     if (auth) {
       return this.mainService.getData('users_group', auth).then(result => {
-        delete result.auth.components;
-        localStorage.setItem('userPermissions', JSON.stringify(result.auth));
+        if (result && result.auth) {
+          delete result.auth.components;
+          localStorage.setItem('userPermissions', JSON.stringify(result.auth));
+        }
+      }).catch(err => {
+        console.error('AuthService: Error setting permissions', err);
       });
     }
     return Promise.resolve();
@@ -82,6 +95,11 @@ export class AuthService {
       console.log('AuthService: main segment', mainSegment);
 
       return this.mainService.getData('users_group', auth).then(result => {
+        if (!result || !result.auth || !result.auth.components) {
+          console.error('AuthService: Invalid user group data');
+          return false;
+        }
+
         const guard = result.auth.components;
         console.log('AuthService: permissions', guard);
         switch (mainSegment) {

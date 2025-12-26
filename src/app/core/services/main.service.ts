@@ -94,7 +94,7 @@ export class MainService {
 
     // Auth bilgilerini yükle
     this.getAllBy('settings', { key: 'AuthInfo' }).then(res => {
-      if (res.docs.length > 0) {
+      if (res && res.docs && res.docs.length > 0) {
         this.authInfo = res.docs[0].value;
         this.hostname = 'http://' + this.authInfo.app_remote + ':' + this.authInfo.app_port;
 
@@ -115,11 +115,13 @@ export class MainService {
         this.db_prefix = this.authInfo.app_db;
         this.RemoteDB = new PouchDB(this.hostname + this.db_prefix, authOptions);
       }
+    }).catch(err => {
+      console.error('MainService: Error loading auth info:', err);
     });
 
     // Server bilgilerini yükle
     this.getAllBy('settings', { key: 'ServerSettings' }).then(res => {
-      if (res.docs.length > 0) {
+      if (res && res.docs && res.docs.length > 0) {
         const appType = localStorage.getItem('AppType');
         switch (appType) {
           case 'Primary':
@@ -139,6 +141,8 @@ export class MainService {
           this.RemoteDB = new PouchDB(`http://${this.serverInfo.ip_address}:${this.serverInfo.ip_port}/${this.serverInfo.key}/appServer`);
         }
       }
+    }).catch(err => {
+      console.error('MainService: Error loading server settings:', err);
     });
   }
 
@@ -288,10 +292,16 @@ export class MainService {
 
   removeAll(db: string, $schema: any): Promise<any> {
     return this.getAllBy(db as any, $schema).then(res => {
+      if (!res || !res.docs || res.docs.length === 0) {
+        return [];
+      }
       return res.docs.map((obj: any) => {
         return { _id: obj._id, _rev: obj._rev, _deleted: true };
       });
     }).then(deleteDocs => {
+      if (deleteDocs.length === 0) {
+        return { ok: true };
+      }
       return this.LocalDB[db].bulkDocs(deleteDocs);
     });
   }
@@ -420,6 +430,11 @@ export class MainService {
 
   loadAppData(): Promise<any> {
     return this.getAllBy('allData', {}).then(res => {
+      if (!res || !res.docs || res.docs.length === 0) {
+        console.log('MainService: No data to load from allData');
+        return true;
+      }
+
       const docs = res.docs;
       const groups: { [key: string]: any[] } = {};
 
@@ -438,9 +453,9 @@ export class MainService {
       });
 
       const dbPromises = Object.keys(groups).map(dbName => {
-        // Try to fetch existing docs to avoid conflicts if possible, 
+        // Try to fetch existing docs to avoid conflicts if possible,
         // but bulkDocs without _rev will just result in conflict items in the result array anyway.
-        // To truly overwrite, we would need current revs. 
+        // To truly overwrite, we would need current revs.
         // However, loadAppData is typically for initial load.
         return this.LocalDB[dbName].bulkDocs(groups[dbName]).catch((err: any) => {
           console.warn(`Bulk update failed for ${dbName}:`, err);
@@ -461,6 +476,10 @@ export class MainService {
   syncToLocal(database?: string): Promise<any> {
     const selector = database ? { db_name: database } : {};
     return this.getAllBy('allData', selector).then(res => {
+      if (!res || !res.docs || res.docs.length === 0) {
+        return true;
+      }
+
       const docs = res.docs;
       const groups: { [key: string]: any[] } = {};
 
