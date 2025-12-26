@@ -43,13 +43,20 @@ export const DayStarted: CanActivateFn = (): boolean => {
         return false;
     }
 
-    const Status = JSON.parse(StatusStr);
-    const isStarted: boolean = Status.started;
+    try {
+        const Status = JSON.parse(StatusStr);
+        const isStarted: boolean = Status.started;
 
-    if (isStarted == false) {
-        messageService.sendAlert('Dikkat', 'Lütfen Gün Başlangıcı Yapınız', 'warning');
+        if (isStarted == false) {
+            messageService.sendAlert('Dikkat', 'Lütfen Gün Başlangıcı Yapınız', 'warning');
+            router.navigate(['/endoftheday']);
+        }
+
+        return isStarted;
+    } catch (error) {
+        console.error('Error parsing DayStatus:', error);
+        messageService.sendAlert('Dikkat', 'Gün durumu okunamadı. Lütfen gün başlangıcı yapınız', 'warning');
         router.navigate(['/endoftheday']);
+        return false;
     }
-
-    return isStarted;
 };

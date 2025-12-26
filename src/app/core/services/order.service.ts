@@ -23,7 +23,9 @@ export class OrderService {
   }
 
   closeOrderListener(): void {
-    this.orderListener.cancel();
+    if (this.orderListener) {
+      this.orderListener.cancel();
+    }
   }
 
   orderToCheck(): void {
