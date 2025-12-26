@@ -26,14 +26,24 @@ function createWindow(): BrowserWindow {
     },
   });
 
-  // Bypass CORS
+  // Bypass CORS - Handle both preflight and actual requests
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    callback({
+      requestHeaders: {
+        ...details.requestHeaders,
+        'Origin': 'http://localhost:4200'
+      }
+    });
+  });
+
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Access-Control-Allow-Origin': ['*'],
         'Access-Control-Allow-Headers': ['*'],
-        'Access-Control-Allow-Methods': ['*']
+        'Access-Control-Allow-Methods': ['GET, POST, PUT, DELETE, OPTIONS'],
+        'Access-Control-Allow-Credentials': ['true']
       }
     });
   });
@@ -84,6 +94,9 @@ function createWindow(): BrowserWindow {
 }
 
 try {
+  // Ignore certificate errors for development
+  app.commandLine.appendSwitch('ignore-certificate-errors');
+
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
