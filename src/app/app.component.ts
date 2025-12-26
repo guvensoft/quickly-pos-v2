@@ -89,27 +89,50 @@ export class AppComponent implements OnInit {
             const appType = localStorage.getItem('AppType');
             switch (appType) {
               case 'Primary':
-                this.serverSettings = settings.find(obj => obj.key == 'ServerSettings' && obj.value.type == 0)!.value;
+                const primarySetting = settings.find(obj => obj.key == 'ServerSettings' && obj.value.type == 0);
+                if (primarySetting) {
+                  this.serverSettings = primarySetting.value;
+                } else {
+                  throw new Error('Primary server settings not found');
+                }
                 break;
               case 'Secondary':
-                this.serverSettings = settings.find(obj => obj.key == 'ServerSettings' && obj.value.type == 1)!.value;
+                const secondarySetting = settings.find(obj => obj.key == 'ServerSettings' && obj.value.type == 1);
+                if (secondarySetting) {
+                  this.serverSettings = secondarySetting.value;
+                } else {
+                  throw new Error('Secondary server settings not found');
+                }
                 break;
               default:
                 break;
             }
           } catch (error) {
+            console.error('Server settings error:', error);
             this.messageService.sendAlert('Bağlantı Hatası', 'Sunucu Bağlantı Anahtarı Bulunamadı!', 'error');
             this.findServerSettings();
           }
           try {
-            this.dayStatus = settings.find(obj => obj.key == 'DateSettings')!.value;
+            const daySettings = settings.find(obj => obj.key == 'DateSettings');
+            if (daySettings) {
+              this.dayStatus = daySettings.value;
+            } else {
+              throw new Error('Date settings not found');
+            }
           } catch (error) {
+            console.error('Day status error:', error);
             this.messageService.sendAlert('Gün Dökümanı Hatası', 'Tarih Eşleştirmesi Başarısız', 'error');
             this.findAppSettings();
           }
           try {
-            this.activationStatus = settings.find(obj => obj.key == 'ActivationStatus')!.value;
+            const activationSettings = settings.find(obj => obj.key == 'ActivationStatus');
+            if (activationSettings) {
+              this.activationStatus = activationSettings.value;
+            } else {
+              throw new Error('Activation settings not found');
+            }
           } catch (error) {
+            console.error('Activation status error:', error);
             this.messageService.sendAlert('Aktivasyon Hatası', 'Aktivasyon Anahtarı Bulunamadı!', 'error');
             this.findAppSettings();
           }
@@ -227,6 +250,10 @@ export class AppComponent implements OnInit {
   orderListener(): void {
     console.log('Order Listener Process Started');
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(prints => {
+      if (!prints.docs || prints.docs.length === 0) {
+        console.error('No printers found in settings');
+        return;
+      }
       const printers = prints.docs[0].value;
       this.mainService.LocalDB['orders'].changes({ since: 'now', live: true, include_docs: true }).on('change', (res: any) => {
         if (!this.onSync) {
@@ -248,9 +275,11 @@ export class AppComponent implements OnInit {
                         const contains = splitPrintArray.some(element => element.printer.name == catPrinter);
                         if (contains) {
                           const index = splitPrintArray.findIndex(p_name => p_name.printer.name == catPrinter);
-                          splitPrintArray[index].products.push(obj);
+                          if (index >= 0) {
+                            splitPrintArray[index].products.push(obj);
+                          }
                         } else {
-                          const thePrinter = printers.filter((p: any) => p.name == catPrinter)[0];
+                          const thePrinter = printers.find((p: any) => p.name == catPrinter);
                           if (thePrinter) {
                             const splitPrintOrder = { printer: thePrinter, products: [obj] };
                             splitPrintArray.push(splitPrintOrder);
@@ -282,6 +311,10 @@ export class AppComponent implements OnInit {
         this.messageService.sendAlert('Dikkat!', 'Gün Sonu Yapılmamış.', 'warning');
       } else {
         this.mainService.RemoteDB.find({ selector: { db_name: 'settings', key: 'DateSettings' }, limit: 5000 }).then((res: any) => {
+          if (!res.docs || res.docs.length === 0) {
+            console.error('No date settings found on remote server');
+            return;
+          }
           const serverDate: DayInfo = res.docs[0].value;
           if (serverDate.started) {
             this.mainService.getData('settings', res.docs[0]._id).then((settingsDoc: any) => {
@@ -398,28 +431,36 @@ export class AppComponent implements OnInit {
   }
 
   findServerSettings(): void {
-    let serverDocument: any;
     const AppType = localStorage.getItem('AppType');
     this.mainService.getAllBy('allData', { key: 'ServerSettings' }).then(res => {
+      let serverDocument: any;
       switch (AppType) {
         case 'Primary':
           serverDocument = res.docs.find((obj: any) => obj.value.type == 0);
-          delete serverDocument._rev;
-          this.mainService.putDoc('settings', serverDocument).then(() => {
-            this.electronService.reloadProgram();
-          });
+          if (serverDocument) {
+            delete serverDocument._rev;
+            this.mainService.putDoc('settings', serverDocument).then(() => {
+              this.electronService.reloadProgram();
+            }).catch(err => console.error('Failed to put server document:', err));
+          } else {
+            console.error('Primary server settings not found in allData');
+          }
           break;
         case 'Secondary':
           serverDocument = res.docs.find((obj: any) => obj.value.type == 1);
-          delete serverDocument._rev;
-          this.mainService.putDoc('settings', serverDocument).then(() => {
-            this.electronService.reloadProgram();
-          });
+          if (serverDocument) {
+            delete serverDocument._rev;
+            this.mainService.putDoc('settings', serverDocument).then(() => {
+              this.electronService.reloadProgram();
+            }).catch(err => console.error('Failed to put server document:', err));
+          } else {
+            console.error('Secondary server settings not found in allData');
+          }
           break;
         default:
           break;
       }
-    });
+    }).catch(err => console.error('Failed to get server settings from allData:', err));
   }
 
   updateLastSeen(): void {
@@ -439,15 +480,19 @@ export class AppComponent implements OnInit {
           const checks_total_count = res.docs.length;
           let checks_total_amount: number;
           let activity_value: number;
-          try {
-            checks_total_amount = res.docs.map((obj: any) => obj.total_price + obj.discount).reduce((a: number, b: number) => a + b);
+          if (res.docs.length > 0) {
+            checks_total_amount = res.docs.map((obj: any) => obj.total_price + obj.discount).reduce((a: number, b: number) => a + b, 0);
             activity_value = checks_total_amount / checks_total_count;
-          } catch (error) {
+          } else {
             checks_total_amount = 0;
             activity_value = 0;
           }
-          const activity_count = (checks_total_count * 100) / tables.docs.length;
+          const activity_count = tables.docs.length > 0 ? (checks_total_count * 100) / tables.docs.length : 0;
           this.mainService.getAllBy('reports', { type: 'Activity' }).then(res => {
+            if (!res.docs || res.docs.length === 0) {
+              console.error('No activity report found');
+              return;
+            }
             const sellingAct = res.docs[0];
             if (sellingAct && sellingAct._id) {
               const date = new Date();
