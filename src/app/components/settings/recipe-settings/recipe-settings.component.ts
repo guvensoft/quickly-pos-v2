@@ -22,7 +22,11 @@ export class RecipeSettingsComponent implements OnInit {
 
   fillData() {
     this.mainService.getAllBy('recipes', {}).then(res => {
-      this.recipes = res.docs;
+      if (res && res.docs) {
+        this.recipes = res.docs;
+      } else {
+        this.recipes = [];
+      }
     })
   }
 
