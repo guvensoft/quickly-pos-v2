@@ -44,7 +44,7 @@
                         <span class="float-right">{{check.total_price | price}} </span>
                       </strong>
                     </p>
-                    <button (click)="sendAllProducts()" [disabled]="(check.products?.length ?? 0) === 0"
+                    <button (click)="sendAllProducts()" [disabled]="check.products.length === 0"
                       class="btn btn-lg btn-danger btn-block text-left">
                       <strong>Hepsini Öde</strong>
                       <span class="float-right">
@@ -76,8 +76,8 @@
                       </div>
                     </div>
                   </div>
-                  <div *ngIf="(check.discount ?? 0) > 0" class="card-footer p-1">
-                    <p *ngIf="(check.discount ?? 0) > 0" class="pr-1 pl-1 mt-2">
+                  <div *ngIf="check.discount > 0" class="card-footer p-1">
+                    <p *ngIf="check.discount > 0" class="pr-1 pl-1 mt-2">
                       <strong>
                         Ödenen Miktar:
                         <span class="pull-right">{{check.discount | price }} </span>
@@ -90,7 +90,7 @@
                       </span>
                     </button>
                   </div>
-                  <div *ngIf="(check.discount ?? 0) > 0 && payedShow" class="card-body check-flow p-2 payed-things">
+                  <div *ngIf="check.discount > 0 && payedShow" class="card-body check-flow p-2 payed-things">
                     <div *ngFor="let payment of check.payment_flow" class="mb-2 payedLayer">
                       <p class="mb-0">{{payment.method}}
                         <small>( {{payment.owner}} - {{payment.timestamp | date:'HH:mm'}} )</small>
@@ -205,7 +205,7 @@
               <div class="card-footer p-1">
                 <p class="pr-1 pl-1 mt-1 mb-0">
                   <strong class="text-primary" style="font-size: large;">Hesap Toplamı:
-                    <span class="pull-right">{{((check.discount ?? 0) + (check?.total_price ?? 0) + priceWillPay) |
+                    <span class="pull-right">{{(check.discount + check.total_price + priceWillPay) |
                       price}}
                     </span>
                   </strong>
@@ -224,7 +224,7 @@
                     </span>
                   </button>
                   <button
-                    [disabled]="(check.products?.length ?? 0) !== 0 || productsWillPay.length === 0 || !permissions.discount"
+                    [disabled]="check.products.length !== 0 || productsWillPay.length === 0 || !permissions.discount"
                     type="button" data-toggle="modal" data-target="#otherOptions"
                     class="btn btn-info btn-lg mt-0"><strong>İşlemler</strong>
                   </button>

@@ -24,6 +24,11 @@ function createWindow(): BrowserWindow {
     },
   });
 
+   import('electron-debug').then(debug => {
+      debug.default({ isEnabled: true, showDevTools: true });
+    });
+
+
   if (serve) {
     import('electron-debug').then(debug => {
       debug.default({ isEnabled: true, showDevTools: true });

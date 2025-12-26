@@ -1,8 +1,12 @@
 {
   "mcpServers": {
-    "context-engine": {
+    "qdrant-indexer": {
       "type": "http",
-      "url": "http://127.0.0.1:30810/mcp"
+      "url": "http://localhost:8003/mcp"
+    },
+    "memory": {
+      "type": "http",
+      "url": "http://localhost:8002/mcp"
     }
   }
 }

@@ -27,7 +27,7 @@
             <div *ngIf="onUpdate">
               <input type="hidden" name="_id" ngModel>
               <input type="hidden" name="_rev" ngModel>
-              <input type="hidden" name="phone_number" [value]="call?.number" ngModel>
+              <input type="hidden" name="phone_number" [value]="call.number" ngModel>
               <input type="hidden" name="type" value="1" ngModel>
               <input type="hidden" name="timestamp" value="{{Date.now()}}" ngModel>
             </div>
