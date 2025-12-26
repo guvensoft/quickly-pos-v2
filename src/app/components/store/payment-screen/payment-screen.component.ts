@@ -246,8 +246,15 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
       this.updateTableReport(this.check, paymentMethod);
       this.mainService.addData('closed_checks', checkWillClose);
     }
-    const newCredit = new Check(customer, this.priceWillPay, CheckStatus.PASSIVE, this.userName, creditNote, 0, this.productsWillPay, Date.now(), CheckType.PASSIVE, CheckNo());
-    this.mainService.addData('credits', newCredit).then((res: any) => {
+    // Credit document için uygun yapı oluştur
+    const creditData = {
+      customer_id: customer,
+      amount: this.priceWillPay,
+      description: creditNote,
+      timestamp: Date.now(),
+      status: 0
+    };
+    this.mainService.addData('credits', creditData as any).then((res: any) => {
       if (res.ok) {
         if (this.check.type == 1) {
           this.mainService.updateData('tables', this.check.table_id, { status: 1 });

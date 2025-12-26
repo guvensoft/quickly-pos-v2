@@ -58,11 +58,11 @@ export class UserSettingsComponent implements OnInit {
   getUsersByGroup(id: string | null | undefined) {
     if (id) {
       this.mainService.getAllBy('users', { role_id: id }).then(res => {
-        this.users = res.docs;
+        this.users = res.docs as any;
       });
     } else {
       this.mainService.getAllBy('users', {}).then(res => {
-        this.users = res.docs;
+        this.users = res.docs as any;
       });
     }
   }
@@ -208,16 +208,16 @@ export class UserSettingsComponent implements OnInit {
   filterUsers(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('users', { name: { $regex: regexp } }).then(res => {
-      this.users = res.docs;
+      this.users = res.docs as any;
     });
   }
 
   fillData() {
     this.mainService.getAllBy('users', {}).then(result => {
-      this.users = result.docs;
+      this.users = result.docs as any;
     });
     this.mainService.getAllBy('users_group', {}).then(result => {
-      this.groups = result.docs;
+      this.groups = result.docs as any;
     });
   }
 }
