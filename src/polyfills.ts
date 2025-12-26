@@ -24,12 +24,8 @@ import * as process from 'process';
 (window as any).Buffer = Buffer;
 (window as any).global = window;
 (window as any).process = process;
-// jQuery is loaded via angular.json scripts to ensure Bootstrap compatibility.
-// Do not overwrite it here as it strips the Bootstrap plugins.
-if (!(window as any).$) {
-    // Fallback only if scripts failed
-    import('jquery').then((jq: any) => {
-        const $ = jq.default || jq;
-        (window as any).$ = (window as any).jQuery = $;
-    });
-}
+
+// jQuery and Bootstrap are loaded via angular.json scripts section.
+// Do not import them here as it may cause timing issues with Bootstrap plugins.
+// They will be available globally as $ and jQuery after scripts load.
+
