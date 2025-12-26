@@ -263,8 +263,12 @@ export interface CashboxDocument extends PouchDBDocument {
 /** Customer Document */
 export interface CustomerDocument extends PouchDBDocument {
     name: string;
+    surname: string;
     phone: string;
+    phone_number: number;
     address: string;
+    picture: string;
+    type: number;
     timestamp: number;
 }
 

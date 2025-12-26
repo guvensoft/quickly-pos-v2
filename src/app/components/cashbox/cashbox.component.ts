@@ -58,14 +58,14 @@ export class CashboxComponent implements OnInit {
     if (form.coupon == null) { form.coupon = 0 }
     if (!form._id) {
       const schema = new Cashbox(this.type, form.description, Date.now(), form.cash, form.card, form.coupon, this.user);
-      this.mainService.addData('cashbox', schema).then(res => {
+      this.mainService.addData('cashbox', schema as any).then(res => {
         this.logService.createLog(logType.CASHBOX_CREATED, res.id, `Kasaya ${(form.cash + form.card + form.coupon)} tutarında ${this.type} eklendi.`);
         this.fillData();
         this.messageService.sendMessage(this.type + ' Eklendi');
       });
     } else {
       const schema = new Cashbox(this.type, form.description, Date.now(), form.cash, form.card, form.coupon, this.user, form._id, form._rev);
-      this.mainService.updateData('cashbox', form._id, schema).then(res => {
+      this.mainService.updateData('cashbox', form._id, schema as any).then(res => {
         this.fillData();
         this.messageService.sendMessage(this.type + ' Düzenlendi');
       });
@@ -103,7 +103,7 @@ export class CashboxComponent implements OnInit {
   fillData() {
     this.sellingIncomes = 0;
     this.mainService.getAllBy('cashbox', {}).then(result => {
-      this.cashboxData = result.docs;
+      this.cashboxData = result.docs as any;
       this.cashboxData.sort((a, b) => b.timestamp - a.timestamp);
       try {
         this.incomes = this.cashboxData.filter(obj => obj.type == 'Gelir').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b);
