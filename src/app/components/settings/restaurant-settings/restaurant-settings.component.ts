@@ -73,7 +73,7 @@ export class RestaurantSettingsComponent implements OnInit {
     }
     const areaSpecs = new FloorSpecs(form.air, form.cigarate, form.reservation, form.music, form.events);
     const schema = new Floor(form.name, form.description, 1, Date.now(), form.special, areaSpecs);
-    this.mainService.addData('floors', schema).then(() => {
+    this.mainService.addData('floors', schema as any).then(() => {
       this.fillData();
       this.messageService.sendMessage('Bölüm Oluşturuldu!');
       areaForm.reset();
@@ -98,12 +98,14 @@ export class RestaurantSettingsComponent implements OnInit {
         this.mainService.getAllBy('tables', { floor_id: this.selectedFloor! }).then(result => {
           const data = result.docs
           for (const prop in data) {
-            this.mainService.removeData('tables', data[prop]._id).then(result => {
-              this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
-                if (res.docs.length > 0)
-                  this.mainService.removeData('reports', res.docs[0]._id);
+            if (data[prop]._id) {
+              this.mainService.removeData('tables', data[prop]._id!).then(result => {
+                this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
+                  if (res.docs.length > 0 && res.docs[0]._id)
+                    this.mainService.removeData('reports', res.docs[0]._id);
+                });
               });
-            });
+            }
           }
           this.messageService.sendMessage('Bölüm ve Masalar Silindi!')
           this.selectedFloor = undefined;

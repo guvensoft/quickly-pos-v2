@@ -82,8 +82,8 @@ export class CustomerSettingsComponent implements OnInit {
           customerForm.reset();
         } else {
           const schema = new Customer(form.name, form.surname, form.phone_number, form.address, '', form.type, Date.now());
-          this.mainService.addData('customers', schema).then((response: any) => {
-            this.mainService.addData('reports', new Report('Customer', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now())).then((res: any) => {
+          this.mainService.addData('customers', schema as any).then((response: any) => {
+            this.mainService.addData('reports', new Report('Customer', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now()) as any).then((res: any) => {
               this.logService.createLog(logType.CUSTOMER_CREATED, res.id, `${form.name} Adlı Müşteri Oluşturuldu`);
             });
             this.messageService.sendMessage('Müşteri Oluşturuldu!');
