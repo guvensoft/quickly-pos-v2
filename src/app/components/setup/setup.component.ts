@@ -34,7 +34,7 @@ export class SetupComponent implements OnInit {
   constructor(private mainService: MainService, private settingsService: SettingsService, private http: HttpClient, private electron: ElectronService, private message: MessageService, private router: Router) {
     this.headers = new HttpHeaders({ 'Content-Type': 'application/json', 'charset': 'UTF-8' });
     this.options = { headers: this.headers };
-    this.baseUrl = 'https://hq.quickly.com.tr';
+    this.baseUrl = 'http://hq.quickly.com.tr';
   }
 
   ngOnInit() {
