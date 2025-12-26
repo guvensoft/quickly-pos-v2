@@ -67,6 +67,11 @@ function createWindow(): BrowserWindow {
     win.loadURL(url);
   }
 
+  // Open DevTools automatically on startup
+  win.webContents.on('did-finish-load', () => {
+    win?.webContents.openDevTools();
+  });
+
   // Emitted when the window is closed.
   win.on('closed', () => {
     // Dereference the window object, usually you would store window
