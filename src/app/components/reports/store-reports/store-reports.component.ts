@@ -134,7 +134,7 @@ export class StoreReportsComponent implements OnInit {
     });
     if (check.payment_method !== 'Parçalı') {
       this.mainService.getAllBy('reports', { connection_id: check.payment_method }).then(res => {
-        this.mainService.changeData('reports', res.docs[0]._id, (doc: any) => {
+        this.mainService.changeData('reports', res.docs[0]._id!, (doc: any) => {
           doc.weekly[this.day] -= check.total_price;
           doc.weekly_count[this.day]--;
           return doc;
@@ -143,7 +143,7 @@ export class StoreReportsComponent implements OnInit {
     } else {
       check.payment_flow!.forEach((element: any) => {
         this.mainService.getAllBy('reports', { connection_id: element.method }).then(res => {
-          this.mainService.changeData('reports', res.docs[0]._id, (doc: any) => {
+          this.mainService.changeData('reports', res.docs[0]._id!, (doc: any) => {
             doc.weekly[this.day] -= element.amount;
             return doc;
           });
@@ -157,7 +157,7 @@ export class StoreReportsComponent implements OnInit {
     if (this.checkDetail.payment_method !== Form.payment_method) {
       this.mainService.getAllBy('reports', { connection_id: this.checkDetail.payment_method }).then(res => {
         const docReport = res.docs[0];
-        this.mainService.changeData('reports', docReport._id, (doc: any) => {
+        this.mainService.changeData('reports', docReport._id!, (doc: any) => {
           doc.weekly[this.day] -= this.checkDetail.total_price;
           doc.weekly_count[this.day]--
           return doc;
@@ -165,7 +165,7 @@ export class StoreReportsComponent implements OnInit {
       });
       this.mainService.getAllBy('reports', { connection_id: Form.payment_method }).then(res => {
         const docReport = res.docs[0];
-        this.mainService.changeData('reports', docReport._id, (doc: any) => {
+        this.mainService.changeData('reports', docReport._id!, (doc: any) => {
           doc.weekly[this.day] += Form.total_price;
           doc.weekly_count[this.day]++
           return doc;
@@ -180,7 +180,7 @@ export class StoreReportsComponent implements OnInit {
       if (this.checkDetail.total_price !== Form.total_price) {
         this.mainService.getAllBy('reports', { connection_id: this.checkDetail.payment_method }).then(res => {
           const docReport = res.docs[0];
-          this.mainService.changeData('reports', docReport._id, (doc: any) => {
+          this.mainService.changeData('reports', docReport._id!, (doc: any) => {
             doc.weekly[this.day] -= this.checkDetail.total_price;
             doc.weekly[this.day] += Form.total_price;
             return doc;
@@ -222,14 +222,14 @@ export class StoreReportsComponent implements OnInit {
     if (Form.method !== this.selectedPayment.method) {
       this.mainService.getAllBy('reports', { connection_id: this.selectedPayment.method }).then(res => {
         const docReport = res.docs[0];
-        this.mainService.changeData('reports', docReport._id, (doc: any) => {
+        this.mainService.changeData('reports', docReport._id!, (doc: any) => {
           doc.weekly[this.day] -= this.selectedPayment.amount;
           doc.weekly_count[this.day]--
           return doc;
         });
         this.mainService.getAllBy('reports', { connection_id: Form.method }).then(res => {
           const docReport = res.docs[0];
-          this.mainService.changeData('reports', docReport._id, (doc: any) => {
+          this.mainService.changeData('reports', docReport._id!, (doc: any) => {
             doc.weekly[this.day] += Form.amount;
             doc.weekly_count[this.day]++
             return doc;
@@ -251,7 +251,7 @@ export class StoreReportsComponent implements OnInit {
       if (this.selectedPayment.amount !== Form.amount) {
         this.mainService.getAllBy('reports', { connection_id: this.selectedPayment.method }).then(res => {
           const docReport = res.docs[0];
-          this.mainService.changeData('reports', docReport._id, (doc: any) => {
+          this.mainService.changeData('reports', docReport._id!, (doc: any) => {
             doc.weekly[this.day] -= this.selectedPayment.amount;
             doc.weekly[this.day] += Form.amount;
             return doc;

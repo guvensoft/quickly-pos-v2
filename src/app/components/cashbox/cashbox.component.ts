@@ -79,7 +79,7 @@ export class CashboxComponent implements OnInit {
     this.selectedData = data;
     this.type = this.selectedData.type;
     this.mainService.getData('cashbox', data._id).then(res => {
-      this.logService.createLog(logType.CASHBOX_UPDATED, res.id, `Kasa '${this.selectedData.description}' adlı ${this.type}'i güncellendi.`);
+      this.logService.createLog(logType.CASHBOX_UPDATED, (res as any).id, `Kasa '${this.selectedData.description}' adlı ${this.type}'i güncellendi.`);
       this.cashboxForm.setValue(res);
       this.fillData();
       (window as any).$('#cashboxModal').modal('show');

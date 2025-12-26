@@ -113,8 +113,8 @@ export class UserReportsComponent implements OnInit {
     this.ItemReport = report;
     let detailLabel;
     this.mainService.getData('reports', report._id!).then(res => {
-      res.weekly = this.normalWeekOrder(res.weekly);
-      res.weekly_count = this.normalWeekOrder(res.weekly_count);
+      res.weekly = this.normalWeekOrder(res.weekly || []);
+      res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
       this.DetailData = [{ data: res.weekly, label: 'Sipariş Tutarı' }, { data: res.weekly_count, label: 'Sipariş Adedi' }];
       this.DetailLoaded = true;
       (window as any).$('#reportDetail').modal('show');

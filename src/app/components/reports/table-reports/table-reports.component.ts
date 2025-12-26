@@ -126,8 +126,8 @@ export class TableReportsComponent implements OnInit {
     this.DetailLoaded = false;
     this.ItemReport = report;
     this.mainService.getData('reports', report._id!).then(res => {
-      res.weekly = this.normalWeekOrder(res.weekly);
-      res.weekly_count = this.normalWeekOrder(res.weekly_count);
+      res.weekly = this.normalWeekOrder(res.weekly || []);
+      res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
       this.DetailData = [{ data: res.weekly, label: 'Hesap Tutarı' }]; // { data: res.weekly_count, label: 'Hesap Adedi' }
       this.DetailLoaded = true;
       (window as any).$('#reportDetail').modal('show');
