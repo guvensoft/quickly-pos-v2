@@ -113,11 +113,15 @@ export class UserSettingsComponent implements OnInit {
         this.mainService.getAllBy('users', { role_id: id }).then(result => {
           const data = result.docs
           for (const prop in data) {
-            this.mainService.removeData('users', data[prop]._id).then((result) => {
-              this.mainService.getAllBy('reports', { connection_id: result.id }).then(res => {
-                this.mainService.removeData('reports', res.docs[0]._id);
+            if (data[prop]._id) {
+              this.mainService.removeData('users', data[prop]._id!).then((result) => {
+                this.mainService.getAllBy('reports', { connection_id: result.id }).then(res => {
+                  if (res.docs[0]?._id) {
+                    this.mainService.removeData('reports', res.docs[0]._id);
+                  }
+                });
               });
-            });
+            }
           }
           this.messageService.sendMessage('Grup ve Kullanıcılar Silindi.');
           this.selectedGroup = undefined;
@@ -151,8 +155,8 @@ export class UserSettingsComponent implements OnInit {
           this.mainService.getData('users_group', form.role_id).then(result => {
             const role = result.name;
             const schema = new User(form.name, role, form.role_id, form.pincode, 1, Date.now());
-            this.mainService.addData('users', schema).then((response) => {
-              this.mainService.addData('reports', new Report('User', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now())).then(res => {
+            this.mainService.addData('users', schema as any).then((response) => {
+              this.mainService.addData('reports', new Report('User', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now()) as any).then(res => {
                 this.logService.createLog(logType.USER_CREATED, res.id, `${form.name} Adlı Kullanıcı Oluşturuldu`);
               });
               this.messageService.sendMessage('Kullanıcı Oluşturuldu!');
@@ -184,8 +188,9 @@ export class UserSettingsComponent implements OnInit {
     this.onUpdate = true;
     this.selectedUser = id;
     this.mainService.getData('users', id!).then(result => {
-      delete result.role;
-      this.userForm.setValue(result);
+      const resultCopy = { ...result } as any;
+      delete resultCopy.role;
+      this.userForm.setValue(resultCopy);
       (window as any).$('#userModal').modal('show');
     });
   }
@@ -196,7 +201,9 @@ export class UserSettingsComponent implements OnInit {
       this.mainService.removeData('users', id!).then((result) => {
         this.logService.createLog(logType.USER_DELETED, result.id, `${this.userForm.value.name} Adlı Kullanıcı Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id }).then(res => {
-          this.mainService.removeData('reports', res.docs[0]._id);
+          if (res.docs[0]?._id) {
+            this.mainService.removeData('reports', res.docs[0]._id);
+          }
         });
         this.messageService.sendMessage('Kullanıcı Silindi!');
         this.fillData();

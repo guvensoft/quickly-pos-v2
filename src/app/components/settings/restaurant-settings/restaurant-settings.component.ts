@@ -47,12 +47,12 @@ export class RestaurantSettingsComponent implements OnInit {
   getTablesByFloor(id: string | null | undefined) {
     if (id) {
       this.mainService.getAllBy('tables', { floor_id: id }).then(result => {
-        this.tables = result.docs;
+        this.tables = result.docs as any;
         this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
       });
     } else {
       this.mainService.getAllBy('tables', {}).then(result => {
-        this.tables = result.docs;
+        this.tables = result.docs as any;
         this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
       });
     }
@@ -157,9 +157,9 @@ export class RestaurantSettingsComponent implements OnInit {
     const isOk = confirm('Masayı Silmek Üzeresiniz!');
     if (isOk) {
       this.mainService.removeData('tables', this.selectedTable!).then((result) => {
-        this.logService.createLog(logType.TABLE_DELETED, result._id, `${this.tableForm.value.name} adlı Masa Silindi.`);
+        this.logService.createLog(logType.TABLE_DELETED, result.id, `${this.tableForm.value.name} adlı Masa Silindi.`);
         this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
-          if (res.docs.length > 0)
+          if (res.docs.length > 0 && res.docs[0]._id)
             this.mainService.removeData('reports', res.docs[0]._id);
         });
         this.fillData();
@@ -174,18 +174,18 @@ export class RestaurantSettingsComponent implements OnInit {
   filterTables(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('tables', { name: { $regex: regexp } }).then(res => {
-      this.tables = res.docs;
+      this.tables = res.docs as any;
       this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
     });
   }
 
   fillData() {
     this.mainService.getAllBy('floors', {}).then((result) => {
-      this.floors = result.docs;
+      this.floors = result.docs as any;
       this.floors = this.floors.sort((a, b) => a.timestamp - b.timestamp);
     });
     this.mainService.getAllBy('tables', {}).then((result) => {
-      this.tables = result.docs;
+      this.tables = result.docs as any;
       this.tables = this.tables.sort((a, b) => a.name.localeCompare(b.name));
     });
   }

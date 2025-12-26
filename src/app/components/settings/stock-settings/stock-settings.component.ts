@@ -48,7 +48,7 @@ export class StockSettingsComponent implements OnInit {
 
   getStocks(id: string | undefined) {
     this.mainService.getAllBy('stocks', { sub_category: id }).then((result) => {
-      this.stocks = result.docs;
+      this.stocks = result.docs as any;
     });
   }
 
@@ -145,7 +145,9 @@ export class StockSettingsComponent implements OnInit {
           const data = result.docs
           if (data.length > 0) {
             for (const prop in data) {
-              this.mainService.removeData('stocks', data[prop]._id);
+              if (data[prop]._id) {
+                this.mainService.removeData('stocks', data[prop]._id!);
+              }
             }
           }
           this.messageService.sendMessage('Stok Kategorisi ve Bağlı Stoklar Silindi.');
@@ -159,17 +161,17 @@ export class StockSettingsComponent implements OnInit {
   filterStocks(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('stocks', { name: { $regex: regexp } }).then(res => {
-      this.stocks = res.docs;
+      this.stocks = res.docs as any;
       this.stocks = this.stocks.sort((a, b) => a.left_total - b.left_total);
     });
   }
 
   fillData() {
     this.mainService.getAllBy('stocks_cat', {}).then(result => {
-      this.categories = result.docs;
+      this.categories = result.docs as any;
     });
     this.mainService.getAllBy('stocks', {}).then(result => {
-      this.stocks = result.docs;
+      this.stocks = result.docs as any;
       this.stocks = this.stocks.sort((a, b) => b.timestamp - a.timestamp);
     })
   }
