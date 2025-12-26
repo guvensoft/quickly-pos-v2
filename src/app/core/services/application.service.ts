@@ -25,7 +25,7 @@ export class ApplicationService {
   constructor() {
     // İş mantığı AYNEN korundu
     this.settings.AppSettings.subscribe((data) => {
-      if (data) {
+      if (data && data.value && data.value.timeout !== undefined) {
         this.appLockTime = data.value.timeout;
         this.screenLock('start');
       }
@@ -38,7 +38,7 @@ export class ApplicationService {
 
   isActive(): void {
     this.settings.ActivationStatus.subscribe(res => {
-      if (res.value) {
+      if (res && res.value) {
         console.log('İşletme Hesabı Aktif.');
       } else {
         console.warn('İşletme Hesabı Aktif Değil.');
