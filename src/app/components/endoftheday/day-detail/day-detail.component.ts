@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Cashbox } from '../../../core/models/cashbox.model';
 import { ClosedCheck } from '../../../core/models/check.model';
@@ -22,8 +22,8 @@ import { BaseChartDirective } from 'ng2-charts';
   styleUrls: ['./day-detail.component.scss']
 })
 export class DayDetailComponent implements OnInit {
-  @Input('data') detailData!: EndDay;
-  @Input() printers: any;
+  detailData = input.required<EndDay>({ alias: 'data' });
+  printers = input<any>();
   oldBackupData!: Array<BackupData>;
   oldChecks: any;
   oldCashbox: any;
@@ -90,7 +90,7 @@ export class DayDetailComponent implements OnInit {
 
   ngOnInit() {
     // this.settingsService.getPrinters().subscribe(res => this.printers = res.value);
-    console.log(this.detailData, this.printers);
+    console.log(this.detailData(), this.printers());
 
     this.detailTitle = 'Genel Detaylar & Grafik';
     this.pieColors = [];
@@ -190,8 +190,9 @@ export class DayDetailComponent implements OnInit {
   }
 
   printEndday() {
-    if (this.printers && this.printers.length > 0) {
-      this.printerService.printEndDay(this.printers[0], this.detailData);
+    const printers = this.printers();
+    if (printers && printers.length > 0) {
+      this.printerService.printEndDay(printers[0], this.detailData());
     } else {
       console.warn('No printers available');
     }
@@ -208,11 +209,12 @@ export class DayDetailComponent implements OnInit {
   }
 
   fillData() {
+    const data = this.detailData();
     this.pieColors = [{ backgroundColor: ['#5cb85c', '#f0ad4e', '#5bc0de', '#d9534f'] }];
     this.pieLabels.push('Nakit', 'Kart', 'Kupon', 'İkram');
-    this.pieData.push(this.detailData.cash_total, this.detailData.card_total, this.detailData.coupon_total, this.detailData.free_total);
-    this.detailDay = new Date(this.detailData.timestamp).getDay();
-    this.electronService.readBackupData(this.detailData.data_file).then((result: Array<BackupData>) => {
+    this.pieData.push(data.cash_total, data.card_total, data.coupon_total, data.free_total);
+    this.detailDay = new Date(data.timestamp).getDay();
+    this.electronService.readBackupData(data.data_file).then((result: Array<BackupData>) => {
       if (result && Array.isArray(result) && result.length >= 4) {
         this.oldBackupData = result;
         this.oldChecks = this.oldBackupData[0];
