@@ -1,4 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal, Signal, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Observable, from, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import PouchDB from 'pouchdb-browser';
 import PouchDBFind from 'pouchdb-find';
 import PouchDBUpsert from 'pouchdb-upsert';
@@ -53,6 +56,16 @@ export class MainService {
   hostname!: string;
   db_prefix!: string;
   ajax_opts!: object;
+
+  // PHASE 1 - SIGNAL-BASED STATE MANAGEMENT
+  // Reactive state for tracking data loading, sync progress, and errors
+  private dataLoaded = signal(false);
+  private syncInProgress = signal(false);
+  private lastSyncError = signal<Error | null>(null);
+
+  // Computed signals for derived state
+  readonly isDataReady = computed(() => this.dataLoaded() && !this.syncInProgress());
+  readonly hasSyncError = computed(() => this.lastSyncError() !== null);
 
   constructor() {
     const db_opts: PouchDB.Configuration.DatabaseConfiguration = {
@@ -179,6 +192,85 @@ export class MainService {
       selector: $schema,
       limit: 10000
     }) as Promise<PouchDBFindResult<DatabaseModelMap[K]>>;
+  }
+
+  /**
+   * PHASE 1 - REACTIVE DATA LAYER
+   * Observable-based version of getAllBy for reactive patterns.
+   * Fetches documents from PouchDB and returns as Observable.
+   * Ensures proper error handling and type safety.
+   *
+   * @param db DatabaseName - Which database to query
+   * @param $schema Query selector
+   * @returns Observable<T[]> - Observable of typed documents
+   *
+   * @see MIGRATION_SUPERVISION.md - Phase 1, Task 1.3
+   */
+  getAllByObservable<T = PouchDBDocument>(
+    db: DatabaseName,
+    $schema?: Record<string, any>
+  ): Observable<T[]> {
+    if (!this.LocalDB[db]) {
+      this.lastSyncError.set(new Error(`Database ${db} not found`));
+      return of([]);
+    }
+
+    // Performance optimization: use allDocs for empty queries
+    if (!$schema || Object.keys($schema).length === 0) {
+      return from(this.LocalDB[db].allDocs({ include_docs: true })).pipe(
+        map((res: any) => {
+          const docs = res.rows
+            .map((row: any) => row.doc)
+            .filter((doc: any) => doc !== null);
+          return docs as T[];
+        }),
+        catchError(err => {
+          this.lastSyncError.set(err);
+          console.error(`MainService: Error fetching all docs from ${db}:`, err);
+          return of([]);
+        })
+      );
+    }
+
+    return from(
+      this.LocalDB[db].find({
+        selector: $schema,
+        limit: 10000
+      })
+    ).pipe(
+      map((res: PouchDBFindResult<any>) => {
+        if (res && res.docs && res.docs.length > 0) {
+          return res.docs as T[];
+        }
+        return [];
+      }),
+      catchError(err => {
+        this.lastSyncError.set(err);
+        console.error(`MainService: Error fetching from ${db}:`, err);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * PHASE 1 - REACTIVE DATA LAYER
+   * Signal version of getAllBy for direct Signal-based components.
+   * Returns a Signal that tracks the documents in the database.
+   *
+   * @param db DatabaseName
+   * @param $schema Query selector
+   * @returns Signal<T[]> - Reactive signal of documents
+   *
+   * @see MIGRATION_SUPERVISION.md - Phase 1, Task 1.3
+   */
+  getAllBySignal<T = PouchDBDocument>(
+    db: DatabaseName,
+    $schema?: Record<string, any>
+  ): Signal<T[]> {
+    return toSignal(
+      this.getAllByObservable<T>(db, $schema),
+      { initialValue: [] }
+    );
   }
 
   /**
