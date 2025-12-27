@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -27,9 +27,9 @@ export class UserSettingsComponent implements OnInit {
   readonly selectedUser = signal<string | undefined>(undefined);
   readonly onUpdate = signal<boolean>(false);
 
-  @ViewChild('userForm') userForm!: NgForm;
-  @ViewChild('groupForm') groupForm!: NgForm;
-  @ViewChild('groupDetailForm') groupDetailForm!: NgForm;
+  userForm = viewChild<NgForm>('userForm');
+  groupForm = viewChild<NgForm>('groupForm');
+  groupDetailForm = viewChild<NgForm>('groupDetailForm');
 
   constructor() { }
 
@@ -42,8 +42,8 @@ export class UserSettingsComponent implements OnInit {
     this.onUpdate.set(false);
     this.selectedGroup.set(undefined);
     this.selectedUser.set(undefined);
-    if (this.groupForm) this.groupForm.reset();
-    if (this.userForm) this.userForm.reset();
+    if (this.groupForm()) this.groupForm()!.reset();
+    if (this.userForm()) this.userForm()!.reset();
   }
 
   getGroup(id: string | undefined) {
@@ -59,8 +59,8 @@ export class UserSettingsComponent implements OnInit {
         Object.assign(data, data.auth);
         delete data.auth;
       }
-      if (this.groupDetailForm) {
-        this.groupDetailForm.form.patchValue(data);
+      if (this.groupDetailForm()) {
+        this.groupDetailForm()!.form.patchValue(data);
       }
     });
   }
@@ -216,8 +216,8 @@ export class UserSettingsComponent implements OnInit {
     this.mainService.getData('users', id).then(result => {
       const resultCopy = { ...result } as any;
       delete resultCopy.role;
-      if (this.userForm) {
-        this.userForm.form.patchValue(resultCopy);
+      if (this.userForm()) {
+        this.userForm()!.form.patchValue(resultCopy);
       }
       (window as any).$('#userModal').modal('show');
     });
@@ -228,7 +228,7 @@ export class UserSettingsComponent implements OnInit {
     const isOk = confirm('Kulanıcıyı Silmek Üzerisiniz. Bu işlem Geri Alınamaz.');
     if (isOk) {
       this.mainService.removeData('users', id).then((result) => {
-        const userName = this.userForm?.value?.name || 'Kullanıcı';
+        const userName = this.userForm()?.value?.name || 'Kullanıcı';
         this.logService.createLog(logType.USER_DELETED, result.id, `${userName} Adlı Kullanıcı Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id }).then(res => {
           if (res && res.docs && res.docs[0]?._id) {
