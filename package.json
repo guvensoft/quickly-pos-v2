@@ -81,8 +81,7 @@
     "stream-browserify": "3.0.0",
     "sweetalert": "2.1.2",
     "tether": "1.4.3",
-    "tslib": "2.8.1",
-    "zone.js": "0.16.0"
+    "tslib": "2.8.1"
   },
   "devDependencies": {
     "@angular-eslint/builder": "21.0.1",

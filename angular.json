@@ -30,7 +30,6 @@
             },
             "index": "src/index.html",
             "polyfills": [
-              "zone.js",
               "src/polyfills.ts"
             ],
             "tsConfig": "src/tsconfig.app.json",
@@ -98,8 +97,7 @@
             },
             "testing": {
               "polyfills": [
-                "zone.js",
-                "zone.js/testing"
+                "src/polyfills.ts"
               ]
             }
           }
