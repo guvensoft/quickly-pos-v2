@@ -8,6 +8,7 @@ import { ElectronService } from '../../../core/services/electron/electron.servic
 import { MessageService } from '../../../core/services/message.service';
 import { PrinterService } from '../../../core/services/printer.service';
 import { SettingsService } from '../../../core/services/settings.service';
+import { SignalValidatorService } from '../../../core/services/signal-validator.service';
 
 @Component({
   standalone: true,
@@ -22,6 +23,7 @@ export class ApplicationSettingsComponent implements OnInit {
   private readonly printerService = inject(PrinterService);
   private readonly electronService = inject(ElectronService);
   private readonly message = inject(MessageService);
+  private readonly validatorService = inject(SignalValidatorService);
 
   readonly restInfo = signal<any>(undefined);
   readonly restMap = signal<string | null>(null);
@@ -33,6 +35,12 @@ export class ApplicationSettingsComponent implements OnInit {
   readonly selectedPrinter = signal<any>(undefined);
   readonly choosenPrinter = signal<any>(undefined);
   readonly currentSection = signal<string>('AppSettings');
+
+  // Server settings validation signals
+  readonly serverUrl = signal<string>('');
+  readonly serverPort = signal<number>(3000);
+  readonly urlError = signal<string | null>(null);
+  readonly portError = signal<string | null>(null);
 
   // Computed properties for reactive state
   readonly isPrinterSelected = computed(() => {
@@ -62,6 +70,10 @@ export class ApplicationSettingsComponent implements OnInit {
   readonly canAddPrinter = computed(() => {
     const process = this.printerProcess();
     return process !== undefined && process !== null;
+  });
+
+  readonly isServerSettingsValid = computed(() => {
+    return !this.urlError() && !this.portError();
   });
 
   // Form references using Signal-based viewChild API
@@ -125,6 +137,37 @@ export class ApplicationSettingsComponent implements OnInit {
         }
       });
     }, { allowSignalWrites: true });
+
+    // Validate server URL
+    effect(() => {
+      const url = this.serverUrl();
+      if (!url) {
+        this.urlError.set('Sunucu URL Belirtmelisiniz');
+      } else if (!this.isValidUrl(url)) {
+        this.urlError.set('Geçersiz URL formatı (örn: http://localhost:3000)');
+      } else {
+        this.urlError.set(null);
+      }
+    });
+
+    // Validate server port
+    effect(() => {
+      const port = this.serverPort();
+      if (port < 1 || port > 65535) {
+        this.portError.set('Port 1 ile 65535 arasında olmalıdır');
+      } else {
+        this.portError.set(null);
+      }
+    });
+  }
+
+  private isValidUrl(url: string): boolean {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   getSettingsDetail(section: string) {
@@ -148,6 +191,16 @@ export class ApplicationSettingsComponent implements OnInit {
   }
 
   saveServerSettings(Form: NgForm) {
+    // Update validation signals from form
+    this.serverUrl.set(Form.value.url || '');
+    this.serverPort.set(Form.value.port || 3000);
+
+    // Check if server settings are valid
+    if (!this.isServerSettingsValid()) {
+      this.message.sendMessage('Lütfen sunucu ayarlarını kontrol ediniz.');
+      return false;
+    }
+
     this.settings.setAppSettings('ServerSettings', Form.value);
     this.message.sendMessage('Sunucu Ayarları Kaydediliyor.. Makina Yeniden Başlatılıyor.');
     setTimeout(() => {
@@ -281,6 +334,11 @@ export class ApplicationSettingsComponent implements OnInit {
     this.choosenPrinter.set(undefined);
     this.printerProcess.set(undefined);
     this.selectedPrinter.set(undefined);
+    // Clear server settings validation signals
+    this.serverUrl.set('');
+    this.serverPort.set(3000);
+    this.urlError.set(null);
+    this.portError.set(null);
   }
 
   fillData() {
