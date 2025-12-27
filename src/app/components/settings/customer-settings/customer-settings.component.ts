@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MainService } from '../../../core/services/main.service';
@@ -36,7 +36,7 @@ export class CustomerSettingsComponent implements OnInit {
   readonly credits = signal<Array<any>>([]);
   readonly creditsView = signal<Array<any>>([]);
 
-  @ViewChild('customerForm') customerForm!: NgForm;
+  customerForm = viewChild<NgForm>('customerForm');
   readonly checkDetail = signal<any>(undefined);
   readonly day = signal<number>(new Date().getDay());
   readonly printers = signal<any[]>([]);
@@ -55,7 +55,7 @@ export class CustomerSettingsComponent implements OnInit {
   setDefault() {
     this.onUpdate.set(false);
     this.selectedCustomer.set(undefined);
-    if (this.customerForm) this.customerForm.reset();
+    if (this.customerForm()) this.customerForm()!.reset();
   }
 
   addCustomer(customerForm: NgForm) {
@@ -118,8 +118,8 @@ export class CustomerSettingsComponent implements OnInit {
     this.selectedCustomer.set(id);
     this.mainService.getData('customers', id).then((result: any) => {
       delete result.role;
-      if (this.customerForm) {
-        this.customerForm.form.patchValue(result);
+      if (this.customerForm()) {
+        this.customerForm()!.form.patchValue(result);
       }
       (window as any).$('#customerModal').modal('show');
     });
@@ -129,7 +129,7 @@ export class CustomerSettingsComponent implements OnInit {
     const isOk = confirm('Müşteriyi Silmek Üzerisiniz. Bu işlem Geri Alınamaz.');
     if (isOk) {
       this.mainService.removeData('customers', id).then((result: any) => {
-        const customerName = this.customerForm ? this.customerForm.value.name : 'Müşteri';
+        const customerName = this.customerForm() ? this.customerForm()!.value.name : 'Müşteri';
         this.logService.createLog(logType.CUSTOMER_DELETED, result.id, `${customerName} Adlı Müşteri Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id! }).then((res: any) => {
           if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
