@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ElectronService } from '../../core/services/electron/electron.service';
 import { SettingsService } from '../../core/services/settings.service';
@@ -28,7 +28,7 @@ import { RestaurantSettingsComponent } from './restaurant-settings/restaurant-se
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
 })
-export class SettingsComponent implements OnInit, OnDestroy {
+export class SettingsComponent implements OnInit {
   private readonly electron = inject(ElectronService);
   private readonly settingsService = inject(SettingsService);
 
@@ -37,11 +37,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
   readonly logo = signal<string>(this.electron.appRealPath + '/data/customer.png');
 
   ngOnInit() {
-    this.settingsService.RestaurantInfo.subscribe(res => {
-      this.storeInfo.set(res.value);
-    })
-  }
-
-  ngOnDestroy() {
+    // Set up reactive effect for RestaurantInfo changes
+    effect(() => {
+      this.settingsService.RestaurantInfo.subscribe(res => {
+        this.storeInfo.set(res.value);
+      });
+    }, { allowSignalWrites: true });
   }
 }
