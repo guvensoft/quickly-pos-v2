@@ -41,8 +41,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (let item of endDayData; track item._id || $index; let i = $index) {
-            <tr (click)="getDetail(item)">
+            <tr *ngFor="let item of endDayData; let i = index" (click)="getDetail(item)">
               <td>{{i+1}}</td>
               <td>{{item.timestamp | date:'dd/M/y'}} <span class="pull-right">{{item.timestamp | date:'HH:mm'}} - {{item.data_file.split('.')[0] | date:'HH:mm'}} </span></td>
               @if (permissions?.end) {
@@ -51,7 +50,6 @@
               <td>{{item.check_count}} Adet</td>
               <!-- <td>{{item.owner | general:'users' | async}}</td> -->
             </tr>
-            }
           </tbody>
         </table>
         }
