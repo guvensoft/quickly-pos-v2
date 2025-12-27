@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, signal, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +16,7 @@ import { SettingsService } from '../../core/services/settings.service';
   styleUrls: ['./login.component.scss']
 })
 
-export class LoginComponent implements OnInit {
+export class LoginComponent {
   private readonly mainService = inject(MainService);
   private readonly messageService = inject(MessageService);
   private readonly authService = inject(AuthService);
@@ -29,14 +29,17 @@ export class LoginComponent implements OnInit {
   readonly user = signal<User | undefined>(undefined);
   readonly fastSelling = signal<boolean>(false);
 
-  ngOnInit() {
+  constructor() {
     this.authService.logout();
     this.pinInput.set('');
-    this.settingsService.AppSettings.subscribe(res => {
-      if (res) {
-        this.fastSelling.set(res.value.takeaway === 'Açık');
-      }
-    });
+
+    effect(() => {
+      this.settingsService.AppSettings.subscribe(res => {
+        if (res) {
+          this.fastSelling.set(res.value.takeaway === 'Açık');
+        }
+      });
+    }, { allowSignalWrites: true });
   }
 
   logIn() {
