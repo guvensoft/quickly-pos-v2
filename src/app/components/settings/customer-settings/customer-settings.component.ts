@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MainService } from '../../../core/services/main.service';
 import { MessageService } from '../../../core/services/message.service';
 import { LogService, logType } from '../../../core/services/log.service';
+import { SignalValidatorService } from '../../../core/services/signal-validator.service';
 import { NgForm } from '@angular/forms';
 import { Customer } from '../../../core/models/customer.model';
 import { Report } from '../../../core/models/report.model';
@@ -28,10 +29,23 @@ export class CustomerSettingsComponent implements OnInit {
   private readonly printerService = inject(PrinterService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly validatorService = inject(SignalValidatorService);
 
   readonly customers = signal<Array<Customer>>([]);
   readonly selectedCustomer = signal<string | undefined>(undefined);
   readonly onUpdate = signal<boolean>(false);
+
+  // Form field signals for validation
+  readonly customerName = signal<string>('');
+  readonly customerPhone = signal<string>('');
+  readonly customerAddress = signal<string>('');
+  readonly customerType = signal<string>('');
+
+  // Validation error signals
+  readonly nameError = signal<string | null>(null);
+  readonly phoneError = signal<string | null>(null);
+  readonly addressError = signal<string | null>(null);
+  readonly typeError = signal<string | null>(null);
 
   readonly credits = signal<Array<any>>([]);
   readonly creditsView = signal<Array<any>>([]);
@@ -68,6 +82,11 @@ export class CustomerSettingsComponent implements OnInit {
     return creditsMap;
   });
 
+  // Form validation computed property
+  readonly isCustomerFormValid = computed(() => {
+    return !this.nameError() && !this.phoneError() && !this.addressError() && !this.typeError();
+  });
+
   ngOnInit() {
     this.onUpdate.set(false);
 
@@ -93,31 +112,84 @@ export class CustomerSettingsComponent implements OnInit {
       }
     });
 
+    // Validate name field
+    effect(() => {
+      const name = this.customerName();
+      if (!name || !name.trim()) {
+        this.nameError.set('Müşteri Adı Belirtmelisiniz');
+      } else if (name.length < 2) {
+        this.nameError.set('Müşteri Adı en az 2 karakter olmalıdır');
+      } else {
+        this.nameError.set(null);
+      }
+    });
+
+    // Validate phone field
+    effect(() => {
+      const phone = this.customerPhone();
+      if (!phone || !phone.trim()) {
+        this.phoneError.set('Telefon Numarası Belirtmelisiniz');
+      } else {
+        const digitsOnly = phone.replace(/\D/g, '');
+        if (digitsOnly.length < 10) {
+          this.phoneError.set('Telefon Numarası en az 10 rakam olmalıdır');
+        } else {
+          this.phoneError.set(null);
+        }
+      }
+    });
+
+    // Validate address field
+    effect(() => {
+      const address = this.customerAddress();
+      if (!address || !address.trim()) {
+        this.addressError.set('Adres Belirtmelisiniz');
+      } else {
+        this.addressError.set(null);
+      }
+    });
+
+    // Validate type field
+    effect(() => {
+      const type = this.customerType();
+      if (!type) {
+        this.typeError.set('Müşteri Tipi Seçmelisiniz');
+      } else {
+        this.typeError.set(null);
+      }
+    });
+
     this.fillData();
   }
 
   setDefault() {
     this.onUpdate.set(false);
     this.selectedCustomer.set(undefined);
+    // Clear form field signals
+    this.customerName.set('');
+    this.customerPhone.set('');
+    this.customerAddress.set('');
+    this.customerType.set('');
+    // Clear validation errors
+    this.nameError.set(null);
+    this.phoneError.set(null);
+    this.addressError.set(null);
+    this.typeError.set(null);
     if (this.customerForm()) this.customerForm()!.reset();
   }
 
   addCustomer(customerForm: NgForm) {
     const form = customerForm.value;
-    if (form.name == undefined) {
-      this.messageService.sendMessage('Müşteri Adı Girmek Zorundasınız.');
-      return false;
-    }
-    if (form.type == undefined) {
-      this.messageService.sendMessage('Müşteri Tipi Seçmek Zorundasınız.');
-      return false;
-    }
-    if (form.phone_number == undefined) {
-      this.messageService.sendMessage('Telefon Numarası Girmek Zorundasınız.');
-      return false;
-    }
-    if (form.address == undefined) {
-      this.messageService.sendMessage('Adres Girmek Zorundasınız.');
+
+    // Update validation signals from form
+    this.customerName.set(form.name || '');
+    this.customerType.set(form.type || '');
+    this.customerPhone.set(form.phone_number || '');
+    this.customerAddress.set(form.address || '');
+
+    // Check if form is valid
+    if (!this.isCustomerFormValid()) {
+      this.messageService.sendMessage('Lütfen tüm zorunlu alanları doldurunuz.');
       return false;
     }
     form.phone_number = parseInt(form.phone_number);
@@ -162,6 +234,11 @@ export class CustomerSettingsComponent implements OnInit {
     this.selectedCustomer.set(id);
     this.mainService.getData('customers', id).then((result: any) => {
       delete result.role;
+      // Sync form data to validation signals
+      this.customerName.set(result.name || '');
+      this.customerPhone.set(result.phone_number || '');
+      this.customerAddress.set(result.address || '');
+      this.customerType.set(result.type || '');
       if (this.customerForm()) {
         this.customerForm()!.form.patchValue(result);
       }
