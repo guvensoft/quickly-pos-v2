@@ -32,7 +32,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
   providers: [SettingsService]
 })
 
-export class SellingScreenComponent implements OnInit, OnDestroy {
+export class SellingScreenComponent implements OnDestroy {
   private readonly db = inject(DatabaseService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly mainService = inject(MainService);
@@ -170,53 +170,62 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
     this.ownerRole.set(this.settingsService.getUser('type') as string);
     this.ownerId.set(this.settingsService.getUser('id') as string);
 
-    this.route.params.subscribe((params: any) => {
-      this.id.set(params['id']);
-      this.type.set(params['type']);
-      const currentId = this.id();
-      const currentType = this.type();
-      const ownerName = this.owner();
+    // route.params subscription wrapped in effect
+    effect(() => {
+      this.route.params.subscribe((params: any) => {
+        this.id.set(params['id']);
+        this.type.set(params['type']);
+        const currentId = this.id();
+        const currentType = this.type();
+        const ownerName = this.owner();
 
-      switch (currentType) {
-        case 'Normal':
-          this.check.set(new Check(currentId!, 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.NORMAL, CheckNo()));
-          this.getCheck({ table_id: currentId }).finally(() => {
-            if (this.check().status == CheckStatus.PASSIVE) {
-              (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+        switch (currentType) {
+          case 'Normal':
+            this.check.set(new Check(currentId!, 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.NORMAL, CheckNo()));
+            this.getCheck({ table_id: currentId }).finally(() => {
+              if (this.check().status == CheckStatus.PASSIVE) {
+                (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+              }
+            });
+            break;
+          case 'Fast':
+            if (currentId == 'New') {
+              this.check.set(new Check('Hızlı Satış', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.FAST, CheckNo()));
+            } else {
+              this.check.set(new Check('Hızlı Satış', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.FAST, CheckNo()));
+              this.getCheck({ _id: currentId }).finally(() => {
+                if (this.check().status == CheckStatus.PASSIVE) {
+                  (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                }
+              });
             }
-          });
-          break;
-        case 'Fast':
-          if (currentId == 'New') {
-            this.check.set(new Check('Hızlı Satış', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.FAST, CheckNo()));
-          } else {
-            this.check.set(new Check('Hızlı Satış', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.FAST, CheckNo()));
+            break;
+          case 'Order':
+            this.check.set(new Check('Paket Servis', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo()));
             this.getCheck({ _id: currentId }).finally(() => {
               if (this.check().status == CheckStatus.PASSIVE) {
                 (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
               }
             });
-          }
-          break;
-        case 'Order':
-          this.check.set(new Check('Paket Servis', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo()));
-          this.getCheck({ _id: currentId }).finally(() => {
-            if (this.check().status == CheckStatus.PASSIVE) {
-              (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
-            }
-          });
-          break;
-      }
-    });
+            break;
+        }
+      });
+    }, { allowSignalWrites: true });
 
-    this.settingsService.DateSettings.subscribe((res: any) => {
-      this.day.set(res.value.day);
-    });
+    // DateSettings subscription wrapped in effect
+    effect(() => {
+      this.settingsService.DateSettings.subscribe((res: any) => {
+        this.day.set(res.value.day);
+      });
+    }, { allowSignalWrites: true });
 
-    this.settingsService.AppSettings.subscribe((res: any) => {
-      const takeawayValue = res.value.takeaway;
-      this.takeaway.set(takeawayValue !== 'Kapalı');
-    });
+    // AppSettings subscription wrapped in effect
+    effect(() => {
+      this.settingsService.AppSettings.subscribe((res: any) => {
+        const takeawayValue = res.value.takeaway;
+        this.takeaway.set(takeawayValue !== 'Kapalı');
+      });
+    }, { allowSignalWrites: true });
 
     try {
       const userPermissions = localStorage.getItem('userPermissions');
@@ -226,7 +235,10 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
       this.permissions.set({});
     }
 
-    this.settingsService.getPrinters().subscribe((res: any) => this.printers.set(res.value));
+    // getPrinters subscription wrapped in effect
+    effect(() => {
+      this.settingsService.getPrinters().subscribe((res: any) => this.printers.set(res.value));
+    }, { allowSignalWrites: true });
 
     try {
       const selectedFloor = localStorage.getItem('selectedFloor');
@@ -236,48 +248,49 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error parsing selectedFloor:', error);
     }
-  }
 
-  ngOnInit() {
-    this.fillData();
-    const ch = this.mainService.LocalDB['checks'].changes({ since: 'now', live: true }).on('change', (change: any) => {
-      if (change.id == this.check_id()) {
-        if (!change.deleted) {
-          this.mainService.getData('checks', change.id).then((res: any) => {
-            this.check.set(res);
-            this.id.set(res.table_id);
-            if (res.status == CheckStatus.PROCESSING) {
-              this.router.navigate(['/store']);
-            }
-          })
-        } else {
-          this.router.navigate(['/store']);
+    // DB change listener subscription wrapped in effect
+    effect(() => {
+      this.fillData();
+      const ch = this.mainService.LocalDB['checks'].changes({ since: 'now', live: true }).on('change', (change: any) => {
+        if (change.id == this.check_id()) {
+          if (!change.deleted) {
+            this.mainService.getData('checks', change.id).then((res: any) => {
+              this.check.set(res);
+              this.id.set(res.table_id);
+              if (res.status == CheckStatus.PROCESSING) {
+                this.router.navigate(['/store']);
+              }
+            })
+          } else {
+            this.router.navigate(['/store']);
+          }
         }
-      }
-    });
-    this.changes.set(ch);
+      });
+      this.changes.set(ch);
 
-    this.zone.runOutsideAngular(() => {
-      const $ = (window as any).$;
-      if ($ && typeof $ === 'function') {
-        const productSpecsModal = $('#productSpecs');
-        if (productSpecsModal.length) {
-          productSpecsModal.on('hide.bs.modal', () => {
-            if (this.scalerListener && typeof this.scalerListener.unsubscribe === 'function') {
-              this.scalerListener.unsubscribe();
-            }
-          });
-        }
+      this.zone.runOutsideAngular(() => {
+        const $ = (window as any).$;
+        if ($ && typeof $ === 'function') {
+          const productSpecsModal = $('#productSpecs');
+          if (productSpecsModal.length) {
+            productSpecsModal.on('hide.bs.modal', () => {
+              if (this.scalerListener && typeof this.scalerListener.unsubscribe === 'function') {
+                this.scalerListener.unsubscribe();
+              }
+            });
+          }
 
-        const specsModal = $('#specsModal');
-        if (specsModal.length) {
-          specsModal.on('hide.bs.modal', () => {
-            this.selectedQuantity.set(1);
-          });
+          const specsModal = $('#specsModal');
+          if (specsModal.length) {
+            specsModal.on('hide.bs.modal', () => {
+              this.selectedQuantity.set(1);
+            });
+          }
         }
-      }
-    });
-    this.cdr.detectChanges();
+      });
+      this.cdr.detectChanges();
+    }, { allowSignalWrites: true });
   }
 
   ngOnDestroy() {
