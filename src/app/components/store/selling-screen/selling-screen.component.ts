@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, NgZone, ChangeDetectorRef, inject, OnDestroy, signal, computed, effect } from '@angular/core';
+import { Component, ElementRef, OnInit, NgZone, ChangeDetectorRef, inject, OnDestroy, signal, computed, effect, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonDirective } from '../../../shared/directives/button.directive';
 import { RouterModule } from '@angular/router';
@@ -160,9 +160,10 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
     return this.tables().find(t => t._id === this.selectedTableId());
   });
 
-  @ViewChild('productName') productFilterInput!: ElementRef;
-  @ViewChild('specsUnit') productUnit!: ElementRef;
-  @ViewChild('noteInput') noteInput!: ElementRef;
+  // Input element references using Signal-based viewChild API
+  productFilterInput = viewChild<ElementRef>('productName');
+  productUnit = viewChild<ElementRef>('specsUnit');
+  noteInput = viewChild<ElementRef>('noteInput');
 
   constructor() {
     this.owner.set(this.settingsService.getUser('name') as string);
@@ -369,7 +370,9 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
       });
       (window as any).$('#productSpecs').modal('show');
     } else {
-      this.productFilterInput.nativeElement.value = '';
+      if (this.productFilterInput()) {
+        this.productFilterInput()!.nativeElement.value = '';
+      }
       this.filterText.set('');
 
       const newProduct = new CheckProduct(product._id!, product.cat_id, product.name, product.price, '', 1, this.ownerId(), Date.now(), product.tax_value, product.barcode);
@@ -419,14 +422,15 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
     const productWS = this.productWithSpecs();
     const pStock = this.productStock();
     const newAmount = (amount * productWS.price) / pStock.amount;
-    const newNote = `${amount} ${this.productUnit.nativeElement.innerHTML}`;
+    const unitText = this.productUnit()?.nativeElement.innerHTML ?? 'Adet';
+    const newNote = `${amount} ${unitText}`;
     const newProduct = new CheckProduct(productWS._id, productWS.cat_id, productWS.name, newAmount, newNote, 1, this.ownerId(), Date.now(), productWS.tax_value, productWS.barcode);
 
     const currentCheck = { ...this.check() };
     currentCheck.total_price = (currentCheck.total_price || 0) + newProduct.price;
     const countFor = newAmount / productWS.price;
 
-    if (this.productUnit.nativeElement.innerHTML === 'Adet') {
+    if (unitText === 'Adet') {
       for (let index = 0; index < countFor; index++) {
         const repeatingProduct = new CheckProduct(productWS._id, productWS.cat_id, productWS.name, productWS.price, '', 1, this.ownerId(), Date.now(), productWS.tax_value, productWS.barcode);
         currentCheck.products.push(repeatingProduct);
@@ -835,8 +839,10 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
 
   addReadyNotes(note: string) {
     // this.check.products[this.selectedIndex].note += note + ', ';
-    this.noteInput.nativeElement.value += note + ', ';
-    this.noteInput.nativeElement.dispatchEvent(new Event('input'));
+    if (this.noteInput()) {
+      this.noteInput()!.nativeElement.value += note + ', ';
+      this.noteInput()!.nativeElement.dispatchEvent(new Event('input'));
+    }
   }
 
   makeGift() {
