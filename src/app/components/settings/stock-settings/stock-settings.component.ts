@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -27,10 +27,10 @@ export class StockSettingsComponent implements OnInit {
   readonly onUpdate = signal<boolean>(false);
   readonly units = signal<Array<string>>(['Gram', 'Mililitre', 'Adet']);
 
-  @ViewChild('stockCatForm') stockCatForm!: NgForm;
-  @ViewChild('stockCatDetailForm') stockCatDetailForm!: NgForm;
-  @ViewChild('stockForm') stockForm!: NgForm;
-  @ViewChild('stockDetailForm') stockDetailForm!: NgForm;
+  stockCatForm = viewChild<NgForm>('stockCatForm');
+  stockCatDetailForm = viewChild<NgForm>('stockCatDetailForm');
+  stockForm = viewChild<NgForm>('stockForm');
+  stockDetailForm = viewChild<NgForm>('stockDetailForm');
 
   constructor() {
     this.fillData();
@@ -41,15 +41,15 @@ export class StockSettingsComponent implements OnInit {
   }
 
   setDefault() {
-    if (this.stockCatForm) this.stockCatForm.reset();
-    if (this.stockForm) this.stockForm.reset();
+    if (this.stockCatForm()) this.stockCatForm()!.reset();
+    if (this.stockForm()) this.stockForm()!.reset();
     this.onUpdate.set(false);
   }
 
   getStockCatDetail(category: StockCategory) {
     this.selectedCat.set(category);
-    if (this.stockCatDetailForm) {
-      this.stockCatDetailForm.form.patchValue(category);
+    if (this.stockCatDetailForm()) {
+      this.stockCatDetailForm()!.form.patchValue(category);
     }
   }
 
@@ -84,8 +84,8 @@ export class StockSettingsComponent implements OnInit {
     this.onUpdate.set(true);
     if (!stock._id) return;
     this.mainService.getData('stocks', stock._id).then(result => {
-      if (this.stockForm) {
-        this.stockForm.form.patchValue(result);
+      if (this.stockForm()) {
+        this.stockForm()!.form.patchValue(result);
       }
       this.selectedStock.set(stock);
       (window as any).$('#stock').modal('show');
@@ -108,8 +108,8 @@ export class StockSettingsComponent implements OnInit {
       warning_limit: (currentStock.total * new_quantity) * 25 / 100
     };
 
-    if (this.stockForm) {
-      this.stockForm.form.patchValue(updatedStock);
+    if (this.stockForm()) {
+      this.stockForm()!.form.patchValue(updatedStock);
     }
 
     (window as any).$('#quantityModal').modal('hide');
