@@ -1,4 +1,4 @@
-import { Component, OnInit, viewChild, inject, signal, ElementRef } from '@angular/core';
+import { Component, viewChild, inject, signal, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpService } from '../../core/services/http.service';
 import { MainService } from '../../core/services/main.service';
@@ -17,11 +17,11 @@ import { Table } from '../../core/models/table.model';
   styleUrls: ['./admin.component.scss']
 })
 
-export class AdminComponent implements OnInit {
+export class AdminComponent {
   private readonly mainService = inject(MainService);
   private readonly httpService = inject(HttpService);
 
-  readonly databases = signal<Array<string>>(Object.keys(this.mainService.LocalDB));
+  readonly databases = signal<Array<string>>([]);
   readonly documents = signal<any>(undefined);
   readonly selectedDoc = signal<any>(undefined);
   readonly selectedDB = signal<string>("");
@@ -29,7 +29,9 @@ export class AdminComponent implements OnInit {
   readonly onCreate = signal<boolean>(false);
   editArea = viewChild<ElementRef>('editArea');
 
-  ngOnInit() {
+  constructor() {
+    // Initialize databases list after DI is ready
+    this.databases.set(Object.keys(this.mainService.LocalDB));
   }
 
   getEditAreaValue(): string {
