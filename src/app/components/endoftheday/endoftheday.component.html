@@ -1,5 +1,5 @@
 <div class="row">
-  <div class="col-lg-10 pr-0" [ngClass]="{'col-lg-12 pr-3': selectedEndDay !== undefined}">
+  <div class="col-lg-10 pr-0" [ngClass]="{'col-lg-12 pr-3': selectedEndDay() !== undefined}">
     <div class="card full-height">
       <div class="card-header">
         <div class="row">
@@ -7,19 +7,19 @@
             Gün Sonu
           </div>
           <div class="col-lg-3 pr-2 pl-0">
-            @if (selectedEndDay !== undefined) {
-            <button (click)="selectedEndDay = undefined;" class="btn btn-danger btn-sm btn-block">
+            @if (selectedEndDay() !== undefined) {
+            <button (click)="selectedEndDay.set(undefined)" class="btn btn-danger btn-sm btn-block">
               <i class="fa fa-backward" aria-hidden="true"></i> Geri Dön
             </button>
             }
           </div>
         </div>
       </div>
-      <div class="card-body p-0" [ngClass]="{'flow': selectedEndDay === undefined}">
-        @if (selectedEndDay !== undefined) {
-        <app-day-detail [printers]="printers" [data]="selectedEndDay"></app-day-detail>
+      <div class="card-body p-0" [ngClass]="{'flow': selectedEndDay() === undefined}">
+        @if (selectedEndDay() !== undefined) {
+        <app-day-detail [printers]="printers()" [data]="selectedEndDay()!"></app-day-detail>
         }
-        @if (selectedEndDay === undefined) {
+        @if (selectedEndDay() === undefined) {
         <table class="table table-striped  table-bordered table-hover">
           <thead class="thead-dark">
             <tr>
@@ -27,7 +27,7 @@
               <th width="34%">
                 <i class="fa fa-clock-o" aria-hidden="true"></i> Tarih
               </th>
-              @if (permissions?.end) {
+              @if (permissions().end) {
               <th width="20%">
                 <i class="fa fa-turkish-lira" aria-hidden="true"></i> Toplam Satış
               </th>
@@ -41,24 +41,26 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of endDayData; let i = index" (click)="getDetail(item)">
+            @for (item of endDayData(); track item._id; let i = $index) {
+            <tr (click)="getDetail(item)">
               <td>{{i+1}}</td>
               <td>{{item.timestamp | date:'dd/M/y'}} <span class="pull-right">{{item.timestamp | date:'HH:mm'}} - {{item.data_file.split('.')[0] | date:'HH:mm'}} </span></td>
-              @if (permissions?.end) {
+              @if (permissions().end) {
               <td>{{item.total_income | price }}</td>
               }
               <td>{{item.check_count}} Adet</td>
               <!-- <td>{{item.owner | general:'users' | async}}</td> -->
             </tr>
+            }
           </tbody>
         </table>
         }
       </div>
     </div>
   </div>
-  <div class="col-lg-2" [hidden]="selectedEndDay !== undefined || appType?.type === '1'">
-    <button [disabled]="isStarted" (click)="startDay()" class="btn btn-lg btn-success btn-block pt-5 pb-5">Gün Başı</button>
-    <button [disabled]="!isStarted" (click)="endDay()" class="btn btn-lg btn-danger btn-block pt-5 pb-5">Gün Sonu</button>
+  <div class="col-lg-2" [hidden]="selectedEndDay() !== undefined || appType()?.type === '1'">
+    <button [disabled]="isStarted()" (click)="startDay()" class="btn btn-lg btn-success btn-block pt-5 pb-5">Gün Başı</button>
+    <button [disabled]="!isStarted()" (click)="endDay()" class="btn btn-lg btn-danger btn-block pt-5 pb-5">Gün Sonu</button>
   </div>
 </div>
 
@@ -72,7 +74,7 @@
         <i class="fa fa-refresh fa-5x fa-spin" style="font-size:50vh" aria-hidden="true"></i>
       </div>
       <div class="modal-footer">
-        {{progress}}
+        {{progress()}}
       </div>
     </div>
   </div>
