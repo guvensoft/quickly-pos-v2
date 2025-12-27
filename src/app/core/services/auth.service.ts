@@ -2,6 +2,18 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { MessageService } from './message.service';
 import { MainService } from './main.service';
+import { UserDocument } from '../models/database.types';
+
+// PHASE 2 - Type Safety: JWT Payload interface
+interface JwtPayload {
+  [key: string]: unknown;
+}
+
+// PHASE 2 - Type Safety: Current User notification interface
+interface CurrentUserNotification {
+  name: string;
+  type: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -10,13 +22,18 @@ export class AuthService {
   private messageService = inject(MessageService);
   private mainService = inject(MainService);
 
-  private subject = new Subject<any>();
+  // PHASE 2 - Type Safety: Properly typed Subject
+  private subject = new Subject<CurrentUserNotification>();
 
   // ============================================
   // İş Mantığı - AYNEN KORUNDU
   // ============================================
 
-  parseJWT(token: string): any {
+  /**
+   * PHASE 2 - Type Safety: Parse JWT token
+   * Returns JwtPayload on success, null on failure
+   */
+  parseJWT(token: string): JwtPayload | null {
     try {
       const parts = token.split('.');
       if (parts.length < 2) {
@@ -24,7 +41,7 @@ export class AuthService {
       }
       const base64Url = parts[1];
       const base64 = base64Url.replace('-', '+').replace('_', '/');
-      return JSON.parse(atob(base64));
+      return JSON.parse(atob(base64)) as JwtPayload;
     } catch (error) {
       console.error('AuthService: Error parsing JWT', error);
       return null;
@@ -35,11 +52,15 @@ export class AuthService {
     localStorage.setItem('userType', userType);
   }
 
-  login(user: any): void {
+  /**
+   * PHASE 2 - Type Safety: Login user with proper typing
+   * Accepts Partial<UserDocument> to allow flexible user objects
+   */
+  login(user: Partial<UserDocument> & { name: string; role: string; role_id: string }): void {
     localStorage.setItem('userName', user.name);
     localStorage.setItem('userType', user.role);
     localStorage.setItem('userAuth', user.role_id);
-    localStorage.setItem('userID', user._id);
+    localStorage.setItem('userID', user._id || '');
     this.subject.next({ name: user.name, type: user.role });
   }
 
@@ -65,7 +86,11 @@ export class AuthService {
     }
   }
 
-  getCurrentUser(): Observable<any> {
+  /**
+   * PHASE 2 - Type Safety: Get current user observable
+   * Returns properly typed Observable of user notifications
+   */
+  getCurrentUser(): Observable<CurrentUserNotification> {
     return this.subject.asObservable();
   }
 
