@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -64,7 +64,7 @@ export class StoreReportsComponent implements OnInit {
   readonly day = signal<number>(0);
   readonly permissions = signal<any>({});
 
-  @ViewChild('checkEdit') editForm!: NgForm;
+  editForm = viewChild<NgForm>('checkEdit');
 
   constructor() {
     this.settingsService.DateSettings.subscribe(res => {
