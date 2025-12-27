@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CallerIDService } from '../../../core/services/caller-id.service';
@@ -25,7 +25,7 @@ export class CallerComponent implements OnInit {
   onUpdate: boolean = false;
   Date: any = Date;
 
-  @ViewChild('customerForm') customerForm!: NgForm;
+  customerForm = viewChild<NgForm>('customerForm');
 
   constructor(
     private router: Router,
@@ -62,7 +62,7 @@ export class CallerComponent implements OnInit {
   }
 
   saveCustomer(form?: any) {
-    const unknownCustomer = this.customerForm.value;
+    const unknownCustomer = this.customerForm()?.value;
     const customerWillCreate = new Customer(unknownCustomer.name, unknownCustomer.surname, this.call.number, unknownCustomer.address, '', CustomerType.FAR, Date.now())
     this.mainService.addData('customers', customerWillCreate as any).then(res => {
       const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner, `${unknownCustomer.name} | ${this.call.number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
