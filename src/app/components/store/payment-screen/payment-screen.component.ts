@@ -1,22 +1,17 @@
-import { Component, ElementRef, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, OnDestroy, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Check, CheckProduct, ClosedCheck, PaymentStatus, CheckStatus, CheckType, CheckNo } from '../../../core/models/check.model';
-import { Printer, PaymentMethod } from '../../../core/models/settings.model';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Check, CheckProduct, ClosedCheck, PaymentStatus, CheckNo } from '../../../core/models/check.model';
+import { PaymentMethod } from '../../../core/models/settings.model';
 import { MessageService } from '../../../core/services/message.service';
 import { PrinterService } from '../../../core/services/printer.service';
 import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
 import { SettingsService } from '../../../core/services/settings.service';
-import { Customer } from 'app/core/models/customer.model';
-
+import { DatabaseService } from '../../../core/services/database.service';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
-import { FormsModule } from '@angular/forms';
-import { signal, computed, inject, effect } from '@angular/core';
-import { DatabaseService } from '../../../core/services/database.service';
-import { DatabaseName } from '../../../core/models/database.types';
 
 @Component({
   standalone: true,
@@ -25,22 +20,19 @@ import { DatabaseName } from '../../../core/models/database.types';
   templateUrl: './payment-screen.component.html',
   styleUrls: ['./payment-screen.component.scss'],
 })
-
 export class PaymentScreenComponent implements OnInit, OnDestroy {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private settingsService = inject(SettingsService);
-  private mainService = inject(MainService);
-  private databaseService = inject(DatabaseService);
-  private printerService = inject(PrinterService);
-  private messageService = inject(MessageService);
-  private logService = inject(LogService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly settingsService = inject(SettingsService);
+  private readonly mainService = inject(MainService);
+  private readonly databaseService = inject(DatabaseService);
+  private readonly printerService = inject(PrinterService);
+  private readonly messageService = inject(MessageService);
+  private readonly logService = inject(LogService);
 
   readonly id = signal<string | undefined>(undefined);
-  readonly check_id = signal<string | undefined>(undefined);
   readonly check_type = signal<'Normal' | 'Fast' | 'Order'>('Normal');
 
-  // Base signals for state
   readonly numpad = signal<string>('');
   readonly isFirstTime = signal<boolean>(true);
   readonly payedPrice = signal<number>(0);
@@ -51,7 +43,6 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
   readonly onClosing = signal<boolean>(false);
   readonly payedShow = signal<boolean>(false);
 
-  // Computed views and derived state
   readonly check = computed(() => {
     const checkId = this.id();
     return this.databaseService.checks().find(c => c._id === checkId);
@@ -87,23 +78,23 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
     return this.payedShow() ? 'Ödemeleri Gizle' : 'Ödemeleri Göster';
   });
 
-  readonly userId = this.settingsService.getUser('id') as string;
-  readonly userName = this.settingsService.getUser('name') as string;
+  readonly userId = signal<string | undefined>(undefined);
+  readonly userName = signal<string | undefined>(undefined);
   readonly day = signal<number>(0);
   readonly permissions = signal<any>({});
 
-  readonly printers = this.databaseService.receipts; // Assuming receipts are printers if configured so, or update accordingly
+  readonly printers = this.databaseService.receipts;
   readonly customers = this.databaseService.customers;
 
-  readonly discounts = [5, 10, 15, 20, 25, 40];
-  readonly numboard = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [".", 0, "✔"]];
+  readonly discounts = signal([5, 10, 15, 20, 25, 40]);
+  readonly numboard = signal([[1, 2, 3], [4, 5, 6], [7, 8, 9], [".", 0, "✔"]]);
 
-  readonly paymentMethods = [
+  readonly paymentMethods = signal([
     new PaymentMethod('Nakit', 'Nakit Ödeme', '#5cb85c', 'fa-money', 1, 1),
     new PaymentMethod('Kart', 'Kredi veya Banka Kartı', '#f0ad4e', 'fa-credit-card', 2, 1),
     new PaymentMethod('Kupon', 'İndirim Kuponu veya Yemek Çeki', '#5bc0de', 'fa-bookmark', 3, 1),
     new PaymentMethod('İkram', 'İkram Hesap', '#c9302c', 'fa-handshake-o', 4, 1)
-  ];
+  ]);
 
   @ViewChild('discountInput') discountInput!: ElementRef;
   @ViewChild('customerInput') customerInput!: ElementRef;
@@ -112,6 +103,9 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
   constructor() {
     this.route.params.subscribe(params => {
       this.id.set(params['id']);
+      if (params['type']) {
+        this.check_type.set(params['type']);
+      }
     });
 
     try {
@@ -122,8 +116,13 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
     }
 
     this.settingsService.DateSettings.subscribe((res: any) => {
-      this.day.set(res.value.day);
+      if (res && res.value) {
+        this.day.set(res.value.day);
+      }
     });
+
+    this.userId.set(this.settingsService.getUser('id') as string);
+    this.userName.set(this.settingsService.getUser('name') as string);
 
     effect(() => {
       const c = this.check();
@@ -136,7 +135,9 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.settingsService.getAppSettings().subscribe((res: any) => {
-      this.askForPrint.set(res.value.ask_print_check === 'Sor');
+      if (res && res.value) {
+        this.askForPrint.set(res.value.ask_print_check === 'Sor');
+      }
     });
   }
 
@@ -157,8 +158,6 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
     const c = this.check();
     if (!c) return [];
     const willPay = this.productsWillPay();
-    // Use an index or unique property to filter if references might break, 
-    // but for now let's hope the local mutation of productsWillPay holds the correct refs during a single session.
     return c.products.filter(p => p.status === 2 && !willPay.includes(p));
   });
 
@@ -168,7 +167,7 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
 
   payProducts(method: string) {
     if (this.discountAmount() > 0) {
-      this.logService.createLog(logType.DISCOUNT, this.userId, `${this.table()} Hesabına ${this.discountAmount()} TL tutarında indirim yapıldı.`);
+      this.logService.createLog(logType.DISCOUNT, this.userId() || '', `${this.table()} Hesabına ${this.discountAmount()} TL tutarında indirim yapıldı.`);
     }
 
     const c = this.check();
@@ -180,24 +179,23 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
       this.onClosing.set(true);
       let newPayment: PaymentStatus = undefined!;
       const willPay = [...this.productsWillPay()];
-      const payPrice = this.payedPrice() + (this.discount() ? this.discountAmount() : 0);
-
-      const isAnyEqual = willPay.some(obj => obj.price === payPrice);
-      const isAnyGreat = willPay.some(obj => obj.price > payPrice);
-      const isAnyLittle = willPay.some(obj => obj.price < payPrice);
+      let activePayPrice = this.payedPrice();
+      if (this.discount()) {
+        activePayPrice += this.discountAmount();
+      }
 
       if (this.changePrice() < 0) {
-        let activePayPrice = this.payedPrice();
-        if (this.discount()) {
-          activePayPrice += this.discountAmount();
-        }
+        const isAnyEqual = willPay.some(obj => obj.price === activePayPrice);
+        const isAnyGreat = willPay.some(obj => obj.price > activePayPrice);
+        const isAnyLittle = willPay.some(obj => obj.price < activePayPrice);
 
         if (isAnyEqual) {
           const indexOfEqual = willPay.findIndex(obj => obj.price === activePayPrice);
           if (indexOfEqual > -1) {
             const equalProduct = willPay[indexOfEqual];
-            newPayment = new PaymentStatus(this.userName, method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), [equalProduct]);
+            newPayment = new PaymentStatus(this.userName() || '', method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), [equalProduct]);
             willPay.splice(indexOfEqual, 1);
+            this.productsWillPay.set(willPay);
           }
         } else if (isAnyGreat) {
           const sortedProducts = [...willPay].sort((a: any, b: any) => b.price - a.price);
@@ -205,11 +203,12 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
           if (greatOne) {
             const greatOneCopy = { ...greatOne };
             greatOneCopy.price = activePayPrice;
-            newPayment = new PaymentStatus(this.userName, method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), [greatOneCopy]);
+            newPayment = new PaymentStatus(this.userName() || '', method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), [greatOneCopy]);
             greatOne.price -= activePayPrice;
+            this.productsWillPay.set(willPay);
           }
         } else if (isAnyLittle) {
-          newPayment = new PaymentStatus(this.userName, method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), []);
+          newPayment = new PaymentStatus(this.userName() || '', method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), []);
           let priceCount = activePayPrice;
           let willRemove = 0;
           const sorted = [...willPay].sort((a: any, b: any) => b.price - a.price);
@@ -228,17 +227,14 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
               }
             }
           });
-          // Note: Splice logic might need care if we sorted willPay. 
-          // Re-assigning willPay from the modified sorted products.
           this.productsWillPay.set(sorted.slice(willRemove));
         }
 
         if (newPayment) {
-          this.productsWillPay.set(willPay); // Update signal
           this.numpad.set((this.priceWillPay()).toFixed(2).toString());
         }
       } else {
-        newPayment = new PaymentStatus(this.userName, method, this.currentAmount(), this.discountAmount(), Date.now(), willPay);
+        newPayment = new PaymentStatus(this.userName() || '', method, this.currentAmount(), this.discountAmount(), Date.now(), willPay);
         this.productsWillPay.set([]);
       }
 
@@ -278,7 +274,7 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
     if (c.payment_flow !== undefined && c.payment_flow.length > 0) {
       const realMethod = method;
       method = 'Parçalı';
-      const lastPayment = new PaymentStatus(this.userName, realMethod, this.currentAmount(), this.discountAmount(), Date.now(), willPayProds);
+      const lastPayment = new PaymentStatus(this.userName() || '', realMethod, this.currentAmount(), this.discountAmount(), Date.now(), willPayProds);
 
       const checkUpdate = { ...c };
       checkUpdate.payment_flow.push(lastPayment);
@@ -287,10 +283,10 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
       total_discounts = checkUpdate.payment_flow.reduce((acc, obj) => acc + (obj.discount || 0), 0);
       const total_price = checkUpdate.payment_flow.reduce((acc, obj) => acc + (obj.amount || 0), 0);
 
-      checkWillClose = new ClosedCheck(c.table_id, total_price, total_discounts, this.userName, c.note, c.status, c.products, Date.now(), c.type, method, checkUpdate.payment_flow, undefined, c.occupation);
+      checkWillClose = new ClosedCheck(c.table_id, total_price, total_discounts, this.userName() || '', c.note, c.status, c.products, Date.now(), c.type, method, checkUpdate.payment_flow, undefined, c.occupation);
     } else {
       total_discounts = this.discountAmount();
-      checkWillClose = new ClosedCheck(c.table_id, this.currentAmount(), total_discounts, this.userName, c.note, c.status, willPayProds, Date.now(), c.type, method, undefined, undefined, c.occupation);
+      checkWillClose = new ClosedCheck(c.table_id, this.currentAmount(), total_discounts, this.userName() || '', c.note, c.status, willPayProds, Date.now(), c.type, method, undefined, undefined, c.occupation);
     }
 
     if (this.askForPrint()) {
@@ -327,8 +323,8 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
 
     if (c.payment_flow !== undefined) {
       let paymentMethod;
-      (c.payment_flow.length > 0) ? paymentMethod = 'Parçalı' : paymentMethod = c.payment_flow[0].method;
-      const checkWillClose = new ClosedCheck(c.table_id, c.discount, 0, this.userName, '', c.status, c.products, Date.now(), c.type, paymentMethod, c.payment_flow, undefined, c.occupation);
+      (c.payment_flow.length > 1) ? paymentMethod = 'Parçalı' : (c.payment_flow.length === 1 ? paymentMethod = c.payment_flow[0].method : paymentMethod = 'Belirsiz');
+      const checkWillClose = new ClosedCheck(c.table_id, c.discount, 0, this.userName() || '', '', c.status, c.products, Date.now(), c.type, paymentMethod, c.payment_flow, undefined, c.occupation);
       this.updateSellingReport(paymentMethod);
       if (c.type === 1) {
         this.updateTableReport(c, paymentMethod);
@@ -349,8 +345,8 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
         if (c.type === 1) {
           this.mainService.updateData('tables', c.table_id, { status: 1 });
         }
-        this.mainService.removeData('checks', c._id!).then((res: any) => {
-          if (res.ok) {
+        this.mainService.removeData('checks', c._id!).then((result: any) => {
+          if (result.ok) {
             (window as any).$ ? (window as any).$('#otherOptions').modal('hide') : null;
             this.router.navigate(['/store']);
           }
@@ -377,6 +373,7 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
   }
 
   divideWillPay(division: number) {
+    if (division <= 0) return;
     this.payedPrice.set(this.priceWillPay() / division);
     this.numpad.set(this.payedPrice().toFixed(2).toString());
     (window as any).$ ? (window as any).$('#calculator').modal('hide') : null;
@@ -408,6 +405,7 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
 
   getPayment(number: number) {
     this.payedPrice.update(prev => prev + number);
+    this.numpad.set(this.payedPrice().toString());
   }
 
   pushKey(key: any) {
@@ -428,6 +426,7 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
     this.payedPrice.set(0);
     this.discount.set(undefined);
     this.discountAmount.set(0);
+    this.isFirstTime.set(true);
   }
 
   printCheck() {
@@ -509,3 +508,4 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
     }
     this.mainService.updateData('reports', updated._id, updated);
   }
+}

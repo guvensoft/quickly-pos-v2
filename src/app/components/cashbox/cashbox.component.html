@@ -11,7 +11,7 @@
               </td>
               <td width="94%">
                 <b>Faliyet Gelirleri</b>
-                <span class="pull-right">Toplam: {{sellingIncomes | price }}</span>
+                <span class="pull-right">Toplam: {{sellingIncomes() | price }}</span>
               </td>
             </tr>
           </thead>
@@ -29,36 +29,42 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let cash of cashboxData; let i=index" (click)="updateData(cash)" [ngClass]="{'table-danger': cash.type === 'Gider', 'table-success': cash.type === 'Gelir'}">
+            @for (cash of cashboxData(); track cash._id) {
+            <tr (click)="updateData(cash)"
+              [ngClass]="{'table-danger': cash.type === 'Gider', 'table-success': cash.type === 'Gelir'}">
               <td>
-                <i class="fa" [ngClass]="{'fa-arrow-up': cash.type === 'Gider' , 'fa-arrow-down': cash.type === 'Gelir'}"></i>
+                <i class="fa"
+                  [ngClass]="{'fa-arrow-up': cash.type === 'Gider' , 'fa-arrow-down': cash.type === 'Gelir'}"></i>
               </td>
               <td>{{cash.description}}</td>
               <td>{{cash.user}}</td>
               <td>{{cash.timestamp | date:'HH:mm'}}</td>
-              <td>{{cash.cash + cash.card + cash.coupon  | price}}</td>
+              <td>{{cash.cash + cash.card + cash.coupon | price}}</td>
             </tr>
+            }
           </tbody>
         </table>
       </div>
       <div class="card-footer">
         <div class="row">
           <div class="col-lg-4">
-            <h4 class="text-success">Gelir: {{incomes | price}}</h4>
+            <h4 class="text-success">Gelir: {{incomes() | price}}</h4>
           </div>
           <div class="col-lg-4 text-center">
-            <h4 class="text-danger">Gider: {{outcomes | price}}</h4>
+            <h4 class="text-danger">Gider: {{outcomes() | price}}</h4>
           </div>
           <div class="col-lg-4">
-            <h4 class="pull-right text-primary">Toplam: {{leftTotal | price}}</h4>
+            <h4 class="pull-right text-primary">Toplam: {{leftTotal() | price}}</h4>
           </div>
         </div>
       </div>
     </div>
   </div>
   <div id="sidebarHolder" class="col-lg-2">
-    <button (click)="type = 'Gelir'; setDefault();" data-toggle="modal" data-target="#cashboxModal" class="btn btn-lg btn-success btn-block pt-5 pb-5">Gelir Ekle</button>
-    <button (click)="type = 'Gider'; setDefault();" data-toggle="modal" data-target="#cashboxModal" class="btn btn-lg btn-danger btn-block pt-5 pb-5">Gider Ekle</button>
+    <button (click)="type.set('Gelir'); setDefault();" data-toggle="modal" data-target="#cashboxModal"
+      class="btn btn-lg btn-success btn-block pt-5 pb-5">Gelir Ekle</button>
+    <button (click)="type.set('Gider'); setDefault();" data-toggle="modal" data-target="#cashboxModal"
+      class="btn btn-lg btn-danger btn-block pt-5 pb-5">Gider Ekle</button>
   </div>
 </div>
 
@@ -66,17 +72,19 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">{{type}}</h5>
+        <h5 class="modal-title">{{type()}}</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <form #cashboxForm="ngForm" (ngSubmit)="addData(cashboxForm)">
         <div class="modal-body">
-          <div *ngIf="onUpdate">
+          @if (onUpdate()) {
+          <div>
             <input type="hidden" name="_id" ngModel />
             <input type="hidden" name="_rev" ngModel />
           </div>
+          }
           <input type="hidden" name="timestamp" class="form-control form-control-lg" ngModel>
           <input type="hidden" name="user" class="form-control form-control-lg" ngModel>
           <input id="type" type="hidden" name="type" ngModel>
@@ -124,7 +132,10 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-          <button *ngIf="onUpdate" type="button" (click)="removeData(selectedData._id)" class="btn btn-danger btn-lg" data-dismiss="modal"> <i class="fa fa-times" aria-hidden="true"></i> Kaydı Sil</button>
+          @if (onUpdate()) {
+          <button type="button" (click)="removeData(selectedData()?._id!)" class="btn btn-danger btn-lg"
+            data-dismiss="modal"> <i class="fa fa-times" aria-hidden="true"></i> Kaydı Sil</button>
+          }
           <button type="submit" class="btn btn-primary btn-lg">
             <i class="fa fa-check" aria-hidden="true"></i> Kaydet</button>
         </div>

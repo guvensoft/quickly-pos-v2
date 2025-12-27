@@ -79,12 +79,13 @@
                     </div>
                     }
                   </div>
-                  @if ((check()?.discount ?? 0) > 0) {
+                  @if (check(); as c) {
+                  @if (c.discount > 0) {
                   <div class="card-footer p-1">
                     <p class="pr-1 pl-1 mt-2">
                       <strong>
                         Ödenen Miktar:
-                        <span class="pull-right">{{check()?.discount | price }} </span>
+                        <span class="pull-right">{{c.discount | price }} </span>
                       </strong>
                     </p>
                     <button (click)="togglePayed()"
@@ -96,9 +97,9 @@
                     </button>
                   </div>
                   }
-                  @if ((check()?.discount ?? 0) > 0 && payedShow()) {
+                  @if (c.discount > 0 && payedShow()) {
                   <div class="card-body check-flow p-2 payed-things">
-                    @for (payment of check()?.payment_flow; track $index) {
+                    @for (payment of c.payment_flow; track $index) {
                     <div class="mb-2 payedLayer">
                       <p class="mb-0">{{payment.method}}
                         <small>( {{payment.owner}} - {{payment.timestamp | date:'HH:mm'}} )</small>
@@ -131,6 +132,7 @@
                     </div>
                     }
                   </div>
+                  }
                   }
                 </div>
               </div>
@@ -215,7 +217,7 @@
                 </div>
               </div>
               <div class="card-footer">
-                @for (keys of numboard; track $index) {
+                @for (keys of numboard(); track $index) {
                 <div class="row mb-1">
                   @for (key of keys; track key) {
                   <div class="col-lg-4 pr-1 pl-1">
@@ -259,7 +261,7 @@
             </div>
           </div>
           <div class="col-lg-1 pl-1 pr-0">
-            @for (method of paymentMethods; track method.name) {
+            @for (method of paymentMethods(); track method.name) {
             <button
               [disabled]="currentAmount() === 0 || payedPrice() === 0 || (currentAmount() === 0 && productsWillPay().length === 0)"
               (click)="payProducts(method.name)" class="btn btn-block btn-secondary sellButton"
@@ -307,7 +309,7 @@
           </div>
         </div>
         <div class="row mt-4 pr-2 pl-2">
-          @for (item of discounts; track item) {
+          @for (item of discounts(); track item) {
           <div class="col-lg-4 mb-2 pr-1 pl-1">
             <button type="button" (click)="setDiscount(item)"
               class="btn btn-primary btn-block btn-lg btn-discount">{{item}}
