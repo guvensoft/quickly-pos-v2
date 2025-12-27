@@ -12,6 +12,33 @@
 [![Star on GitHub][github-star-badge]][github-star]
 [![Tweet][twitter-badge]][twitter]
 
+---
+
+## 🚀 ANGULAR 5 → ANGULAR 21 MIGRATION IN PROGRESS
+
+**Status:** Active Migration | **Branch:** `claude/migrate-angular-5-to-21-fCbW8`
+
+| Phase | Status | Progress | Details |
+|-------|--------|----------|---------|
+| **Phase 1:** Infrastructure & Zoneless | ✅ **COMPLETE** | 100% | Zoneless enabled, Signal wrapper added |
+| **Phase 2:** Reactive Data Layer | 🟡 In Progress | 5% | MainService methods conversion in progress |
+| **Phase 3:** UI Component Fidelity | ❌ Not Started | 0% | Next after Phase 2 completion |
+| **Phase 4:** Business Logic | ❌ Not Started | 0% | Service Reactive pattern conversion |
+| **Phase 5:** Verification | ❌ Not Started | 0% | Pending completion of Phases 1-4 |
+
+**📚 Migration Documentation:**
+- **[MIGRATION_SUPERVISION.md](./MIGRATION_SUPERVISION.md)** - Detailed supervision plan with weekly breakdown
+- **[PHASE_CHECKLIST.md](./PHASE_CHECKLIST.md)** - Quick reference checklist for each phase
+- **[Angular 21 Modernizasyon Yol Haritası]** - Architecture & FAZ details (user-provided)
+- **[Angular 21 Geliştirici Kılavuzu]** - TypeScript 5.9 & RxJS 7.8.2 best practices (user-provided)
+
+**🎯 Next Steps:**
+1. **Phase 1:** Enable Zoneless mode in `src/main.ts`
+2. **Phase 2:** Implement Signal wrapper for MainService
+3. See [MIGRATION_SUPERVISION.md](./MIGRATION_SUPERVISION.md) for detailed task breakdown
+
+---
+
 # Introduction
 
 Bootstrap and package your project with Angular 21 and Electron 39 (Typescript + SASS + Hot Reload) for creating Desktop applications.

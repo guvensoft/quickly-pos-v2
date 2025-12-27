@@ -1,3 +1,4 @@
+import { enableProdMode, provideZonelessChangeDetection } from '@angular/core';
 import { enableProdMode, provideExperimentalZonelessChangeDetection } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import * as jQuery from 'jquery';
@@ -38,6 +39,7 @@ if (APP_CONFIG.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
+    provideZonelessChangeDetection(), provideHttpClient(),
     provideExperimentalZonelessChangeDetection(), provideHttpClient(),
     provideTranslateService({
       loader: provideTranslateHttpLoader({
