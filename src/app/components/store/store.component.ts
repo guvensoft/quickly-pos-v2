@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, OnDestroy, signal, computed, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PricePipe } from '../../shared/pipes/price.pipe';
@@ -28,7 +28,7 @@ export interface CountData { product: string; count: number; total: number; };
   styleUrls: ['./store.component.scss']
 })
 
-export class StoreComponent implements OnInit, OnDestroy {
+export class StoreComponent implements OnDestroy {
   private readonly dbService = inject(DatabaseService);
   private readonly mainService = inject(MainService);
   private readonly router = inject(Router);
@@ -46,8 +46,8 @@ export class StoreComponent implements OnInit, OnDestroy {
   readonly selectedFloorId = signal<string | null>(null);
   readonly section = signal<string>('Masalar');
   readonly filterText = signal<string>('');
-  readonly owner = signal<string>(this.settingsService.getUser('name') as string);
-  readonly ownerId = signal<string>(this.settingsService.getUser('id') as string);
+  readonly owner = signal<string>('');
+  readonly ownerId = signal<string>('');
   readonly closedDelivery = signal<any[]>([]);
 
   // Computed views (Reactive!)
@@ -106,9 +106,12 @@ export class StoreComponent implements OnInit, OnDestroy {
         this.selectedFloorId.set(null);
       }
     }
-  }
 
-  ngOnInit() {
+    // Initialize user info from service (after DI is ready)
+    this.owner.set(this.settingsService.getUser('name') as string);
+    this.ownerId.set(this.settingsService.getUser('id') as string);
+
+    // Fetch closed delivery data
     this.fetchClosedDelivery();
   }
 
