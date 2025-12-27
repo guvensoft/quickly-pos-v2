@@ -1,8 +1,6 @@
-import { Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgForm } from '@angular/forms';
-import { Subscription } from 'rxjs';
 import { KeyboardService } from '../../../core/services/keyboard.service';
 import { SettingsService } from '../../../core/services/settings.service';
 
@@ -15,132 +13,142 @@ import { SettingsService } from '../../../core/services/settings.service';
 })
 
 export class KeyboardComponent implements OnInit {
-  keytype!: Array<any>;
-  keyboard!: Array<any>;
-  numboard!: Array<any>;
-  keyIndex!: number;
+  private readonly keyboardService = inject(KeyboardService);
+  private readonly settings = inject(SettingsService);
+
+  // Keyboard layout configuration (initialized in constructor)
+  private readonly keyboardLayout = [
+    [["1", "!"], ["2", "@"], ["3", "#"], ["4", "$"], ["5", "%"], ["6", "¨"], ["7", "&"], ["8", "*"], ["9", "("], ["0", ")"], ["*", "?"], ["-", "_"], ["◂", "◂"]],
+    [["q", "Q"], ["w", "W"], ["e", "E"], ["r", "R"], ["t", "T"], ["y", "Y"], ["u", "U"], ["ı", "I"], ["o", "O"], ["p", "P"], ["ğ", "Ğ"], ["ü", "Ü"], ["▴", "▴"]],
+    [["a", "A"], ["s", "S"], ["d", "D"], ["f", "F"], ["g", "G"], ["h", "H"], ["j", "J"], ["k", "K"], ["l", "L"], ["ş", "Ş"], ["i", "İ"], [",", ";"], ["▾", "▾"]],
+    [["\\", "|"], ["z", "Z"], ["x", "X"], ["c", "C"], ["v", "V"], ["b", "B"], ["n", "N"], ["m", "M"], ["ö", "Ö"], ["ç", "Ç"], [".", ":"], ["/", "/"], ["✔", "✔"]],
+    [[" ", " "]]
+  ];
+
+  private readonly numboardLayout = [
+    [[1], [2], [3]],
+    [[4], [5], [6]],
+    [[7], [8], [9]],
+    [["."], [0], ["◂"]],
+    [["✔"]]
+  ];
+
+  // Signal properties
+  readonly keytype = signal<Array<any>>(this.keyboardLayout);
+  readonly keyIndex = signal<number>(0);
+  readonly selectedInput = signal<ElementRef | undefined>(undefined);
+  readonly onAir = signal<boolean>(false);
+  readonly onNumb = signal<boolean>(false);
+  readonly keyboardInput = signal<string>("");
+  readonly inputType = signal<string>("");
+  readonly keyboardStatus = signal<boolean>(false);
+  readonly placeholder = signal<string>("");
 
   // Computed properties for each key row
-  get keyRow0() { return this.keytype?.[0] ?? []; }
-  get keyRow1() { return this.keytype?.[1] ?? []; }
-  get keyRow2() { return this.keytype?.[2] ?? []; }
-  get keyRow3() { return this.keytype?.[3] ?? []; }
-  get keyRow4() { return this.keytype?.[4] ?? []; }
-  signalListener!: Subscription;
-  selectedInput!: ElementRef;
-  selectedForm!: NgForm;
-  onAir!: boolean;
-  onNumb!: boolean;
-  keyboardInput: any;
-  inputType!: string;
-  keyboardStatus!: boolean;
-  placeholder!: string;
-
-  constructor(private keyboardService: KeyboardService, private settings: SettingsService, private renderer: Renderer2) {
-    this.keyIndex = 0;
-    this.keyboard = [
-      [["1", "!"], ["2", "@"], ["3", "#"], ["4", "$"], ["5", "%"], ["6", "\u00a8"], ["7", "&"], ["8", "*"], ["9", "("], ["0", ")"], ["*", "?"], ["-", "_"], ["◂", "◂"]],
-      [["q", "Q"], ["w", "W"], ["e", "E"], ["r", "R"], ["t", "T"], ["y", "Y"], ["u", "U"], ["ı", "I"], ["o", "O"], ["p", "P"], ["ğ", "Ğ"], ["ü", "Ü"], ["▴", "▴"]],
-      [["a", "A"], ["s", "S"], ["d", "D"], ["f", "F"], ["g", "G"], ["h", "H"], ["j", "J"], ["k", "K"], ["l", "L"], ["ş", "Ş"], ["i", "İ"], [",", ";"], ["▾", "▾"]],
-      [["\\", "|"], ["z", "Z"], ["x", "X"], ["c", "C"], ["v", "V"], ["b", "B"], ["n", "N"], ["m", "M"], ["ö", "Ö"], ["ç", "Ç"], [".", ":"], ["/", "/"], ["✔", "✔"]],
-      [[" ", " "]]
-    ];
-    this.numboard = [
-      [[1], [2], [3]],
-      [[4], [5], [6]],
-      [[7], [8], [9]],
-      [["."], [0], ["◂"]],
-      [["✔"]]
-    ];
-    this.keyboardInput = "";
-    this.placeholder = "";
-  }
+  readonly keyRow0 = computed(() => this.keytype()?.[0] ?? []);
+  readonly keyRow1 = computed(() => this.keytype()?.[1] ?? []);
+  readonly keyRow2 = computed(() => this.keytype()?.[2] ?? []);
+  readonly keyRow3 = computed(() => this.keytype()?.[3] ?? []);
+  readonly keyRow4 = computed(() => this.keytype()?.[4] ?? []);
 
   ngOnInit() {
-    this.settings.AppSettings.subscribe(res => {
-      if (res) {
-        if (res.value.keyboard == 'Açık') {
-          this.keyboardStatus = true;
+    // Set up reactive effect for AppSettings changes
+    effect(() => {
+      this.settings.AppSettings.subscribe(res => {
+        if (res) {
+          this.keyboardStatus.set(res.value.keyboard === 'Açık');
         } else {
-          this.keyboardStatus = false;
+          this.keyboardStatus.set(false);
         }
-      } else {
-        this.keyboardStatus = false;
-      }
-    });
+      });
+    }, { allowSignalWrites: true });
 
-    this.onAir = false;
-    this.keyboardService.listenInput().subscribe(element => {
-      this.selectedInput = element;
-      this.selectedForm = element.nativeElement.form;
-      this.inputType = element.nativeElement.type;
-      this.keyboardInput = element.nativeElement.value;
-      this.placeholder = element.nativeElement.placeholder;
-      switch (this.inputType) {
-        case "text":
-          this.keytype = this.keyboard;
-          this.onNumb = false;
-          break;
-        case "number":
-          this.keytype = this.numboard;
-          this.onNumb = true;
-          break;
-        case "password":
-          this.keytype = this.numboard;
-          this.onNumb = true;
-          break;
-        default:
-          this.keytype = this.keyboard;
-          this.onNumb = false;
-          break;
-      }
-    });
-    this.keyboardService.listenKeyboard().subscribe(signal => {
-      if (signal == "Open") {
-        this.onAir = true;
-        const dBody = document.getElementsByTagName("body");
-      } else if (signal == "Close") {
-        this.onAir = false;
-      }
-    });
+    // Set up reactive effect for keyboard input changes
+    effect(() => {
+      this.keyboardService.listenInput().subscribe(element => {
+        this.selectedInput.set(element);
+        const nativeElement = element.nativeElement;
+        this.inputType.set(nativeElement.type);
+        this.keyboardInput.set(nativeElement.value);
+        this.placeholder.set(nativeElement.placeholder);
+
+        switch (nativeElement.type) {
+          case "text":
+            this.keytype.set(this.keyboardLayout);
+            this.onNumb.set(false);
+            break;
+          case "number":
+            this.keytype.set(this.numboardLayout);
+            this.onNumb.set(true);
+            break;
+          case "password":
+            this.keytype.set(this.numboardLayout);
+            this.onNumb.set(true);
+            break;
+          default:
+            this.keytype.set(this.keyboardLayout);
+            this.onNumb.set(false);
+            break;
+        }
+      });
+    }, { allowSignalWrites: true });
+
+    // Set up reactive effect for keyboard open/close signals
+    effect(() => {
+      this.keyboardService.listenKeyboard().subscribe(signal => {
+        if (signal === "Open") {
+          this.onAir.set(true);
+        } else if (signal === "Close") {
+          this.onAir.set(false);
+        }
+      });
+    }, { allowSignalWrites: true });
   }
 
   pushKey(key: string) {
+    const currentInput = this.selectedInput();
+    if (!currentInput) return;
+
     switch (key) {
       case "▴":
-        this.keyIndex = 1;
+        this.keyIndex.set(1);
         break;
       case "▾":
-        this.keyIndex = 0;
+        this.keyIndex.set(0);
         break;
       case "◂":
-        this.keyboardInput = this.keyboardInput.slice(0, -1);
+        this.keyboardInput.set(this.keyboardInput().slice(0, -1));
         break;
       case "✔":
         this.closeKeyboard();
         break;
       default:
-        if (this.inputType == "number") {
-          this.selectedInput.nativeElement.type = "text";
-          this.keyboardInput += key;
+        if (this.inputType() === "number") {
+          currentInput.nativeElement.type = "text";
+          this.keyboardInput.set(this.keyboardInput() + key);
         } else {
-          this.keyboardInput += key;
+          this.keyboardInput.set(this.keyboardInput() + key);
         }
         break;
     }
-    this.selectedInput.nativeElement.value = this.keyboardInput;
-    this.selectedInput.nativeElement.dispatchEvent(new Event('keyup'));
-    this.selectedInput.nativeElement.dispatchEvent(new Event('input'));
-    this.selectedInput.nativeElement.dispatchEvent(new Event('keydown'));
+
+    const nativeElement = currentInput.nativeElement;
+    nativeElement.value = this.keyboardInput();
+    nativeElement.dispatchEvent(new Event('keyup'));
+    nativeElement.dispatchEvent(new Event('input'));
+    nativeElement.dispatchEvent(new Event('keydown'));
   }
 
   closeKeyboard() {
-    this.keyboardInput = "";
-    this.keyIndex = 0;
-    if (this.onNumb) {
-      this.selectedInput.nativeElement.type = 'number';
+    this.keyboardInput.set("");
+    this.keyIndex.set(0);
+    const currentInput = this.selectedInput();
+    if (currentInput && this.onNumb()) {
+      currentInput.nativeElement.type = 'number';
     }
-    this.keyboardService.triggerKeyboard('Close', this.selectedInput);
+    if (currentInput) {
+      this.keyboardService.triggerKeyboard('Close', currentInput);
+    }
   }
 
 }
