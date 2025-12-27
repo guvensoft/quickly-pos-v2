@@ -8,7 +8,8 @@ import {
     CheckDocument,
     CategoryDocument,
     ProductDocument,
-    FloorDocument
+    FloorDocument,
+    SubCategoryDocument
 } from '../models/database.types';
 
 @Injectable({
@@ -22,6 +23,7 @@ export class DatabaseService {
     readonly orders = signal<OrderDocument[]>([]);
     readonly checks = signal<CheckDocument[]>([]);
     readonly categories = signal<CategoryDocument[]>([]);
+    readonly sub_categories = signal<SubCategoryDocument[]>([]);
     readonly products = signal<ProductDocument[]>([]);
     readonly floors = signal<FloorDocument[]>([]);
     readonly receipts = signal<any[]>([]);
@@ -48,6 +50,7 @@ export class DatabaseService {
         this.watchDatabase('orders', this.orders);
         this.watchDatabase('checks', this.checks);
         this.watchDatabase('categories', this.categories);
+        this.watchDatabase('sub_categories', this.sub_categories);
         this.watchDatabase('products', this.products);
         this.watchDatabase('floors', this.floors);
         this.watchDatabase('receipts', this.receipts);
@@ -59,11 +62,12 @@ export class DatabaseService {
      * Refreshes all core signals by fetching from PouchDB
      */
     async refreshAll() {
-        const [tables, orders, checks, categories, products, floors, receipts, customers, reports] = await Promise.all([
+        const [tables, orders, checks, categories, sub_categories, products, floors, receipts, customers, reports] = await Promise.all([
             this.mainService.getAllBy('tables', {}),
             this.mainService.getAllBy('orders', {}),
             this.mainService.getAllBy('checks', {}),
             this.mainService.getAllBy('categories', {}),
+            this.mainService.getAllBy('sub_categories', {}),
             this.mainService.getAllBy('products', {}),
             this.mainService.getAllBy('floors', {}),
             this.mainService.getAllBy('receipts', {}),
@@ -75,6 +79,7 @@ export class DatabaseService {
         this.orders.set(orders.docs || []);
         this.checks.set(checks.docs || []);
         this.categories.set(categories.docs || []);
+        this.sub_categories.set(sub_categories.docs || []);
         this.products.set(products.docs || []);
         this.floors.set(floors.docs || []);
         this.receipts.set(receipts.docs || []);

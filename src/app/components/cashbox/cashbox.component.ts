@@ -84,7 +84,7 @@ export class CashboxComponent implements OnInit {
     this.onUpdate.set(true);
     this.selectedData.set(data);
     this.type.set(data.type);
-    this.mainService.getData('cashbox', data._id).then(res => {
+    this.mainService.getData('cashbox', data._id!).then(res => {
       this.logService.createLog(logType.CASHBOX_UPDATED, (res as any).id, `Kasa '${data.description}' adlı ${this.type()}'i güncellendi.`);
       if (this.cashboxForm) {
         this.cashboxForm.setValue(res);
@@ -114,7 +114,7 @@ export class CashboxComponent implements OnInit {
   fillData() {
     this.sellingIncomes.set(0);
     this.mainService.getAllBy('cashbox', {}).then(result => {
-      const data = result.docs as Cashbox[];
+      const data = result.docs as unknown as Cashbox[];
       data.sort((a, b) => b.timestamp - a.timestamp);
       this.cashboxData.set(data);
 

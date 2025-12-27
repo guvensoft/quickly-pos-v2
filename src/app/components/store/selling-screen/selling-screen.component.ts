@@ -64,7 +64,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
   readonly subCatsView = computed(() => {
     const catId = this.selectedCatId();
     if (!catId) return [];
-    return this.sub_categories().filter(s => s.cat_id === catId);
+    return this.sub_categories().filter((s: any) => s.cat_id === catId);
   });
 
   readonly productsView = computed(() => {
@@ -89,7 +89,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
   });
 
   readonly table = computed(() => {
-    return this.tables().find(t => t._id === this.id()) || {};
+    return this.tables().find(t => t._id === this.id()) || {} as any;
   });
 
   readonly tablesView = computed(() => {
@@ -470,7 +470,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
 
     if (currentCheck.status !== CheckStatus.PASSIVE) {
       if (currentCheck.type == CheckType.NORMAL) {
-        this.mainService.updateData('tables', this.id(), { status: 2 });
+        this.mainService.updateData('tables', this.id() as string, { status: 2 });
       }
       this.mainService.updateData('checks', this.check_id(), currentCheck).then((res: any) => {
         if (res.ok) {
@@ -501,7 +501,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
     } else {
       currentCheck.status = CheckStatus.READY;
       if (currentCheck.type == CheckType.NORMAL) {
-        this.mainService.updateData('tables', this.id(), { status: 2, timestamp: Date.now() });
+        this.mainService.updateData('tables', this.id() as string, { status: 2, timestamp: Date.now() });
       }
       this.mainService.addData('checks', currentCheck).then((res: any) => {
         if (res.ok) {
@@ -1232,7 +1232,7 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
 
   splitProduct() {
     const selectedProd = this.selectedProduct();
-    const selectedTab = this.selectedTable();
+    const selectedTab = this.selectedTable() as any;
     const currentCheck = { ...this.check() };
     const ownerName = this.owner();
 
@@ -1359,9 +1359,9 @@ export class SellingScreenComponent implements OnInit, OnDestroy {
   }
 
   splitTable() {
-    const selectedTab = this.selectedTable();
+    const selectedTab = this.selectedTable() as any;
     const currentCheck = { ...this.check() };
-    const currentTable = this.table();
+    const currentTable = this.table() as any;
 
     if (!selectedTab) return;
 

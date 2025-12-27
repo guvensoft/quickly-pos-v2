@@ -277,13 +277,13 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
       const lastPayment = new PaymentStatus(this.userName() || '', realMethod, this.currentAmount(), this.discountAmount(), Date.now(), willPayProds);
 
       const checkUpdate = { ...c };
-      checkUpdate.payment_flow.push(lastPayment);
+      checkUpdate.payment_flow!.push(lastPayment);
       checkUpdate.discount += this.priceWillPay();
 
-      total_discounts = checkUpdate.payment_flow.reduce((acc, obj) => acc + (obj.discount || 0), 0);
-      const total_price = checkUpdate.payment_flow.reduce((acc, obj) => acc + (obj.amount || 0), 0);
+      total_discounts = checkUpdate.payment_flow!.reduce((acc, obj) => acc + (obj.discount || 0), 0);
+      const total_price = checkUpdate.payment_flow!.reduce((acc, obj) => acc + (obj.amount || 0), 0);
 
-      checkWillClose = new ClosedCheck(c.table_id, total_price, total_discounts, this.userName() || '', c.note, c.status, c.products, Date.now(), c.type, method, checkUpdate.payment_flow, undefined, c.occupation);
+      checkWillClose = new ClosedCheck(c.table_id, total_price, total_discounts, this.userName() || '', c.note, c.status, c.products, Date.now(), c.type, method, checkUpdate.payment_flow!, undefined, c.occupation);
     } else {
       total_discounts = this.discountAmount();
       checkWillClose = new ClosedCheck(c.table_id, this.currentAmount(), total_discounts, this.userName() || '', c.note, c.status, willPayProds, Date.now(), c.type, method, undefined, undefined, c.occupation);

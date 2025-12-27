@@ -211,7 +211,7 @@ export class TableReportsComponent implements OnInit {
       });
     });
     this.mainService.getAllBy('floors', {}).then(res => {
-      this.floorsList.set(res.docs as Floor[]);
+      this.floorsList.set(res.docs as unknown as Floor[]);
     })
   }
 
