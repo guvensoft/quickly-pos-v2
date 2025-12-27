@@ -118,7 +118,7 @@ export class StoreComponent implements OnInit, OnDestroy {
     // Combine with current delivery checks
     const deliveryChecks = this.checks().filter(obj => obj.type === CheckType.ORDER);
     deliveryChecks.forEach(check => {
-      delivery.unshift(check);
+      delivery.unshift(check as any);
     });
     this.closedDelivery.set(delivery);
   }
