@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpService } from '../../core/services/http.service';
 import { MainService } from '../../core/services/main.service';
@@ -24,7 +24,7 @@ export class AdminComponent implements OnInit {
   selectedDB!: string;
   storeReports!: Array<any>;
   onCreate!: boolean;
-  @ViewChild('editArea') editArea!: ElementRef;
+  editArea = viewChild<ElementRef>('editArea');
 
   constructor(private mainService: MainService, private httpService: HttpService) {
     this.databases = Object.keys(this.mainService.LocalDB);
@@ -72,8 +72,8 @@ export class AdminComponent implements OnInit {
       this.mainService.updateData(db_name as any, newDocument._id, newDocument).then((res: any) => {
         (window as any).$('#docModal').modal('hide');
         console.log('Döküman Güncellendi');
-        if (this.editArea) {
-          this.editArea.nativeElement.value = '';
+        if (this.editArea()) {
+          this.editArea()!.nativeElement.value = '';
         }
         this.selectedDoc = undefined!;
         this.showDatabase(this.selectedDB);
@@ -95,8 +95,8 @@ export class AdminComponent implements OnInit {
         if (res.ok) {
           (window as any).$('#docModal').modal('hide');
           console.log('Döküman Oluşturuldu');
-          if (this.editArea) {
-            this.editArea.nativeElement.value = '';
+          if (this.editArea()) {
+            this.editArea()!.nativeElement.value = '';
           }
           this.selectedDoc = undefined!;
           this.showDatabase(this.selectedDB);
