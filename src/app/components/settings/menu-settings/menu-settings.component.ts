@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -44,12 +44,12 @@ export class MenuSettingsComponent implements OnInit {
   readonly printers = signal<Array<Printer>>([]);
   readonly productSpecs = signal<Array<ProductSpecs>>([]);
 
-  @ViewChild('catDetails') catDetails!: NgForm;
-  @ViewChild('subCatForm') subCatForm!: NgForm;
-  @ViewChild('productForm') productForm!: NgForm;
-  @ViewChild('categoryForm') categoryForm!: NgForm;
-  @ViewChild('recipesForm') recipesForm!: NgForm;
-  @ViewChild('productTypeSelect') productTypeSelect!: ElementRef;
+  catDetails = viewChild<NgForm>('catDetails');
+  subCatForm = viewChild<NgForm>('subCatForm');
+  productForm = viewChild<NgForm>('productForm');
+  categoryForm = viewChild<NgForm>('categoryForm');
+  recipesForm = viewChild<NgForm>('recipesForm');
+  productTypeSelect = viewChild<ElementRef>('productTypeSelect');
 
   constructor() {
     this.fillData();
@@ -68,8 +68,8 @@ export class MenuSettingsComponent implements OnInit {
 
   getCategory(category: any) {
     this.selectedCat.set(category);
-    if (this.catDetails) {
-      this.catDetails.form.patchValue(category);
+    if (this.catDetails()) {
+      this.catDetails()!.form.patchValue(category);
     }
     this.mainService.getAllBy('sub_categories', { cat_id: category._id }).then((res: any) => {
       this.subCats.set(res.docs);
@@ -192,8 +192,8 @@ export class MenuSettingsComponent implements OnInit {
   updateSubCategory(subCat: SubCategory) {
     this.selectedSubCat.set(subCat);
     this.onUpdate.set(true);
-    if (this.subCatForm) {
-      this.subCatForm.form.patchValue(subCat);
+    if (this.subCatForm()) {
+      this.subCatForm()!.form.patchValue(subCat);
     }
     (window as any).$('#subCatModal').modal('show');
   }
@@ -204,7 +204,7 @@ export class MenuSettingsComponent implements OnInit {
       if (cat) this.getCategory(cat);
       this.onUpdate.set(false);
     });
-    if (this.subCatForm) this.subCatForm.reset();
+    if (this.subCatForm()) this.subCatForm()!.reset();
     (window as any).$('#subCatModal').modal('hide');
   }
 
@@ -252,8 +252,8 @@ export class MenuSettingsComponent implements OnInit {
         }
       });
     }
-    if (this.recipesForm) this.recipesForm.reset();
-    if (this.productForm) this.productForm.reset();
+    if (this.recipesForm()) this.recipesForm()!.reset();
+    if (this.productForm()) this.productForm()!.reset();
     (window as any).$('#productModal').modal('hide');
     return true;
   }
@@ -284,8 +284,8 @@ export class MenuSettingsComponent implements OnInit {
         result.notes = '';
       }
       this.productType.set(result.type);
-      if (this.productForm) {
-        this.productForm.form.patchValue(result);
+      if (this.productForm()) {
+        this.productForm()!.form.patchValue(result);
       }
       (window as any).$('#productModal').modal('show');
     });
@@ -312,7 +312,7 @@ export class MenuSettingsComponent implements OnInit {
     const id = this.selectedId();
     if (isOk && id) {
       this.mainService.removeData('products', id).then((result) => {
-        const productName = this.productForm ? this.productForm.value.name : 'Ürün';
+        const productName = this.productForm() ? this.productForm()!.value.name : 'Ürün';
         this.logService.createLog(logType.PRODUCT_DELETED, result.id, `${productName} adlı Ürün Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id }).then((res: any) => {
           if (res.docs.length > 0)
@@ -338,7 +338,7 @@ export class MenuSettingsComponent implements OnInit {
           this.removeRecipe('old', recipeWillLost.id);
         } else {
           this.productType.set(1);
-          if (this.productTypeSelect) this.productTypeSelect.nativeElement.value = 1;
+          if (this.productTypeSelect()) this.productTypeSelect()!.nativeElement.value = 1;
         }
       }
       this.productRecipe.update(prev => prev.slice(0, -1));
@@ -449,10 +449,10 @@ export class MenuSettingsComponent implements OnInit {
     this.onUpdate.set(false);
     this.hasRecipe.set(false);
 
-    if (this.productForm) this.productForm.reset();
-    if (this.catDetails) this.catDetails.reset();
-    if (this.categoryForm) this.categoryForm.reset();
-    if (this.subCatForm) this.subCatForm.reset();
+    if (this.productForm()) this.productForm()!.reset();
+    if (this.catDetails()) this.catDetails()!.reset();
+    if (this.categoryForm()) this.categoryForm()!.reset();
+    if (this.subCatForm()) this.subCatForm()!.reset();
   }
 
   fillData() {
