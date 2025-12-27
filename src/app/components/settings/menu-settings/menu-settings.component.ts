@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -51,6 +51,32 @@ export class MenuSettingsComponent implements OnInit {
   recipesForm = viewChild<NgForm>('recipesForm');
   productTypeSelect = viewChild<ElementRef>('productTypeSelect');
 
+  // Computed properties for reactive filtering and derived state
+  readonly productsByCategory = computed(() => {
+    const catId = this.selectedCat()?._id;
+    if (!catId) return this.products();
+    return this.products().filter(p => p.cat_id === catId);
+  });
+
+  readonly subCategoriesBySelected = computed(() => {
+    const catId = this.selectedCat()?._id;
+    if (!catId) return [];
+    return this.sub_categories().filter(s => s.cat_id === catId);
+  });
+
+  readonly totalRecipeItems = computed(() => {
+    return this.productRecipe().length + this.oldRecipes().length;
+  });
+
+  readonly canAddRecipe = computed(() => {
+    return this.productType() === 1;
+  });
+
+  readonly productTypeLabel = computed(() => {
+    const type = this.productType();
+    return type === 1 ? 'Hazırlanmış' : 'Manuel';
+  });
+
   constructor() {
     this.fillData();
   }
@@ -64,6 +90,26 @@ export class MenuSettingsComponent implements OnInit {
     this.recipe.set([]);
     this.onUpdate.set(false);
     this.hasRecipe.set(false);
+
+    // Reset recipe when product type changes to 2 (manual mode)
+    effect(() => {
+      const type = this.productType();
+      if (type === 2) {
+        this.productSpecs.set([]);
+      }
+    }, { allowSignalWrites: true });
+
+    // Sync recipe validation when recipe items change
+    effect(() => {
+      const recipeItems = this.productRecipe();
+      const oldItems = this.oldRecipes();
+      const totalItems = recipeItems.length + oldItems.length;
+      if (totalItems === 0) {
+        this.hasRecipe.set(false);
+      } else {
+        this.hasRecipe.set(true);
+      }
+    }, { allowSignalWrites: true });
   }
 
   getCategory(category: any) {
