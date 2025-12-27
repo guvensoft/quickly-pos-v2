@@ -55,6 +55,11 @@ export interface PouchDBAllDocsResult<T extends PouchDBDocument> {
     }>;
 }
 
+/** Delete Operation Result */
+export interface DeleteResult {
+    ok: boolean;
+}
+
 // ============================================
 // DATABASE NAMES (String Literal Union)
 // ============================================

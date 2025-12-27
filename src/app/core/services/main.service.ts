@@ -1,6 +1,6 @@
 import { Injectable, signal, Signal, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Observable, from, of } from 'rxjs';
+import { Observable, from, of, lastValueFrom } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import PouchDB from 'pouchdb-browser';
 import PouchDBFind from 'pouchdb-find';
@@ -16,7 +16,8 @@ import {
   PouchDBDocument,
   PouchDBResponse,
   PouchDBFindResult,
-  PouchDBAllDocsResult
+  PouchDBAllDocsResult,
+  DeleteResult
 } from '../models/database.types';
 
 // PouchDB plugin'lerini yükle
@@ -274,11 +275,37 @@ export class MainService {
   }
 
   /**
-   * ID ile tek doküman getir (Tip güvenli)
+   * PHASE 2 - REACTIVE DATA LAYER
+   * Fetch a single document by ID with proper error handling.
+   * Converted to include Signal-based error state management.
    * İÇ MANTIK: AYNEN KORUNDU
+   *
+   * @param db DatabaseName - Which database to query
+   * @param id Document ID to fetch
+   * @returns Promise<T> - Promise resolving to typed document
+   *
+   * @see MIGRATION_SUPERVISION.md - Phase 2, Task 2.1
    */
   getData<K extends DatabaseName>(db: K, id: string): Promise<DatabaseModelMap[K]> {
-    return this.LocalDB[db].get(id) as Promise<DatabaseModelMap[K]>;
+    if (!this.LocalDB[db]) {
+      const error = new Error(`Database ${db} not found`);
+      this.lastSyncError.set(error);
+      return Promise.reject(error);
+    }
+
+    if (!id) {
+      const error = new Error(`Document ID is required for getData`);
+      this.lastSyncError.set(error);
+      return Promise.reject(error);
+    }
+
+    return this.LocalDB[db].get(id).then((doc: any) => {
+      return doc as DatabaseModelMap[K];
+    }).catch(err => {
+      this.lastSyncError.set(err);
+      console.error(`MainService: Error fetching document ${id} from ${db}:`, err);
+      throw err;
+    });
   }
 
   getBulk(db: string, docs: Array<string>): Promise<any> {
@@ -382,20 +409,66 @@ export class MainService {
     return this.LocalDB[db].bulkDocs(docs);
   }
 
-  removeAll(db: string, $schema: any): Promise<any> {
-    return this.getAllBy(db as any, $schema).then(res => {
-      if (!res || !res.docs || res.docs.length === 0) {
-        return [];
-      }
-      return res.docs.map((obj: any) => {
-        return { _id: obj._id, _rev: obj._rev, _deleted: true };
-      });
-    }).then(deleteDocs => {
-      if (deleteDocs.length === 0) {
-        return { ok: true } as any;
-      }
-      return this.LocalDB[db].bulkDocs(deleteDocs);
-    });
+  /**
+   * PHASE 2 - REACTIVE DATA LAYER
+   * Remove all documents matching a query selector (Observable version).
+   * Internal implementation uses Observable pattern with Signal error handling.
+   *
+   * @param db DatabaseName - Which database to delete from
+   * @param $schema Query selector to match documents for deletion
+   * @returns Observable<DeleteResult> - Observable of deletion result
+   *
+   * @see MIGRATION_SUPERVISION.md - Phase 2, Task 2.1
+   */
+  removeAllObservable<T = PouchDBDocument>(
+    db: DatabaseName,
+    $schema?: Record<string, any>
+  ): Observable<DeleteResult> {
+    return from(
+      new Promise<DeleteResult>((resolve) => {
+        this.getAllBy(db as any, $schema || {}).then(res => {
+          if (!res || !res.docs || res.docs.length === 0) {
+            resolve({ ok: true });
+            return;
+          }
+
+          const toDelete = res.docs.map((doc: any) => ({
+            _id: doc._id,
+            _rev: doc._rev,
+            _deleted: true
+          }));
+
+          return this.LocalDB[db].bulkDocs(toDelete);
+        }).then(result => {
+          if (result && result !== undefined) {
+            resolve({ ok: true });
+          }
+        }).catch(err => {
+          this.lastSyncError.set(err);
+          console.error(`MainService: Error in removeAll for ${db}:`, err);
+          resolve({ ok: false });
+        });
+      })
+    ).pipe(
+      catchError(err => {
+        this.lastSyncError.set(err);
+        console.error(`MainService: Observable error in removeAll for ${db}:`, err);
+        return of({ ok: false });
+      })
+    );
+  }
+
+  /**
+   * PHASE 2 - REACTIVE DATA LAYER
+   * Remove all documents matching a query selector (Promise version for backward compatibility).
+   * Wraps removeAllObservable() to maintain Promise interface.
+   *
+   * @param db DatabaseName - Which database to delete from
+   * @param $schema Query selector to match documents for deletion
+   * @returns Promise<DeleteResult> - Promise of deletion result
+   */
+  removeAll(db: string, $schema?: any): Promise<DeleteResult> {
+    return lastValueFrom(this.removeAllObservable(db as DatabaseName, $schema));
   }
 
   createIndex(db: string, fields: Array<string>): Promise<any> {
@@ -520,83 +593,156 @@ export class MainService {
     }
   }
 
-  loadAppData(): Promise<any> {
-    return this.getAllBy('allData', {}).then(res => {
-      if (!res || !res.docs || res.docs.length === 0) {
-        console.log('MainService: No data to load from allData');
-        return true;
-      }
+  /**
+   * PHASE 2 - REACTIVE DATA LAYER
+   * Load application data from allData database and distribute to specific databases (Observable version).
+   * Internal implementation uses Observable pattern with Signal state management.
+   * Sets dataLoaded signal when complete.
+   *
+   * @returns Observable<boolean> - Observable of load success status
+   *
+   * @see MIGRATION_SUPERVISION.md - Phase 2, Task 2.1
+   */
+  loadAppDataObservable(): Observable<boolean> {
+    return from(
+      new Promise<boolean>((resolve) => {
+        this.getAllBy('allData', {}).then(res => {
+          if (!res || !res.docs || res.docs.length === 0) {
+            console.log('MainService: No data to load from allData');
+            this.dataLoaded.set(true);
+            resolve(true);
+            return;
+          }
 
-      const docs = res.docs;
-      const groups: { [key: string]: any[] } = {};
+          const docs = res.docs;
+          const groups: { [key: string]: any[] } = {};
 
-      docs.forEach((doc: any) => {
-        // Skip settings and ensure db exists
-        if (doc.db_name && doc.db_name !== 'settings' && this.LocalDB[doc.db_name]) {
-          const dbName = doc.db_name;
-          const cleanDoc = { ...doc };
-          delete cleanDoc.db_name;
-          delete cleanDoc.db_seq;
-          delete cleanDoc._rev;
+          docs.forEach((doc: any) => {
+            // Skip settings and ensure db exists
+            if (doc.db_name && doc.db_name !== 'settings' && this.LocalDB[doc.db_name]) {
+              const dbName = doc.db_name;
+              const cleanDoc = { ...doc };
+              delete cleanDoc.db_name;
+              delete cleanDoc.db_seq;
+              delete cleanDoc._rev;
 
-          if (!groups[dbName]) groups[dbName] = [];
-          groups[dbName].push(cleanDoc);
-        }
-      });
+              if (!groups[dbName]) groups[dbName] = [];
+              groups[dbName].push(cleanDoc);
+            }
+          });
 
-      const dbPromises = Object.keys(groups).map(dbName => {
-        // Try to fetch existing docs to avoid conflicts if possible,
-        // but bulkDocs without _rev will just result in conflict items in the result array anyway.
-        // To truly overwrite, we would need current revs.
-        // However, loadAppData is typically for initial load.
-        return this.LocalDB[dbName].bulkDocs(groups[dbName]).catch((err: any) => {
-          console.warn(`Bulk update failed for ${dbName}:`, err);
-          return [];
+          const dbPromises = Object.keys(groups).map(dbName => {
+            return this.LocalDB[dbName].bulkDocs(groups[dbName]).catch((err: any) => {
+              console.warn(`MainService: Bulk update failed for ${dbName}:`, err);
+              return [];
+            });
+          });
+
+          return Promise.all(dbPromises);
+        }).then(() => {
+          console.log('MainService: App Data Successfully Initialized');
+          this.dataLoaded.set(true);
+          resolve(true);
+        }).catch(err => {
+          this.lastSyncError.set(err);
+          console.error('MainService: Error in loadAppData:', err);
+          this.dataLoaded.set(true); // Still set loaded to allow UI to proceed
+          resolve(false);
         });
-      });
-
-      return Promise.all(dbPromises).then(() => {
-        console.log('MainService: App Data Successfully Initialized');
-        return true;
-      });
-    }).catch(err => {
-      console.error('MainService: Error in loadAppData:', err);
-      return true; // Still return true to let the UI proceed
-    });
+      })
+    ).pipe(
+      catchError(err => {
+        this.lastSyncError.set(err);
+        console.error('MainService: Observable error in loadAppData:', err);
+        this.dataLoaded.set(true);
+        return of(false);
+      })
+    );
   }
 
-  syncToLocal(database?: string): Promise<any> {
-    const selector = database ? { db_name: database } : {};
-    return this.getAllBy('allData', selector).then(res => {
-      if (!res || !res.docs || res.docs.length === 0) {
-        return true;
-      }
+  /**
+   * PHASE 2 - REACTIVE DATA LAYER
+   * Load application data (Promise version for backward compatibility).
+   * Wraps loadAppDataObservable() to maintain Promise interface.
+   *
+   * @returns Promise<boolean> - Promise of load success status
+   */
+  loadAppData(): Promise<boolean> {
+    return lastValueFrom(this.loadAppDataObservable());
+  }
 
-      const docs = res.docs;
-      const groups: { [key: string]: any[] } = {};
+  /**
+   * PHASE 2 - REACTIVE DATA LAYER
+   * Sync data from allData to specific local databases (Observable version).
+   * Internal implementation uses Observable pattern with Signal error handling.
+   *
+   * @param database Optional database name to sync specific database only
+   * @returns Observable<boolean> - Observable of sync success status
+   *
+   * @see MIGRATION_SUPERVISION.md - Phase 2, Task 2.1
+   */
+  syncToLocalObservable(database?: string): Observable<boolean> {
+    return from(
+      new Promise<boolean>((resolve) => {
+        const selector = database ? { db_name: database } : {};
 
-      docs.forEach((doc: any) => {
-        const dbName = doc.db_name;
-        if (dbName && dbName !== 'settings' && this.LocalDB[dbName]) {
-          const cleanDoc = { ...doc };
-          delete cleanDoc.db_name;
-          delete cleanDoc.db_seq;
-          delete cleanDoc._rev;
+        this.getAllBy('allData', selector).then(res => {
+          if (!res || !res.docs || res.docs.length === 0) {
+            resolve(true);
+            return;
+          }
 
-          if (!groups[dbName]) groups[dbName] = [];
-          groups[dbName].push(cleanDoc);
-        }
-      });
+          const docs = res.docs;
+          const groups: { [key: string]: any[] } = {};
 
-      const dbPromises = Object.keys(groups).map(dbName => {
-        return this.LocalDB[dbName].bulkDocs(groups[dbName]).catch(() => []);
-      });
+          docs.forEach((doc: any) => {
+            const dbName = doc.db_name;
+            if (dbName && dbName !== 'settings' && this.LocalDB[dbName]) {
+              const cleanDoc = { ...doc };
+              delete cleanDoc.db_name;
+              delete cleanDoc.db_seq;
+              delete cleanDoc._rev;
 
-      return Promise.all(dbPromises).then(() => true);
-    }).catch(err => {
-      console.error('MainService: syncToLocal Error:', err);
-      return false;
-    });
+              if (!groups[dbName]) groups[dbName] = [];
+              groups[dbName].push(cleanDoc);
+            }
+          });
+
+          const dbPromises = Object.keys(groups).map(dbName => {
+            return this.LocalDB[dbName].bulkDocs(groups[dbName]).catch((err: any) => {
+              console.warn(`MainService: Bulk sync failed for ${dbName}:`, err);
+              return [];
+            });
+          });
+
+          return Promise.all(dbPromises);
+        }).then(() => {
+          resolve(true);
+        }).catch(err => {
+          this.lastSyncError.set(err);
+          console.error('MainService: syncToLocal Error:', err);
+          resolve(false);
+        });
+      })
+    ).pipe(
+      catchError(err => {
+        this.lastSyncError.set(err);
+        console.error('MainService: Observable error in syncToLocal:', err);
+        return of(false);
+      })
+    );
+  }
+
+  /**
+   * PHASE 2 - REACTIVE DATA LAYER
+   * Sync data from allData to specific local databases (Promise version for backward compatibility).
+   * Wraps syncToLocalObservable() to maintain Promise interface.
+   *
+   * @param database Optional database name to sync specific database only
+   * @returns Promise<boolean> - Promise of sync success status
+   */
+  syncToLocal(database?: string): Promise<boolean> {
+    return lastValueFrom(this.syncToLocalObservable(database));
   }
 
   replicateDB(db_configrations: any): any {
@@ -621,8 +767,19 @@ export class MainService {
     }).on('change', (sync: any) => { this.handleChanges(sync); });
   }
 
+  /**
+   * PHASE 2 - REACTIVE DATA LAYER
+   * Start live sync with remote database.
+   * Maintains PouchDB sync object interface for backward compatibility.
+   * Updates syncInProgress and lastSyncError signals for reactive state management.
+   *
+   * @returns PouchDB Sync object with .on() and .cancel() methods
+   *
+   * @see MIGRATION_SUPERVISION.md - Phase 2, Task 2.1
+   */
   syncToRemote(): any {
     let rOpts: any = { live: true, retry: true, pull: { filter: (doc: any) => !doc._deleted } };
+
     if (this.serverInfo && this.serverInfo.type == 1) {
       rOpts = {
         live: true,
@@ -635,16 +792,38 @@ export class MainService {
         }
       };
     }
+
     if (!this.RemoteDB) {
       console.warn('MainService: RemoteDB not initialized yet. Skipping syncToRemote.');
+      this.syncInProgress.set(false);
       const dummy = {
         on: (event: string, fn: (...args: any[]) => void) => { return dummy; },
         cancel: () => { }
       };
       return dummy;
     }
+
+    // Set sync in progress
+    this.syncInProgress.set(true);
+
     return PouchDB.sync(this.LocalDB['allData'], this.RemoteDB, rOpts)
-      .on('change', (sync: any) => { this.handleChanges(sync); })
-      .on('error', (err: any) => { console.log('Sync Error:', err); });
+      .on('change', (sync: any) => {
+        this.handleChanges(sync);
+        // Sync is active, keep signal updated
+        this.syncInProgress.set(true);
+      })
+      .on('error', (err: any) => {
+        this.lastSyncError.set(err);
+        this.syncInProgress.set(false);
+        console.error('MainService: Sync Error:', err);
+      })
+      .on('paused', () => {
+        // Sync paused (waiting for changes)
+        this.syncInProgress.set(false);
+      })
+      .on('active', () => {
+        // Sync resumed
+        this.syncInProgress.set(true);
+      });
   }
 }
