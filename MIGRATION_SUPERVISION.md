@@ -26,135 +26,97 @@ This document is the **SINGLE SOURCE OF TRUTH** for the Angular 5 → 21 migrati
 
 ---
 
-## 📋 CURRENT STATUS SNAPSHOT
+## 📋 CURRENT STATUS SNAPSHOT (Updated: 2025-12-27)
 
 ```
 Phase 1: Infrastructure & Zoneless Setup
-  ├─ TypeScript 5.9 + Strict Mode        ✅ 85% (Zoneless needs fix)
-  ├─ Angular 21 + Electron 39            ✅ 85%
+  ├─ TypeScript 5.9 + Strict Mode        ✅ 100%
+  ├─ Angular 21 + Electron 39            ✅ 100%
   ├─ Bootstrap 4 + SCSS                  ✅ 100%
-  └─ Status: NEEDS ZONELESS FIX
+  ├─ Zoneless Mode Enabled               ✅ 100% (provideZonelessChangeDetection())
+  ├─ Zone.js Removed                     ✅ 100% (from package.json & angular.json)
+  ├─ Signal Wrapper Implementation       ✅ 100% (dataLoaded, syncInProgress, lastSyncError)
+  └─ Status: ✅ COMPLETE - Build passes, dev server works
 
-Phase 2: Reactive Data Layer [CRITICAL]
-  ├─ Signal-Based Database Service       ❌ 0% (HIGHEST PRIORITY)
+Phase 2: Reactive Data Layer [CRITICAL - STARTING NOW]
+  ├─ Signal-Based Database Service       🟡 5% (Foundation laid, methods to convert)
+  ├─ getAllByObservable/getAllBySignal   ✅ 100% (Implemented)
+  ├─ Remaining MainService methods       ❌ 0% (removeAll, loadAppData, sync methods)
   ├─ Reactive Sync Bridge                ❌ 0%
   ├─ Conflict Management                 🟡 10%
-  └─ Status: NOT STARTED - MUST BEGIN IMMEDIATELY
+  └─ Status: 🟡 IN PROGRESS - WEEK 2 ACTIVE
 
 Phase 3: UI Component Fidelity
   ├─ Standalone Components               ✅ 100%
   ├─ Safe Navigation Operators           ✅ 80%
   ├─ @if/@for Conversion                 ❌ 0%
   ├─ Input/Output → Signals              ❌ 0%
-  └─ Status: IN PROGRESS
+  └─ Status: ⏳ PENDING Phase 2 completion
 
 Phase 4: Business Logic & IPC
   ├─ Service Porting (Reactive)          🟡 20%
   ├─ Any Type Elimination                ❌ 0%
-  ├─ Electron contextBridge              ⚠️ UNCLEAR
-  └─ Status: INCOMPLETE
+  ├─ Electron contextBridge              ✅ 100% (Verified working)
+  └─ Status: ⏳ PENDING Phase 3 completion
 
 Phase 5: Verification
   ├─ Visual Regression Testing           ❌ 0%
   ├─ Data Consistency Check              ❌ 0%
   ├─ Performance Benchmarking            ❌ 0%
-  └─ Status: NOT STARTED
+  └─ Status: ⏳ PENDING Phase 4 completion
 ```
+
+**Build Status:** ✅ **PASSING** (21.8 seconds)
+**Last Commit:** d27f5cd - PHASE-1: feat - Add Signal wrapper to MainService
+**Branch:** claude/migrate-angular-5-to-21-fCbW8
 
 ---
 
-## 🔴 CRITICAL ISSUES TO FIX (BLOCKING)
+## 🔴 REMAINING ISSUES TO ADDRESS
 
-### Issue #1: Zoneless Mode Not Enabled
-**File:** `src/main.ts` (Line 41)
-
-**Current (WRONG):**
-```typescript
-provideZoneChangeDetection()  ❌
-```
-
-**Should Be:**
-```typescript
-provideExperimentalZonelessChangeDetection()  ✅
-```
-
-**Impact:** Zone.js still in bundle (+50KB), performance gains not realized
-**Priority:** 🔴 CRITICAL - Must fix before anything else
-
----
-
-### Issue #2: Signal-Based Database Service Not Implemented
+### Issue #1: Phase 2 - MainService Methods Conversion (IN PROGRESS)
 **File:** `src/app/core/services/main.service.ts`
 
-**Current State:** Promise-based with null-checks added
-**Should Be:** Signal wrapper with Observable interop
+**Status:** 🟡 **PARTIALLY COMPLETE**
 
-**Example of WRONG approach:**
-```typescript
-// ❌ THIS IS NOT MIGRATION
-getAllBy(db: string, $schema: any): Promise<any> {
-  return this.LocalDB[db].find($schema).then(res => {
-    if (res && res.docs && res.docs.length > 0) {  // ← Added null-check
-      // ...
-    }
-  }).catch(err => {
-    console.error('Error:', err);  // ← Added error handling
-  });
-}
-// Above = Type Safety Sweep, NOT Reactive Migration
-```
+**Completed:**
+- ✅ `getAllByObservable<T>()` - Returns Observable<T[]>
+- ✅ `getAllBySignal<T>()` - Returns Signal<T[]>
+- ✅ Signal state properties (dataLoaded, syncInProgress, lastSyncError)
+- ✅ Computed signals (isDataReady, hasSyncError)
 
-**Example of CORRECT approach:**
-```typescript
-// ✅ THIS IS ANGULAR 21 MIGRATION
-getAllBy<T>(db: DatabaseName, $schema?: Record<string, any>): Observable<T[]> {
-  return new Promise((resolve) => {
-    this.LocalDB[db].find($schema || {})
-      .then(res => resolve(res?.docs as T[] || []))
-      .catch(err => {
-        this.lastSyncError.set(err);
-        resolve([]);
-      });
-  }).then(docs => of(docs)) as any;
-}
+**Remaining to Convert:**
+- ❌ `removeAll()` - Currently Promise-based, needs Observable pattern
+- ❌ `loadAppData()` - Currently Promise-based with side effects
+- ❌ `syncToLocal()` - Currently Promise-based
+- ❌ `syncToRemote()` - Currently Promise-based with race condition fixes needed
+- ❌ `getData()` - Needs better error handling and typing
 
-// Signal version for UI state:
-getAllBySignal<T>(db: DatabaseName, $schema?: any): Signal<T[]> {
-  return toSignal(
-    this.getAllBy<T>(db, $schema),
-    { initialValue: [] }
-  );
-}
-```
-
-**Impact:** Core architecture still legacy-style
 **Priority:** 🔴 CRITICAL - Phase 2 foundation
+**Next Task:** TASK 2.1 (Week 2)
 
 ---
 
-### Issue #3: "any" Types Still Dominant
+### Issue #2: "any" Types Still in Other Services
 **Files Affected:**
-- `src/app/core/services/main.service.ts`
 - `src/app/core/services/auth.service.ts`
-- Multiple component files
+- `src/app/core/services/order.service.ts`
+- Other service files
 
 **Current:** Functions return `any` or accept `any` parameters
-**Should Be:** Strict TypeScript with proper types
+**Target:** Strict TypeScript with proper types
 
-**Example:**
-```typescript
-// ❌ WRONG
-getAllBy(db: string, $schema: any): Promise<any>
+**Priority:** 🟡 HIGH - Phase 4 (Week 3)
 
-// ✅ CORRECT
-getAllBy<T = PouchDBDocument>(
-  db: DatabaseName,
-  $schema?: Record<string, any>
-): Observable<T[]>
-```
+---
 
-**Impact:** Type safety goal not met
-**Priority:** 🟡 HIGH - Phase 4
+### Issue #3: Template Modernization Not Started
+**Scope:**
+- All `*ngIf` → `@if` conversion (100+ instances)
+- All `*ngFor` → `@for` conversion
+- All `@Input/@Output` → `input()/output()` conversion
+
+**Priority:** 🟡 HIGH - Phase 3 (Week 2)
 
 ---
 
