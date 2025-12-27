@@ -1,5 +1,6 @@
 <div class="row pr-2 pl-2 animated fadeIn">
-  <div class="col-lg-4 pr-2 pl-2" *ngFor="let menu of menus; let i = index;">
+  @for (menu of menus; track $index; let i = $index) {
+  <div class="col-lg-4 pr-2 pl-2">
     <a routerLink="/{{menu.link}}">
       <div class="card text-white bg-{{menu.color}} mb-3 mainCard {{menu.link}}">
         <div class="card-body">
@@ -8,6 +9,7 @@
       </div>
     </a>
   </div>
+  }
   <div class="col-lg-4 pr-2 pl-2">
     <a href="#">
       <div class="card text-white mb-3 mainCard exit" (click)="closeProgram()" style="background-color: #333; border-color: #333;">
