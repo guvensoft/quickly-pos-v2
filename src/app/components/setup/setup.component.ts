@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -21,21 +21,25 @@ import { UserGroup, User, UserAuth, ComponentsAuth } from '../../core/models/use
 })
 
 export class SetupComponent implements OnInit {
-  progress!: string;
-  stores!: Array<any>;
-  status: number = 0;
-  statusMessage!: string;
-  showMessage: boolean = false;
-  setupStep: number = 0;
-  headers: HttpHeaders;
-  options: any;
-  baseUrl: string;
+  private readonly mainService = inject(MainService);
+  private readonly settingsService = inject(SettingsService);
+  private readonly http = inject(HttpClient);
+  private readonly electron = inject(ElectronService);
+  private readonly message = inject(MessageService);
+  private readonly router = inject(Router);
 
-  constructor(private mainService: MainService, private settingsService: SettingsService, private http: HttpClient, private electron: ElectronService, private message: MessageService, private router: Router) {
-    this.headers = new HttpHeaders({ 'Content-Type': 'application/json', 'charset': 'UTF-8' });
-    this.options = { headers: this.headers };
-    // Use HTTPS directly to avoid redirect issues with CORS preflight
-    this.baseUrl = 'https://hq.quickly.com.tr';
+  readonly progress = signal('');
+  readonly stores = signal<any[]>([]);
+  readonly status = signal(0);
+  readonly statusMessage = signal('');
+  readonly showMessage = signal(false);
+  readonly setupStep = signal(0);
+
+  headers = new HttpHeaders({ 'Content-Type': 'application/json', 'charset': 'UTF-8' });
+  options = { headers: this.headers };
+  baseUrl = 'https://hq.quickly.com.tr';
+
+  constructor() {
     // this.baseUrl = 'http://localhost:3000';
   }
 
@@ -73,16 +77,16 @@ export class SetupComponent implements OnInit {
         });
       })
       .on('change', (sync: any) => {
-        this.statusMessage = `${sync.docs_written} - Senkronize Ediliyor `;
+        this.statusMessage.set(`${sync.docs_written} - Senkronize Ediliyor `);
       })
       .on('complete', (info: any) => {
         this.mainService.addData('settings', serverSettings);
         this.mainService.syncToLocal().then(res => {
           if (res) {
-            this.statusMessage = 'Kurulum Tamamlandı !'
+            this.statusMessage.set('Kurulum Tamamlandı !');
             setTimeout(() => {
               this.electron.relaunchProgram();
-            }, 30000)
+            }, 30000);
           }
         });
       }).catch((err: any) => {
@@ -111,8 +115,8 @@ export class SetupComponent implements OnInit {
 
           if (data && Array.isArray(data)) {
             if (data.length > 1) {
-              this.stores = data;
-              this.setupStep = 2;
+              this.stores.set(data);
+              this.setupStep.set(2);
             } else if (data.length === 1) {
               this.makeAuth(data[0]);
             }
@@ -202,30 +206,30 @@ export class SetupComponent implements OnInit {
   }
 
   progressBar(step: number) {
-    this.statusMessage = 'Program Ayarlanıyor...';
-    this.setupStep = 5;
+    this.statusMessage.set('Program Ayarlanıyor...');
+    this.setupStep.set(5);
     const stat = setInterval(() => {
-      this.progress = this.status + '%';
-      this.status++;
-      this.showMessage = true;
-      if (this.status == 25) {
-        this.statusMessage = 'Bilgiler Kontrol Ediliyor...';
-        this.showMessage = false;
+      this.progress.set(this.status() + '%');
+      this.status.update(s => s + 1);
+      this.showMessage.set(true);
+      if (this.status() == 25) {
+        this.statusMessage.set('Bilgiler Kontrol Ediliyor...');
+        this.showMessage.set(false);
       }
-      if (this.status == 50) {
-        this.statusMessage = 'Yapılandırma Yapılıyor...';
-        this.showMessage = true;
+      if (this.status() == 50) {
+        this.statusMessage.set('Yapılandırma Yapılıyor...');
+        this.showMessage.set(true);
       }
-      if (this.status == 75) {
-        this.statusMessage = 'Yapılandırma Kontrol Ediliyor...';
-        this.showMessage = true;
+      if (this.status() == 75) {
+        this.statusMessage.set('Yapılandırma Kontrol Ediliyor...');
+        this.showMessage.set(true);
       }
-      if (this.status == 101) {
+      if (this.status() == 101) {
         clearInterval(stat);
-        this.statusMessage = 'Kurulum Tamamlanıyor...';
-        this.showMessage = true;
-        this.setupStep = step;
-        this.progress = '100%';
+        this.statusMessage.set('Kurulum Tamamlanıyor...');
+        this.showMessage.set(true);
+        this.setupStep.set(step);
+        this.progress.set('100%');
       }
     }, 200);
   }

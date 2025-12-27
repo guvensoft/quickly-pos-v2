@@ -30,36 +30,35 @@ import { CallerComponent } from './components/helpers/caller/caller.component';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  private callerService: CallerIDService = inject(CallerIDService);
-  private scalerService: ScalerService = inject(ScalerService);
-  private electronService: ElectronService = inject(ElectronService);
-  private mainService: MainService = inject(MainService);
+  private callerService = inject(CallerIDService);
+  private scalerService = inject(ScalerService);
+  private electronService = inject(ElectronService);
+  private mainService = inject(MainService);
   private router = inject(Router);
-  private applicationService: ApplicationService = inject(ApplicationService);
-  private settingsService: SettingsService = inject(SettingsService);
-  private messageService: MessageService = inject(MessageService);
-  private authService: AuthService = inject(AuthService);
-  private conflictService: ConflictService = inject(ConflictService);
-  private printerService: PrinterService = inject(PrinterService);
-  private cdr = inject(ChangeDetectorRef);
+  private applicationService = inject(ApplicationService);
+  private settingsService = inject(SettingsService);
+  private messageService = inject(MessageService);
+  private authService = inject(AuthService);
+  private conflictService = inject(ConflictService);
+  private printerService = inject(PrinterService);
 
-  title = 'Quickly';
-  description = 'Quickly';
-  version = '1.9.5';
-  windowStatus: boolean = false;
-  connectionStatus: boolean = false;
-  setupFinished: boolean = false;
-  onSync: boolean = true;
-  hasError: boolean = false;
-  statusMessage: string = '';
-  date: number = Date.now();
+  readonly title = signal('Quickly');
+  readonly description = signal('Quickly');
+  readonly version = signal('1.9.5');
+  readonly windowStatus = signal(false);
+  readonly connectionStatus = signal(false);
+  readonly setupFinished = signal(false);
+  readonly onSync = signal(true);
+  readonly hasError = signal(false);
+  readonly statusMessage = signal('');
+  readonly date = signal(Date.now());
 
-  printers: Array<any> = [];
-  categories: Array<Category> = [];
+  readonly printers = signal<any[]>([]);
+  readonly categories = signal<Category[]>([]);
 
-  activationStatus!: boolean;
-  serverSettings!: ServerInfo;
-  dayStatus!: DayInfo;
+  readonly activationStatus = signal<boolean | undefined>(undefined);
+  readonly serverSettings = signal<ServerInfo | undefined>(undefined);
+  readonly dayStatus = signal<DayInfo | undefined>(undefined);
 
   ngOnInit(): void {
     // Ensure jQuery is available globally early
@@ -74,7 +73,7 @@ export class AppComponent implements OnInit {
     this.settingsService.setLocalStorage();
     this.initAppSettings();
     this.initConnectivityAndTime();
-    this.settingsService.getPrinters().subscribe(res => (this.printers = res.value));
+    this.settingsService.getPrinters().subscribe(res => this.printers.set(res.value));
   }
 
   callMe(): void { }
@@ -91,7 +90,7 @@ export class AppComponent implements OnInit {
               case 'Primary':
                 const primarySetting = settings.find(obj => obj.key == 'ServerSettings' && obj.value.type == 0);
                 if (primarySetting) {
-                  this.serverSettings = primarySetting.value;
+                  this.serverSettings.set(primarySetting.value);
                 } else {
                   throw new Error('Primary server settings not found');
                 }
@@ -99,7 +98,7 @@ export class AppComponent implements OnInit {
               case 'Secondary':
                 const secondarySetting = settings.find(obj => obj.key == 'ServerSettings' && obj.value.type == 1);
                 if (secondarySetting) {
-                  this.serverSettings = secondarySetting.value;
+                  this.serverSettings.set(secondarySetting.value);
                 } else {
                   throw new Error('Secondary server settings not found');
                 }
@@ -115,7 +114,7 @@ export class AppComponent implements OnInit {
           try {
             const daySettings = settings.find(obj => obj.key == 'DateSettings');
             if (daySettings) {
-              this.dayStatus = daySettings.value;
+              this.dayStatus.set(daySettings.value);
             } else {
               throw new Error('Date settings not found');
             }
@@ -127,7 +126,7 @@ export class AppComponent implements OnInit {
           try {
             const activationSettings = settings.find(obj => obj.key == 'ActivationStatus');
             if (activationSettings) {
-              this.activationStatus = activationSettings.value;
+              this.activationStatus.set(activationSettings.value);
             } else {
               throw new Error('Activation settings not found');
             }
@@ -148,26 +147,28 @@ export class AppComponent implements OnInit {
 
   initConnectivityAndTime(): void {
     setInterval(() => {
-      this.date = Date.now();
-      this.connectionStatus = this.applicationService.connectionStatus();
+      this.date.set(Date.now());
+      this.connectionStatus.set(this.applicationService.connectionStatus());
     }, 5000);
   }
 
   initAppProcess(): void {
-    switch (this.activationStatus) {
+    const activation = this.activationStatus();
+    const server = this.serverSettings();
+
+    switch (activation) {
       case true:
-        this.setupFinished = true;
-        if (this.serverSettings !== undefined) {
-          if (this.serverSettings.status == 1) {
+        this.setupFinished.set(true);
+        if (server !== undefined) {
+          if (server.status == 1) {
             ////// Birincil Ekran ///////
-            if (this.serverSettings.type == 0) {
-              this.electronService.send('appServer', this.serverSettings.key, this.serverSettings.ip_port);
+            if (server.type == 0) {
+              this.electronService.send('appServer', server.key, server.ip_port);
               this.mainService.syncToServer();
               this.conflictService.conflictListener();
               this.mainService.loadAppData().then((isLoaded: boolean) => {
                 if (isLoaded) {
-                  this.onSync = false;
-                  this.cdr.detectChanges();
+                  this.onSync.set(false);
                   this.updateActivityReport();
                   this.updateLastSeen();
                   this.router.navigate(['']);
@@ -177,16 +178,15 @@ export class AppComponent implements OnInit {
                 console.log(err);
                 this.loadFromBackup();
               });
-            } else if (this.serverSettings.type == 1) {
+            } else if (server.type == 1) {
               ////// İkincil Ekran //////
               this.serverReplication();
             }
           } else {
-            if (this.serverSettings.type == 0) {
+            if (server.type == 0) {
               this.mainService.loadAppData().then((isLoaded: boolean) => {
                 if (isLoaded) {
-                  this.onSync = false;
-                  this.cdr.detectChanges();
+                  this.onSync.set(false);
                   this.router.navigate(['']);
                   this.dayCheck();
                 }
@@ -203,29 +203,30 @@ export class AppComponent implements OnInit {
         }
         break;
       case false:
-        this.setupFinished = false;
-        this.onSync = false;
+        this.setupFinished.set(false);
+        this.onSync.set(false);
         this.router.navigate(['/activation']);
         break;
       default:
-        this.onSync = false;
+        this.onSync.set(false);
         this.router.navigate(['/setup']);
         break;
     }
-    if (this.serverSettings && this.serverSettings.type == 0) {
+    if (server && server.type == 0) {
       setTimeout(() => this.orderListener(), 10000);
-      // this.printsListener();
     }
-    // this.commandListener();
   }
 
   serverReplication(): void {
-    this.hasError = false;
+    this.hasError.set(false);
     console.log('Server Replicating Started!');
+    const server = this.serverSettings();
+    if (!server) return;
+
     this.mainService
-      .replicateDB(this.serverSettings)
+      .replicateDB(server)
       .on('change', (sync: any) => {
-        this.statusMessage = `${sync.docs_written} - Senkronize Ediliyor `;
+        this.statusMessage.set(`${sync.docs_written} - Senkronize Ediliyor `);
       })
       .on('complete', () => {
         setTimeout(() => this.appDataInitializer(), 2000);
@@ -241,7 +242,7 @@ export class AppComponent implements OnInit {
       })
       .catch((err: any) => {
         console.warn('Server Replicating Error:', err);
-        this.hasError = true;
+        this.hasError.set(true);
         this.electronService.openDevTools();
         this.serverReplication();
       });
@@ -254,9 +255,9 @@ export class AppComponent implements OnInit {
         console.error('No printers found in settings');
         return;
       }
-      const printers = prints.docs[0].value;
+      const printersList = prints.docs[0].value;
       this.mainService.LocalDB['orders'].changes({ since: 'now', live: true, include_docs: true }).on('change', (res: any) => {
-        if (!this.onSync) {
+        if (!this.onSync()) {
           const Order: Order = res.doc;
           console.log(Order);
           if (Order.status == OrderStatus.APPROVED && Order.type !== OrderType.EMPLOOYEE) {
@@ -269,7 +270,7 @@ export class AppComponent implements OnInit {
                     const splitPrintArray: any[] = [];
                     orders.forEach((obj: any) => {
                       const category = categories.find((cat: any) => cat._id == obj.cat_id);
-                      const catPrinter = (category && category.printer) ? category.printer : (printers.length > 0 ? printers[0].name : null);
+                      const catPrinter = (category && category.printer) ? category.printer : (printersList.length > 0 ? printersList[0].name : null);
 
                       if (catPrinter) {
                         const contains = splitPrintArray.some(element => element.printer.name == catPrinter);
@@ -279,7 +280,7 @@ export class AppComponent implements OnInit {
                             splitPrintArray[index].products.push(obj);
                           }
                         } else {
-                          const thePrinter = printers.find((p: any) => p.name == catPrinter);
+                          const thePrinter = printersList.find((p: any) => p.name == catPrinter);
                           if (thePrinter) {
                             const splitPrintOrder = { printer: thePrinter, products: [obj] };
                             splitPrintArray.push(splitPrintOrder);
@@ -306,8 +307,11 @@ export class AppComponent implements OnInit {
   }
 
   dayCheck(): void {
-    if (new Date().getDay() !== this.dayStatus.day) {
-      if (this.dayStatus.started) {
+    const day = this.dayStatus();
+    if (!day) return;
+
+    if (new Date().getDay() !== day.day) {
+      if (day.started) {
         this.messageService.sendAlert('Dikkat!', 'Gün Sonu Yapılmamış.', 'warning');
       } else {
         this.mainService.RemoteDB.find({ selector: { db_name: 'settings', key: 'DateSettings' }, limit: 5000 }).then((res: any) => {
@@ -352,8 +356,7 @@ export class AppComponent implements OnInit {
   appDataInitializer(): void {
     this.mainService.loadAppData().then((isLoaded: boolean) => {
       if (isLoaded) {
-        this.onSync = false;
-        this.cdr.detectChanges();
+        this.onSync.set(false);
         this.router.navigate(['']);
         this.settingsListener();
         this.dayCheck();
@@ -369,7 +372,7 @@ export class AppComponent implements OnInit {
     const signalListener = this.mainService.LocalDB['endday'].changes({ since: 'now', live: true }).on('change', () => {
       this.mainService.syncToRemote().cancel();
       console.log('Endday Processing...');
-      this.onSync = true;
+      this.onSync.set(true);
       signalListener.cancel();
       this.mainService.destroyDB('allData').then((res: any) => {
         if (res.ok) {
@@ -386,7 +389,7 @@ export class AppComponent implements OnInit {
   settingsListener(): any {
     console.log('Settings Listener Process Started');
     return this.mainService.LocalDB['settings'].changes({ since: 'now', live: true }).on('change', () => {
-      if (!this.onSync) {
+      if (!this.onSync()) {
         setTimeout(() => {
           this.electronService.reloadProgram();
         }, 5000);
@@ -397,7 +400,7 @@ export class AppComponent implements OnInit {
   printsListener(): any {
     console.log('Printer Listener Process Started');
     return this.mainService.LocalDB['prints'].changes({ since: 'now', live: true, include_docs: true }).on('change', (change: any) => {
-      if (!this.onSync) {
+      if (!this.onSync()) {
         if (!change.deleted) {
           const printObj = change.doc as PrintOut | undefined;
           if (!printObj?._id) return;
@@ -525,7 +528,8 @@ export class AppComponent implements OnInit {
   }
 
   changeWindow(): void {
-    this.electronService.fullScreen(this.windowStatus);
-    this.windowStatus = !this.windowStatus;
+    const status = this.windowStatus();
+    this.electronService.fullScreen(status);
+    this.windowStatus.set(!status);
   }
 }

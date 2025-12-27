@@ -26,7 +26,8 @@
             <h5 class="mt-2">Genel Ayarlar</h5>
           </div>
           <div class="col-lg-4 pr-2 pl-0">
-            <button data-toggle="modal" data-target="#adminModal" class="btn btn-danger btn-block">Uygulama Konsolu</button>
+            <button data-toggle="modal" data-target="#adminModal" class="btn btn-danger btn-block">Uygulama
+              Konsolu</button>
           </div>
         </div>
       </div>
@@ -39,21 +40,22 @@
               </div>
               <div class="card-body p-0 flow">
                 <div class="list-group">
-                  <button (click)="getSettingsDetail('AppSettings')" [ngClass]="{'list-group-item-warning' : currentSection === 'AppSettings'}" type="button" class="list-group-item list-group-item-action">
+                  <button (click)="getSettingsDetail('AppSettings')"
+                    [ngClass]="{'list-group-item-warning' : currentSection() === 'AppSettings'}" type="button"
+                    class="list-group-item list-group-item-action">
                     Uygulama Ayarları
                   </button>
-                  <button (click)="getSettingsDetail('ServerSettings')" [ngClass]="{'list-group-item-warning' : currentSection === 'ServerSettings'}" type="button" class="list-group-item list-group-item-action">
+                  <button (click)="getSettingsDetail('ServerSettings')"
+                    [ngClass]="{'list-group-item-warning' : currentSection() === 'ServerSettings'}" type="button"
+                    class="list-group-item list-group-item-action">
                     Sunucu Ayarları
                   </button>
-                  <!-- <button (click)="getSettingsDetail('AccountSettings')" [ngClass]="{'list-group-item-warning' : currentSection === 'AccountSettings'}" type="button" class="list-group-item list-group-item-action">
-                    Hesap Ayarları
-                  </button> -->
                 </div>
               </div>
             </div>
           </div>
           <div class="col-lg-9 pl-0">
-            <section [hidden]="currentSection !== 'AppSettings'">
+            <section [hidden]="currentSection() !== 'AppSettings'">
               <form #settingsForm="ngForm" (ngSubmit)="saveSettings(settingsForm)">
                 <div class="card tab-inside-height">
                   <div class="card-header">Uygulama Ayarları</div>
@@ -63,7 +65,8 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text">Zaman Aşımı</div>
                         </div>
-                        <input name="timeout" type="number" class="form-control form-control-lg" ngModel />
+                        <input name="timeout" type="number" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.timeout" />
                         <div class="input-group-append">
                           <div class="input-group-text">Saniye</div>
                         </div>
@@ -74,7 +77,8 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text">Ekran Klavyesi</div>
                         </div>
-                        <select name="keyboard" class="form-control form-control-lg" id="" ngModel>
+                        <select name="keyboard" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.keyboard">
                           <option>Açık</option>
                           <option>Kapalı</option>
                         </select>
@@ -85,7 +89,8 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text"> Parakende Satış</div>
                         </div>
-                        <select name="takeaway" class="form-control form-control-lg" id="" ngModel>
+                        <select name="takeaway" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.takeaway">
                           <option>Açık</option>
                           <option>Kapalı</option>
                         </select>
@@ -96,7 +101,8 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text">Sipariş Fişi İçin</div>
                         </div>
-                        <select name="ask_print_order" class="form-control form-control-lg" ngModel>
+                        <select name="ask_print_order" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.ask_print_order">
                           <option>Sor</option>
                           <option>Sorma</option>
                         </select>
@@ -107,7 +113,8 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text">Hesap Fişi İçin</div>
                         </div>
-                        <select name="ask_print_check" class="form-control form-control-lg" ngModel>
+                        <select name="ask_print_check" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.ask_print_check">
                           <option>Sor</option>
                           <option>Sorma</option>
                         </select>
@@ -118,7 +125,8 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text">Son Gün</div>
                         </div>
-                        <select name="last_day" class="form-control form-control-lg" ngModel>
+                        <select name="last_day" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.last_day">
                           <option value="1">Pazartesi</option>
                           <option value="2">Salı</option>
                           <option value="3">Çarşamba</option>
@@ -137,7 +145,7 @@
                 </div>
               </form>
             </section>
-            <section [hidden]="currentSection !== 'ServerSettings'">
+            <section [hidden]="currentSection() !== 'ServerSettings'">
               <form #serverSettingsForm="ngForm" (ngSubmit)="saveServerSettings(serverSettingsForm)">
                 <div class="card tab-inside-height">
                   <div class="card-header">Sunucu Ayarları</div>
@@ -201,87 +209,6 @@
                 </div>
               </form>
             </section>
-            <section [hidden]="currentSection !== 'AccountSettings'">
-              <!-- <form #restaurantForm="ngForm" (ngSubmit)="saveRestSettings(restaurantForm)">
-                <input type="hidden" name="state" ngModel />
-                <input type="hidden" name="city" ngModel />
-                <input type="hidden" name="geolocation" ngModel />
-                <input type="hidden" name="_order" ngModel />
-                <input type="hidden" name="created_at" ngModel />
-                <input type="hidden" name="logo" ngModel />
-                <input type="hidden" name="is_premium" ngModel />
-                <input type="hidden" name="owner" ngModel />
-                <div class="card tab-inside-height">
-                  <div class="card-header">
-                    Hesap Ayarları
-                  </div>
-                  <div class="card-body flow p-2">
-                    <div class="form-group mb-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <div class="input-group-text">İşletme Logo</div>
-                        </div>
-                        <div class="img-thumbnail subCatInput">
-                          <img src="{{appLogo}}" class="img-responsive mx-auto d-body" alt="">
-                        </div>
-                      </div>
-                    </div>
-                    <div class="form-group mb-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <div class="input-group-text">İşletme Adı</div>
-                        </div>
-                        <input name="name" type="text" class="form-control form-control-lg" ngModel />
-                      </div>
-                    </div>
-                    <div class="form-group mb-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <div class="input-group-text">İşletme No</div>
-                        </div>
-                        <input name="_id" type="string" class="form-control form-control-lg" readonly ngModel />
-                      </div>
-                    </div>
-                    <div class="form-group mb-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <div class="input-group-text">Telefon</div>
-                        </div>
-                        <input name="phone_number" type="text" class="form-control form-control-lg" ngModel />
-                      </div>
-                    </div>
-                    <div class="form-group mb-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <div class="input-group-text">Şehir</div>
-                        </div>
-                        <input name="city" type="text" class="form-control form-control-lg" ngModel />
-                      </div>
-                    </div>
-                    <div class="form-group mb-2">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <div class="input-group-text">Bölge</div>
-                        </div>
-                        <input name="state" type="text" class="form-control form-control-lg" ngModel />
-                      </div>
-                    </div>
-                    <div class="form-group mb-0">
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <div class="input-group-text">Adres</div>
-                        </div>
-                        <textarea name="address" rows="2" class="form-control form-control-lg" ngModel></textarea>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-footer">
-                    <button type="submit" class="btn btn-success btn-block btn-md">
-                      <i class="fa fa-check" aria-hidden="true"></i> Ayarları Kaydet</button>
-                  </div>
-                </div>
-              </form> -->
-            </section>
           </div>
         </div>
       </div>
@@ -299,7 +226,8 @@
             <h5 class="mt-2">Yazıcı Ayarları</h5>
           </div>
           <div class="col-lg-4 pr-2 pl-0">
-            <button class="btn btn-danger btn-md btn-block" (click)="setDefault()" data-toggle="modal" data-target="#printerModal">
+            <button class="btn btn-danger btn-md btn-block" (click)="setDefault()" data-toggle="modal"
+              data-target="#printerModal">
               <i class="fa fa-plus"></i> Yazıcı Ekle
             </button>
           </div>
@@ -314,9 +242,11 @@
               </div>
               <div class="card-body p-0 flow">
                 <div class="list-group">
-                  <button *ngFor="let item of printers" (click)="getPrinterDetail(item)" type="button" class="list-group-item list-group-item-action">
+                  @for (item of printers(); track item.name) {
+                  <button (click)="getPrinterDetail(item)" type="button" class="list-group-item list-group-item-action">
                     {{item.name}} ({{item.type}} Yazıcı)
                   </button>
+                  }
                 </div>
               </div>
             </div>
@@ -328,13 +258,15 @@
                   Detaylar
                 </div>
                 <div class="card-body flow p-2">
-                  <section [hidden]="choosenPrinter === undefined" id="detailForm">
+                  @if (choosenPrinter()) {
+                  <section id="detailForm">
                     <div class="form-group mb-2">
                       <div class="input-group">
                         <div class="input-group-prepend">
                           <div class="input-group-text">Yazıcı Adı</div>
                         </div>
-                        <input type="text" name="name" class="form-control form-control-lg" ngModel>
+                        <input type="text" name="name" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.name">
                       </div>
                     </div>
                     <div class="form-group mb-2">
@@ -342,7 +274,8 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text">Açıklama</div>
                         </div>
-                        <textarea name="note" rows="3" class="form-control form-control-lg" ngModel></textarea>
+                        <textarea name="note" rows="3" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.note"></textarea>
                       </div>
                     </div>
                     <div class="form-group mb-2">
@@ -350,7 +283,8 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text">Tip</div>
                         </div>
-                        <input type="text" readonly name="type" class="form-control form-control-lg" ngModel>
+                        <input type="text" readonly name="type" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.type">
                       </div>
                     </div>
                     <div class="form-group mb-2">
@@ -358,7 +292,8 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text">Adres</div>
                         </div>
-                        <input type="text" readonly name="device_port" class="form-control form-control-lg" ngModel>
+                        <input type="text" readonly name="device_port" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.device_port">
                       </div>
                     </div>
                     <div class="form-group mb-0">
@@ -366,24 +301,29 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text">Tür</div>
                         </div>
-                        <select name="mission" class="form-control form-control-lg" ngModel>
+                        <select name="mission" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.mission">
                           <option value="Adisyon">Hesap Yazıcısı</option>
                           <option value="Sipariş">Sipariş Yazıcısı</option>
                         </select>
                       </div>
                     </div>
                   </section>
-                  <h1 *ngIf="choosenPrinter === undefined" class="text-center mt-5">Listeden Yazıcı Seçiniz</h1>
+                  } @else {
+                  <h1 class="text-center mt-5">Listeden Yazıcı Seçiniz</h1>
+                  }
                 </div>
-                <div class="card-footer" [hidden]="choosenPrinter === undefined">
+                <div class="card-footer" [hidden]="!choosenPrinter()">
                   <div class="row">
                     <div class="col-lg-4 pr-1">
-                      <button type="button" (click)="removePrinter(choosenPrinter)" class="btn btn-md btn-danger btn-block ">
+                      <button type="button" (click)="removePrinter(choosenPrinter())"
+                        class="btn btn-md btn-danger btn-block ">
                         <i class="fa fa-times" aria-hidden="true"></i> Yazıcıyı Kaldır
                       </button>
                     </div>
                     <div class="col-lg-4 pr-1 pl-1">
-                      <button type="button" (click)="printTest(choosenPrinter)" class="btn btn-md btn-warning btn-block ">
+                      <button type="button" (click)="printTest(choosenPrinter())"
+                        class="btn btn-md btn-warning btn-block ">
                         <i class="fa fa-print" aria-hidden="true"></i> Sınama Yazdır
                       </button>
                     </div>
@@ -405,18 +345,8 @@
     </div>
   </div>
 
-  <div class="tab-pane" id="server" role="tabpanel">
-    <div class="card ntb">
-      <div class="card-header">
-        <h5 class="mt-2">Sunucu Durumu</h5>
-      </div>
-      <div class="card-body tab-height flow">
-
-      </div>
-      <div class="card-footer">
-        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
-      </div>
-    </div>
+  <div class="tab-pane" id="account" role="tabpanel">
+    <!-- Account settings section removed as it was commented out in original -->
   </div>
 </div>
 
@@ -434,7 +364,8 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-        <button type="button" (click)="makeAdmin(adminPass.value); adminPass.value = '';" class="btn btn-primary btn-lg">Giriş Yap</button>
+        <button type="button" (click)="makeAdmin(adminPass.value); adminPass.value = '';"
+          class="btn btn-primary btn-lg">Giriş Yap</button>
       </div>
     </div>
   </div>
@@ -452,7 +383,8 @@
       </div>
       <form #printerForm="ngForm" (ngSubmit)="addPrinter(printerForm)">
         <div class="modal-body">
-          <section *ngIf="printerProcess === undefined" id="selection">
+          @if (printerProcess() === undefined) {
+          <section id="selection">
             <p class="text-muted">Lütfen eklemek istediğiniz yazıcı tipini seçiniz.</p>
             <div class="row">
               <div class="col-lg-6 pr-2">
@@ -475,15 +407,19 @@
               </div>
             </div>
           </section>
-          <section *ngIf="printerProcess !== undefined" id="form">
-            <section *ngIf="printersFound !== undefined && selectedPrinter === undefined" id="usbPrinters">
+          } @else {
+          <section id="form">
+            @if (printersFound() !== undefined && selectedPrinter() === undefined) {
+            <section id="usbPrinters">
               <p class="text-muted">Kurulum yapmak istediğiniz yazıcıyı seçiniz.</p>
               <div class="row">
-                <div *ngFor="let item of printersFound" class="col">
+                @for (item of printersFound(); track item.portNumbers[0]) {
+                <div class="col">
                   <div class="card p-3 card-primary text-white">
                     <div class="card-body">
                       <h4 class="card-title">
-                        <i class="fa fa-print" aria-hidden="true"></i> USB Yazıcı</h4>
+                        <i class="fa fa-print" aria-hidden="true"></i> USB Yazıcı
+                      </h4>
                       <p class="card-text">Bulunduğu Port: {{item.portNumbers[0]}}</p>
                       <div class="row">
                         <div class="col-lg-6 pr-1">
@@ -492,7 +428,8 @@
                           </button>
                         </div>
                         <div class="col-lg-6 pl-1">
-                          <button type="button" (click)="selectedPrinter = item" class="btn btn-md btn-success btn-block">
+                          <button type="button" (click)="selectedPrinter.set(item)"
+                            class="btn btn-md btn-success btn-block">
                             <i class="fa fa-check" aria-hidden="true"></i> Yazıcıyı Seç
                           </button>
                         </div>
@@ -500,42 +437,41 @@
                     </div>
                   </div>
                 </div>
+                }
               </div>
             </section>
-            <section *ngIf="selectedPrinter !== undefined" id="printerFormHolder">
-              <h4 class="font-weight-bold mb-3">{{printerProcess}} Yazıcı
-                <span *ngIf="printerProcess === 'USB'" class="pull-right text-muted">Bulunduğu Port: {{selectedPrinter.portNumbers[0]}}</span>
+            }
+            @if (selectedPrinter() !== undefined) {
+            <section id="printerFormHolder">
+              <h4 class="font-weight-bold mb-3">{{printerProcess()}} Yazıcı
+                @if (printerProcess() === 'USB') {
+                <span class="pull-right text-muted">Bulunduğu Port: {{selectedPrinter().portNumbers[0]}}</span>
+                }
               </h4>
               <div class="form-group">
                 <div class="input-group">
                   <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      Yazıcı Adı
-                    </div>
+                    <div class="input-group-text">Yazıcı Adı</div>
                   </div>
                   <input type="text" name="name" class="form-control form-control-lg" ngModel>
                 </div>
                 <div class="input-group">
                   <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      Açıklama
-                    </div>
+                    <div class="input-group-text">Açıklama</div>
                   </div>
                   <input type="text" name="note" class="form-control form-control-lg" ngModel>
                 </div>
-                <div *ngIf="printerProcess === 'LAN'" class="input-group">
+                @if (printerProcess() === 'LAN') {
+                <div class="input-group">
                   <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      IP Adresi
-                    </div>
+                    <div class="input-group-text">IP Adresi</div>
                   </div>
                   <input type="text" name="port_number" class="form-control form-control-lg" ngModel>
                 </div>
+                }
                 <div class="input-group">
                   <div class="input-group-prepend">
-                    <div class="input-group-text">
-                      Tür
-                    </div>
+                    <div class="input-group-text">Tür</div>
                   </div>
                   <select name="mission" class="form-control form-control-lg" ngModel>
                     <option value="Adisyon">Hesap Yazıcısı</option>
@@ -544,12 +480,17 @@
                 </div>
               </div>
             </section>
+            }
           </section>
+          }
         </div>
-        <div *ngIf="selectedPrinter !== undefined" class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">İptal</button>
+        @if (selectedPrinter() !== undefined) {
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-lg" data-modal="modal"
+            (click)="setDefault()">İptal</button>
           <button type="submit" class="btn btn-danger btn-lg">Kaydet</button>
         </div>
+        }
       </form>
     </div>
   </div>
