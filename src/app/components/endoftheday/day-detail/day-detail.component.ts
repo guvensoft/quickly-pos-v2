@@ -1,4 +1,4 @@
-import { Component, input, OnInit, inject, signal, computed, effect } from '@angular/core';
+import { Component, input, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Cashbox } from '../../../core/models/cashbox.model';
 import { ClosedCheck } from '../../../core/models/check.model';
@@ -21,7 +21,7 @@ import { BaseChartDirective } from 'ng2-charts';
   templateUrl: './day-detail.component.html',
   styleUrls: ['./day-detail.component.scss']
 })
-export class DayDetailComponent implements OnInit {
+export class DayDetailComponent {
   private readonly electronService = inject(ElectronService);
   private readonly printerService = inject(PrinterService);
   private readonly settingsService = inject(SettingsService);
@@ -108,7 +108,7 @@ export class DayDetailComponent implements OnInit {
   // Generic selected signal (1)
   readonly selected = signal<any>(undefined);
 
-  ngOnInit() {
+  constructor() {
     // this.settingsService.getPrinters().subscribe(res => this.printers = res.value);
     console.log(this.detailData(), this.printers());
 
