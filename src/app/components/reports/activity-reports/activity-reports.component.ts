@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MainService } from '../../../core/services/main.service';
 import { Activity } from '../../../core/models/report.model';
@@ -13,22 +13,22 @@ import { BaseChartDirective } from 'ng2-charts';
   styleUrls: ['./activity-reports.component.scss']
 })
 export class ActivityReportsComponent implements OnInit {
+  private readonly mainService = inject(MainService);
 
-  activityData!: Array<any>;
-  activityLabels!: Array<string>;
-  activityLegend: boolean = true;
-  sellingActivity!: Activity;
-
+  readonly activityData = signal<any[]>([]);
+  readonly activityLabels = signal<string[]>([]);
+  readonly activityLegend = signal<boolean>(true);
+  readonly sellingActivity = signal<Activity | null>(null);
 
   SalesActivityOptions: any;
   CrowdActivityOptions: any;
 
-  ChartLoaded!: boolean;
+  readonly ChartLoaded = signal<boolean>(false);
 
-  SalesColor: Array<any> = [{ backgroundColor: '#5bc0de' }];
-  CrowdColor: Array<any> = [{ backgroundColor: '#f0ad4e' }];
+  readonly SalesColor = signal<any[]>([{ backgroundColor: '#5bc0de' }]);
+  readonly CrowdColor = signal<any[]>([{ backgroundColor: '#f0ad4e' }]);
 
-  constructor(private mainService: MainService) {
+  constructor() {
 
     this.SalesActivityOptions = {
       responsive: false,
@@ -129,23 +129,29 @@ export class ActivityReportsComponent implements OnInit {
   }
 
   dailySalesActivity() {
-    this.ChartLoaded = false;
-    this.activityData = [{ data: this.sellingActivity.activity, label: 'Gelir Endeksi' }];
-    this.activityLabels = this.sellingActivity.activity_time;
-    this.ChartLoaded = true;
+    this.ChartLoaded.set(false);
+    const selling = this.sellingActivity();
+    if (selling) {
+      this.activityData.set([{ data: selling.activity, label: 'Gelir Endeksi' }]);
+      this.activityLabels.set(selling.activity_time);
+      this.ChartLoaded.set(true);
+    }
   }
 
   dailyCrowdActivity() {
-    this.ChartLoaded = false;
-    this.activityData = [{ data: this.sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
-    this.activityLabels = this.sellingActivity.activity_time;
-    this.ChartLoaded = true;
+    this.ChartLoaded.set(false);
+    const selling = this.sellingActivity();
+    if (selling) {
+      this.activityData.set([{ data: selling.activity_count, label: 'Doluluk Oranı ( % )' }]);
+      this.activityLabels.set(selling.activity_time);
+      this.ChartLoaded.set(true);
+    }
   }
 
   fillData() {
     this.mainService.getAllBy('reports', { type: 'Activity' }).then(res => {
       if (res && res.docs && res.docs.length > 0) {
-        this.sellingActivity = res.docs[0] as any;
+        this.sellingActivity.set(res.docs[0] as any);
         this.dailySalesActivity();
       }
     });

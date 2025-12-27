@@ -26,26 +26,34 @@ function createWindow(): BrowserWindow {
     },
   });
 
-  // Bypass CORS
+  // Bypass CORS - Handle both preflight and actual requests
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    callback({
+      requestHeaders: {
+        ...details.requestHeaders,
+        'Origin': 'http://localhost:4200'
+      }
+    });
+  });
+
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Access-Control-Allow-Origin': ['*'],
         'Access-Control-Allow-Headers': ['*'],
-        'Access-Control-Allow-Methods': ['*']
+        'Access-Control-Allow-Methods': ['GET, POST, PUT, DELETE, OPTIONS'],
+        'Access-Control-Allow-Credentials': ['true']
       }
     });
   });
 
-  import('electron-debug').then(debug => {
-    debug.default({ isEnabled: true, showDevTools: true });
-  });
-
-
   if (serve) {
+    // Open DevTools in development mode
+    win.webContents.openDevTools();
+
     import('electron-debug').then(debug => {
-      debug.default({ isEnabled: true, showDevTools: true });
+      debug.default({ isEnabled: true, showDevTools: false }); // Already opened above
     });
 
     import('electron-reloader').then(reloader => {
@@ -67,6 +75,11 @@ function createWindow(): BrowserWindow {
     win.loadURL(url);
   }
 
+  // Open DevTools automatically on startup
+  win.webContents.on('did-finish-load', () => {
+    win?.webContents.openDevTools();
+  });
+
   // Emitted when the window is closed.
   win.on('closed', () => {
     // Dereference the window object, usually you would store window
@@ -79,6 +92,9 @@ function createWindow(): BrowserWindow {
 }
 
 try {
+  // Ignore certificate errors for development
+  app.commandLine.appendSwitch('ignore-certificate-errors');
+
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.

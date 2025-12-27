@@ -7,18 +7,17 @@
             <div class="row">
               <div class="col-lg-5">
                 <div class="table-name">
-                  <!-- <span *ngIf="check?.type === 1">Masa:</span> -->
-                  <b>{{check?.table_id | general:'tables' | async}}</b>
-                  <span
-                    *ngIf="(check?.note ?? '') !== '' && (check?.note ?? null) !== null && (check?.note ?? undefined) !== undefined"
-                    class="text-warning">
-                    ({{check?.note}})
+                  <b>{{check().table_id | general:'tables' | async}}</b>
+                  @if ((check().note ?? '') !== '' && (check().note ?? null) !== null) {
+                  <span class="text-warning">
+                    ({{check().note}})
                   </span>
+                  }
                 </div>
               </div>
               <div class="col-lg-3 humanIcon pr-2 pl-0 text-right">
                 <i class="fa fa-clock-o"></i>
-                {{(check?.timestamp ?? 0) | timeAgo}}
+                {{(check().timestamp ?? 0) | timeAgo}}
               </div>
               <div class="col-lg-4 pl-1 pr-1">
                 <div class="input-group input-group-sm">
@@ -26,8 +25,7 @@
                     <div class="input-group-text humanIcon"><i class="fa fa-search" aria-hidden="true"></i></div>
                   </div>
                   <input #productName type="text" style="font-size: 17px;" placeholder="Ürün Adı Giriniz.."
-                    (keydown)="filterProducts(productName.value)" (click)="subCatsView = [];"
-                    class="form-control form-contol-sm">
+                    (input)="filterProducts(productName.value)" class="form-control form-contol-sm">
                 </div>
               </div>
             </div>
@@ -35,22 +33,22 @@
           <div class="col-xl-4 col-lg-5">
             <div class="row">
               <div class="col-lg-4 pr-1 pl-1">
-                <button data-toggle="modal" (click)="onProductChange = false" data-target="#splitTable"
-                  [disabled]="tablesView.length === 0 || (check?.products?.length ?? 0) === 0 || (check?.status ?? 0) === 0"
+                <button data-toggle="modal" (click)="onProductChange.set(false)" data-target="#splitTable"
+                  [disabled]="tablesView().length === 0 || (check().products?.length ?? 0) === 0 || (check().status ?? 0) === 0"
                   class="btn btn-danger btn-block btn-sm">
                   <strong>Masa Değiştir</strong>
                 </button>
               </div>
               <div class="col-lg-4 pr-1 pl-1">
                 <button data-toggle="modal" data-target="#checkOptions"
-                  [disabled]="(check?.products?.length ?? 0) === 0" class="btn btn-danger btn-block btn-sm">
+                  [disabled]="(check().products?.length ?? 0) === 0" class="btn btn-danger btn-block btn-sm">
                   <strong>Hesap İşlemleri</strong>
                 </button>
               </div>
               <div class="col-lg-4 pr-1 pl-1">
                 <button data-toggle="modal" data-target="#qrPrintersModal"
                   class="btn btn-secondary text-info border-info btn-block btn-sm "
-                  [disabled]="tablesView.length === 0 || check?.type === 2">
+                  [disabled]="tablesView().length === 0 || check().type === 2">
                   <i class="fa fa-qrcode"></i>
                   <strong>QR Yazdır</strong>
                 </button>
@@ -63,55 +61,53 @@
         <div class="row">
           <div class="col-xl-8 col-lg-7">
             <div class="row">
-              <!-- <div class="col-xl-3 col-lg-3 inside-height check-flow pl-0 pr-0">
-                <div class="btn-group-vertical btn-block btn-group-lg">
-                  <button (click)="productsView = products; selectedCat = undefined; subCatsView = undefined;" [ngClass]="{'btn-danger bg-danger text-white':selectedCat === undefined}" class="btn btn-secondary dark-bg catButton">Bütün
-                    Ürünler
-                  </button>
-                  <button *ngFor="let cat of categories" [ngClass]="{'btn-danger bg-danger text-white':selectedCat === cat._id}" (click)="getProductsBy(cat._id)" class="btn btn-secondary dark-bg catButton">{{cat.name}}</button>
-                </div>
-              </div> -->
-              <div *ngIf="selectedCat === undefined" class="col-xl-11 col-lg-11  pr-0 pl-0">
+              @if (selectedCatId() === undefined) {
+              <div class="col-xl-11 col-lg-11  pr-0 pl-0">
                 <div class="card inside-height">
                   <div id="categoryHolder" class="card-body pt-0 pb-0 flow">
                     <div class="row">
-                      <div *ngFor="let cat of categories" (click)="getProductsBy(cat._id!)"
-                        class="col-xl-3 col-lg-4 col-card">
+                      @for (cat of categories(); track cat._id) {
+                      <div (click)="getProductsBy(cat._id!)" class="col-xl-3 col-lg-4 col-card">
                         <div class="card mb-1 mt-1 catCard">
                           <div class="card-body">
                             <h2 class="card-title text-center">{{cat?.name}}</h2>
                           </div>
                         </div>
                       </div>
+                      }
                     </div>
                   </div>
                 </div>
               </div>
-              <div *ngIf="selectedCat !== undefined" class="col-xl-11 col-lg-11  pr-0 pl-0">
+              } @else {
+              <div class="col-xl-11 col-lg-11  pr-0 pl-0">
                 <div class="card inside-height">
                   <div>
                     <div class="card-header pt-1 pb-1 pr-1 pl-1">
                       <div class="row ml-0 mr-0">
                         <div class="col-xl-3 col-lg-4 p-0 pr-1 pl-1 mb-0">
-                          <button (click)="selectedCat = undefined" class="btn btn-md btn-danger text-dark btn-block">
+                          <button (click)="selectedCatId.set(undefined)"
+                            class="btn btn-md btn-danger text-dark btn-block">
                             <b><i class="fa fa-chevron-left" aria-hidden="true"></i> Geri</b>
                           </button>
                         </div>
-                        <ng-container *ngIf="subCatsView !== undefined && subCatsView.length > 0">
-                          <div *ngFor="let item of subCatsView" class="col p-0 pr-1 pl-1 mb-1">
-                            <button (click)="getProductsBySubCat(item._id!)"
-                              class="btn btn-md btn-warning text-dark btn-block">
-                              <b>{{item?.name}}</b>
-                            </button>
-                          </div>
-                        </ng-container>
+                        @if (subCatsView().length > 0) {
+                        @for (item of subCatsView(); track item._id) {
+                        <div class="col p-0 pr-1 pl-1 mb-1">
+                          <button (click)="getProductsBySubCat(item._id!)"
+                            class="btn btn-md btn-warning text-dark btn-block">
+                            <b>{{item?.name}}</b>
+                          </button>
+                        </div>
+                        }
+                        }
                       </div>
                     </div>
                   </div>
                   <div id="productHolder" class="card-body pt-0 pb-0 flow">
                     <div class="row">
-                      <div *ngFor="let product of productsView" (click)="addToCheck(product)"
-                        class="col-xl-3 col-lg-4 col-card">
+                      @for (product of productsView(); track product._id) {
+                      <div (click)="addToCheck(product)" class="col-xl-3 col-lg-4 col-card">
                         <div class="card mb-1 mt-1 proCard">
                           <div class="card-body">
                             <h2 class="card-title" [ngClass]="{'long-name': (product?.name?.length ?? 0) > 12 }">
@@ -123,28 +119,33 @@
                               </span>
                               <small class="category mt-1 text-white">
                                 {{catName(product?.cat_id ?? "")}}
-                                <!-- {{product.cat_id | general:'categories':'name'| async}} -->
                               </small>
                             </p>
                           </div>
                         </div>
                       </div>
+                      }
                     </div>
-                    <div *ngIf="productsView === undefined || productsView.length === 0" class="row mt-5">
+                    @if (productsView().length === 0) {
+                    <div class="row mt-5">
                       <div class="col-xl-12 mt-5">
                         <h2 class="text-center mt-3">Eşleşen Ürün Bulunamadı</h2>
                       </div>
                     </div>
+                    }
                   </div>
                 </div>
               </div>
+              }
               <div class="col-lg-1 col-xl-1">
                 <div class="row">
-                  <div *ngFor="let item of [0.5,1,1.5,2,3,4,5,6,7,8]" class="col pr-0 pl-1">
-                    <button (click)="selectedQuantity = item"
-                      class="btn btn-block {{ selectedQuantity === item ? 'btn-warning' : 'btn-outline-warning'}}"
+                  @for (item of [0.5,1,1.5,2,3,4,5,6,7,8]; track item) {
+                  <div class="col pr-0 pl-1">
+                    <button (click)="selectedQuantity.set(item)"
+                      class="btn btn-block {{ selectedQuantity() === item ? 'btn-warning' : 'btn-outline-warning'}}"
                       style="height: 60.6px; font-weight: bold; font-size:1.5vw;"><strong>{{item}}</strong></button>
                   </div>
+                  }
                 </div>
               </div>
             </div>
@@ -159,15 +160,13 @@
                       <div class="input-group-prepend normal">
                         <div class="input-group-text humanIcon"><i class="fa fa-male" aria-hidden="true"></i></div>
                       </div>
-                      <input type="number" readonly value="{{check?.occupation?.male}}"
+                      <input type="number" readonly [value]="check().occupation?.male || 0"
                         class="form-control form-contol-sm" style="font-weight: bolder; font-size: 20px;">
                       <div class="input-group-append normal">
-                        <button (click)="check!.occupation!.male = (check?.occupation?.male ?? 0) +1"
-                          class="btn btn-success"><i class="fa fa-plus"></i></button>
+                        <button (click)="incrementMale()" class="btn btn-success"><i class="fa fa-plus"></i></button>
                       </div>
                       <div class="input-group-append normal">
-                        <button [disabled]="(check?.occupation?.male ?? 0) === 0"
-                          (click)="check!.occupation!.male = (check?.occupation?.male ?? 0) -1"
+                        <button [disabled]="(check().occupation?.male ?? 0) === 0" (click)="decrementMale()"
                           class="btn btn-danger"><i class="fa fa-minus"></i></button>
                       </div>
                     </div>
@@ -177,15 +176,13 @@
                       <div class="input-group-prepend normal">
                         <div class="input-group-text humanIcon"><i class="fa fa-female" aria-hidden="true"></i></div>
                       </div>
-                      <input type="number" readonly value="{{check?.occupation?.female}}"
+                      <input type="number" readonly [value]="check().occupation?.female || 0"
                         class="form-control form-contol-sm" style="font-weight: bolder; font-size: 20px;">
                       <div class="input-group-append normal">
-                        <button (click)="check!.occupation!.female = (check?.occupation?.female ?? 0) +1"
-                          class="btn btn-success"><i class="fa fa-plus"></i></button>
+                        <button (click)="incrementFemale()" class="btn btn-success"><i class="fa fa-plus"></i></button>
                       </div>
                       <div class="input-group-append normal">
-                        <button [disabled]="(check?.occupation?.female ?? 0) === 0"
-                          (click)="check!.occupation!.female = (check?.occupation?.female ?? 0) -1"
+                        <button [disabled]="(check().occupation?.female ?? 0) === 0" (click)="decrementFemale()"
                           class="btn btn-danger"><i class="fa fa-minus"></i></button>
                       </div>
                     </div>
@@ -193,41 +190,52 @@
                 </div>
               </div>
               <div id="check-products" class="card-body check-flow p-2 dark-bg">
-                <div *ngFor="let item of check?.products; let i = index"
-                  [ngClass]="{'animated slideInLeft':item.status === 1}">
+                @for (item of check().products; track $index) {
+                <div [ngClass]="{'animated slideInLeft':item.status === 1}">
                   <div
-                    [ngClass]="{'text-danger': item.status === 2 && selectedIndex !== i, 'text-warning':selectedIndex === i}"
-                    style="cursor:pointer" (click)="selectProduct(i)" class="check-product">
+                    [ngClass]="{'text-danger': item.status === 2 && selectedIndex() !== $index, 'text-warning':selectedIndex() === $index}"
+                    style="cursor:pointer" (click)="selectProduct($index)" class="check-product">
                     <div class="product-name">
-                      <i *ngIf="item.status === 3" class="fa fa-times-rectangle text-danger" aria-hidden="true"></i>
+                      @if (item.status === 3) {
+                      <i class="fa fa-times-rectangle text-danger" aria-hidden="true"></i>
+                      }
                       {{item?.name}}
-                      <small *ngIf="item.note !== '' && item.note !== undefined">({{item.note}})</small>
+                      @if (item.note !== '' && item.note !== undefined) {
+                      <small>({{item.note}})</small>
+                      }
                     </div>
                     <div class="product-price">{{item?.price | price }} </div>
-                    <div *ngIf="selectedIndex === i && item.status !== 1"
-                      style="font-size: 13px; padding-bottom: 0.25rem;">
+                    @if (selectedIndex() === $index && item.status !== 1) {
+                    <div style="font-size: 13px; padding-bottom: 0.25rem;">
                       <i class="fa fa-user" aria-hidden="true"></i> {{item.owner | general:'users' | async }}
                       <span class="pull-right">
                         <i class="fa fa-clock-o" aria-hidden="true"></i> {{item.timestamp | date:'HH:mm'}}</span>
                     </div>
+                    }
                   </div>
                 </div>
+                }
               </div>
-              <div *ngIf="(check?.discount ?? 0) > 0" class="card-footer p-1">
-                <button (click)="togglePayed()" class="btn btn-sm btn-secondary btn-block text-left">{{payedTitle}}
-                  <i [ngClass]="(payedShow) ? 'fa-caret-down':'fa-caret-up'" class="fa pull-right"
+              @if ((check().discount ?? 0) > 0) {
+              <div class="card-footer p-1">
+                <button (click)="payedShow.set(!payedShow())"
+                  class="btn btn-sm btn-secondary btn-block text-left">{{payedTitle()}}
+                  <i [ngClass]="(payedShow()) ? 'fa-caret-down':'fa-caret-up'" class="fa pull-right"
                     aria-hidden="true"></i>
                 </button>
               </div>
-              <div *ngIf="(check?.discount ?? 0) > 0 && payedShow" class="card-body check-flow p-2 payed-things">
-                <div *ngFor="let payment of check?.payment_flow" class="mb-2 payedLayer">
+              }
+              @if ((check().discount ?? 0) > 0 && payedShow()) {
+              <div class="card-body check-flow p-2 payed-things">
+                @for (payment of check().payment_flow; track $index) {
+                <div class="mb-2 payedLayer">
                   <p class="mb-0">
                     <strong>{{payment.method}}</strong>
                     <small>( {{payment.owner}} - {{payment.timestamp | date:'HH:mm'}} )</small>
                     <span class="pull-right">{{payment.amount + payment.discount | price}} </span>
                   </p>
-                  <p *ngFor="let product of payment.payed_products" class="text-warning m-0 pl-3"
-                    style="text-transform: capitalize;">
+                  @for (product of payment.payed_products; track $index) {
+                  <p class="text-warning m-0 pl-3" style="text-transform: capitalize;">
                     <small>
                       <strong>
                         {{product?.name}}
@@ -235,12 +243,15 @@
                       </strong>
                     </small>
                   </p>
-                  <p *ngIf="payment.discount > 0" class="text-danger m-0">
+                  }
+                  @if (payment.discount > 0) {
+                  <p class="text-danger m-0">
                     <small>
                       <i class="fa fa-arrow-down" aria-hidden="true"></i> İndirim Miktarı
                       <span class="pull-right">{{payment.discount | price}} </span>
                     </small>
                   </p>
+                  }
                   <p class="m-0 font-weight-bold">
                     <small>
                       <i class="fa fa-arrow-right" aria-hidden="true"></i> Alınan Ödeme
@@ -248,80 +259,95 @@
                     </small>
                   </p>
                 </div>
+                }
               </div>
+              }
               <div class="card-footer p-2">
                 <p class="text-primary mb-0">
                   <strong style="font-size: large;">Hesap Toplamı:
-                    <span class="pull-right">{{(check?.total_price ?? 0) + (check?.discount ?? 0) | price}} </span>
+                    <span class="pull-right">{{(check().total_price ?? 0) + (check().discount ?? 0) | price}} </span>
                   </strong>
                 </p>
-                <p *ngIf="(check?.discount ?? 0) > 0" class="text-warning mb-0">
+                @if ((check().discount ?? 0) > 0) {
+                <p class="text-warning mb-0">
                   <strong style="font-size: medium;">
                     Ödenen Miktar:
-                    <span class="pull-right">{{check?.discount | price }} </span>
+                    <span class="pull-right">{{check().discount | price }} </span>
                   </strong>
                 </p>
-                <p *ngIf="(check?.discountPercent ?? 0) > 0" class="text-danger mb-0">
+                }
+                @if ((check().discountPercent ?? 0) > 0) {
+                <p class="text-danger mb-0">
                   <strong>İndirim Tutarı:</strong>
-                  <span class="pull-right">{{ check?.discountPercent?.toFixed(2) }}% -
-                    {{((check?.total_price ?? 0) * (check?.discountPercent ?? 0))/100 | price}} </span>
+                  <span class="pull-right">{{ check().discountPercent?.toFixed(2) }}% -
+                    {{((check().total_price ?? 0) * (check().discountPercent ?? 0))/100 | price}} </span>
                 </p>
-                <p *ngIf="(check?.discount ?? 0) > 0 || check?.discountPercent !== undefined" class="mb-0">
+                }
+                @if ((check().discount ?? 0) > 0 || check().discountPercent !== undefined) {
+                <p class="mb-0">
                   <strong style="font-size: larger;">Kalan Toplam:
                     <span class="pull-right">
-                      {{(check.total_price ?? 0) - ((check.total_price ?? 0) * (check.discountPercent ?? 0)) / 100 |
+                      {{(check().total_price ?? 0) - ((check().total_price ?? 0) * (check().discountPercent ?? 0)) / 100
+                      |
                       price}} </span>
                   </strong>
                 </p>
+                }
                 <p class="text-muted mb-0">
                   <strong>Adisyon No:
-                    <span class="pull-right">#{{check.check_no}}</span>
+                    <span class="pull-right">#{{check().check_no}}</span>
                   </strong>
                 </p>
                 <div class="btn-group btn-group-justify btn-block mt-2" data-toggle="buttons">
-                  <button *ngIf="check.type === 1 || check.type === 2" (click)="goPayment()"
-                    [disabled]="(check.products?.length ?? 0) === 0 || check.type === 1 && check.products?.[0]?.status === 1 || !permissions?.payment"
+                  @if (check().type === 1 || check().type === 2) {
+                  <button (click)="goPayment()"
+                    [disabled]="(check().products?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
                     class="btn btn-danger btn-lg btn-block"><strong>Ödeme Al</strong></button>
-                  <button *ngIf="check.type === 1 || check.type === 2"
-                    [disabled]="(check.products?.length ?? 0) === 0 || check.type === 1 && check.products?.[0]?.status === 1 || !permissions?.payment"
+                  <button
+                    [disabled]="(check().products?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
                     class="btn btn-lg btn-primary" data-toggle="modal"
                     data-target="#closeCheck"><strong>Kapat</strong></button>
+                  }
 
-                  <button *ngIf="check.type === 1 && check.payment_flow && check.total_price === 0" (click)="endCheck()"
-                    [disabled]="(check.payment_flow?.length ?? 0) === 0 || check.type === 1 && check.products?.[0]?.status === 1 || !permissions?.payment"
+                  @if (check().type === 1 && check().payment_flow && check().total_price === 0) {
+                  <button (click)="endCheck()"
+                    [disabled]="(check().payment_flow?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
                     class="btn btn-lg btn-success"><strong><i style="font-size: 1.5em;"
                         class="fa fa-check-square animated tada slow infinite"></i></strong></button>
+                  }
 
-                  <button *ngIf="this.check.type === 5" [routerLink]="['/store']"
-                    class="btn btn-secondary btn-lg btn-block"><strong><i class="fa fa-backward" aria-hidden="true"></i>
+                  @if (check().type === 5) {
+                  <button [routerLink]="['/store']" class="btn btn-secondary btn-lg btn-block"><strong><i
+                        class="fa fa-backward" aria-hidden="true"></i>
                       Geri Dön</strong></button>
-                  <button *ngIf="this.check.type === 5 && this.check.status !== 2"
-                    [disabled]="(check.products?.length ?? 0) === 0 || check.type === 1 && check.products?.[0]?.status === 1 || !permissions?.payment"
+                  @if (check().status !== 2) {
+                  <button
+                    [disabled]="(check().products?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
                     class="btn btn-lg btn-primary" data-toggle="modal"
                     data-target="#closeCheck"><strong>Kapat</strong></button>
-
-                  <!-- <button *ngIf="this.check.type === 7" [disabled]="check.products.length === 0 || check.type === 1 && check.products[0]?.status === 1 || !permissions.payment" class="btn btn-lg btn-primary"><strong>Kapat</strong></button> -->
+                  }
+                  }
                 </div>
               </div>
             </div>
             <div class="col-xl-1 col-lg-1 pr-0 pl-1">
-              <button (click)="sendCheck()" [oneShot]="check.type === 1"
-                [disabled]="(check.products?.length ?? 0) === 0 || newOrders.length === 0"
+              <button (click)="sendCheck()" [oneShot]="check().type === 1"
+                [disabled]="(check().products?.length ?? 0) === 0 || newOrders().length === 0"
                 class="btn btn-success btn-block sendButton">
                 <div>
                   <i class="fa fa-paper-plane fa-5x"></i>
                   <p>Gönder</p>
                 </div>
               </button>
-              <button data-toggle="modal" (click)="getSpecies(selectedProduct)"
-                [disabled]="(check.products?.length ?? 0) === 0 || selectedProduct === undefined || selectedProduct.status !== 1"
+              <button data-toggle="modal" (click)="getSpecies(selectedProduct())"
+                [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 1"
                 data-target="#noteModal" class="btn btn-warning btn-block sendButton">
                 <div>
                   <i class="fa fa-sticky-note fa-5x"></i>
                   <p>Not Ekle</p>
                 </div>
               </button>
-              <button (click)="undoChanges()" [disabled]="newOrders.length === 0"
+              <button (click)="undoChanges()" [disabled]="newOrders().length === 0"
                 class="btn btn-primary btn-block sendButton">
                 <div>
                   <i class="fa fa-undo fa-5x"></i>
@@ -329,15 +355,15 @@
                 </div>
               </button>
               <button data-toggle="modal" data-target="#cancelProduct"
-                [disabled]="(check.products?.length ?? 0) === 0 || selectedProduct === undefined || selectedProduct.status !== 2 || !permissions?.cancelProduct"
+                [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 2 || !permissions()?.cancelProduct"
                 class="btn btn-danger btn-block sendButton">
                 <div>
                   <i class="fa fa-times fa-5x"></i>
                   <p>İptal Et</p>
                 </div>
               </button>
-              <button data-toggle="modal" (click)="onProductChange = true"
-                [disabled]="(check.products?.length ?? 0) === 0 || selectedProduct === undefined || selectedProduct.status !== 2"
+              <button data-toggle="modal" (click)="onProductChange.set(true)"
+                [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 2"
                 data-target="#splitTable" class="btn btn-info btn-block sendButton">
                 <div>
                   <i class="fa fa-exchange fa-5x"></i>
@@ -345,7 +371,7 @@
                 </div>
               </button>
               <button data-toggle="modal" data-target="#printersModal" oneShot
-                [disabled]="(check?.products?.length ?? 0) === 0 || check?.status === 0"
+                [disabled]="(check().products?.length ?? 0) === 0 || check().status === 0"
                 class="btn dark-bg btn-block sendButton">
                 <div>
                   <i style="color:lightgray !important;" class="fa fa-print fa-5x"></i>
@@ -363,7 +389,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title" id="modelTitleId">Not Ekle ( {{selectedProduct?.name ?? 'Ürün'}} )
+          <h4 class="modal-title" id="modelTitleId">Not Ekle ( {{selectedProduct()?.name ?? 'Ürün'}} )
           </h4>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -375,19 +401,24 @@
               <input #noteInput type="text" placeholder="Notunuz..." name="description"
                 class="form-control form-control-lg" ngModel>
             </div>
-            <div *ngIf="readyNotes.length > 0" class="row pr-0 pl-0">
-              <div *ngFor="let note of readyNotes" class="col-lg-4 mb-2">
+            @if (readyNotes().length > 0) {
+            <div class="row pr-0 pl-0">
+              @for (note of readyNotes(); track note) {
+              <div class="col-lg-4 mb-2">
                 <button type="button" class="btn bg-teal btn-lg btn-block" (click)="addReadyNotes(note)">
                   {{note}}
                 </button>
               </div>
+              }
             </div>
+            }
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
             <button type="button" (click)="dontGive()" class="btn btn-warning btn-lg">Verme</button>
-            <button *ngIf="permissions?.discount" type="button" (click)="makeGift()"
-              class="btn btn-danger btn-lg">İkram</button>
+            @if (permissions()?.discount) {
+            <button type="button" (click)="makeGift()" class="btn btn-danger btn-lg">İkram</button>
+            }
             <button type="submit" class="btn btn-primary btn-lg">Not Ekle</button>
           </div>
         </form>
@@ -399,22 +430,26 @@
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title">{{selectedProduct?.name ?? 'Ürün'}}
+          <h4 class="modal-title">{{selectedProduct()?.name ?? 'Ürün'}}
           </h4>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div *ngIf="productSpecs.length > 0" class="modal-body">
+        @if (productSpecs().length > 0) {
+        <div class="modal-body">
           <div class="row">
-            <div *ngFor="let spec of productSpecs" class="col pr-2 pl-2 mb-2">
+            @for (spec of productSpecs(); track spec.spec_name) {
+            <div class="col pr-2 pl-2 mb-2">
               <button class="btn btn-warning btn-lg btn-block btn-specs" (click)="changeSpecs(spec)">
                 {{spec.spec_name}}
                 <b class="spec-price">{{spec.spec_price | price }} </b>
               </button>
             </div>
+            }
           </div>
         </div>
+        }
       </div>
     </div>
   </div>
@@ -429,16 +464,20 @@
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div *ngIf="printers.length > 0" class="modal-body">
+        @if (printers().length > 0) {
+        <div class="modal-body">
           <div class="row">
-            <ng-container *ngFor="let printer of printers">
-              <div *ngIf="printer.mission === 'Adisyon'" class="col pr-2 pl-2 mb-2">
-                <button class="btn btn-warning btn-lg btn-block btn-specs"
-                  (click)="printCheck(printer)">{{printer?.name}}</button>
-              </div>
-            </ng-container>
+            @for (printer of printers(); track printer.name) {
+            @if (printer.mission === 'Adisyon') {
+            <div class="col pr-2 pl-2 mb-2">
+              <button class="btn btn-warning btn-lg btn-block btn-specs"
+                (click)="printCheck(printer)">{{printer?.name}}</button>
+            </div>
+            }
+            }
           </div>
         </div>
+        }
       </div>
     </div>
   </div>
@@ -453,16 +492,20 @@
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div *ngIf="printers.length > 0" class="modal-body">
+        @if (printers().length > 0) {
+        <div class="modal-body">
           <div class="row">
-            <ng-container *ngFor="let printer of printers">
-              <div *ngIf="printer.mission === 'Adisyon'" class="col pr-2 pl-2 mb-2">
-                <button class="btn btn-warning btn-lg btn-block btn-specs"
-                  (click)="qrCode(printer)">{{printer?.name}}</button>
-              </div>
-            </ng-container>
+            @for (printer of printers(); track printer.name) {
+            @if (printer.mission === 'Adisyon') {
+            <div class="col pr-2 pl-2 mb-2">
+              <button class="btn btn-warning btn-lg btn-block btn-specs"
+                (click)="qrCode(printer)">{{printer?.name}}</button>
+            </div>
+            }
+            }
           </div>
         </div>
+        }
       </div>
     </div>
   </div>
@@ -503,10 +546,12 @@
         </div>
         <div class="modal-body">
           <div class="row">
-            <div *ngFor="let reason of cancelReasons" class="col pl-2 pr-2">
+            @for (reason of cancelReasons; track reason) {
+            <div class="col pl-2 pr-2">
               <button type="button" class="btn btn-lg btn-danger btn-block sellButton text-white"
                 (click)="cancelProduct(reason)">{{reason}}</button>
             </div>
+            }
           </div>
         </div>
         <div class="modal-footer">
@@ -529,9 +574,10 @@
           <div class="row">
             <div class="col-lg-10 tFlow pl-1 pr-1">
               <div class="row pr-3 pl-3">
-                <div *ngFor="let item of tablesView" class="col-lg-2 pl-1 pr-1 mb-2">
+                @for (item of tablesView(); track item._id) {
+                <div class="col-lg-2 pl-1 pr-1 mb-2">
                   <div
-                    [ngClass]="{'bg-success': item.status === 2 ,'bg-danger': item.status === 3, 'bg-warning text-dark' : item.status === 1 && item._id !== selectedTable?._id , 'bg-info': item._id === selectedTable?._id}"
+                    [ngClass]="{'bg-success': item.status === 2 ,'bg-danger': item.status === 3, 'bg-warning text-dark' : item.status === 1 && item._id !== selectedTableId() , 'bg-info': item._id === selectedTableId()}"
                     (click)="selectTable(item)" class="card tableCard">
                     <div class="card-body p-3">
                       <h4 class="card-title" style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">
@@ -542,34 +588,40 @@
                     </div>
                   </div>
                 </div>
+                }
               </div>
             </div>
             <div class="col-lg-2 pl-2 pr-2 tFlow">
-              <div (click)="tablesView = tables; selectedFloor = undefined!"
-                [ngClass]="{'bg-danger text-white':selectedFloor === undefined}" class="card mb-2 dark-bg">
+              <div (click)="selectedFloorId.set(undefined)"
+                [ngClass]="{'bg-danger text-white':selectedFloorId() === undefined}" class="card mb-2 dark-bg">
                 <div class="card-body p-2 pt-3">
                   <h2 style="font-size:1.7vw; font-weight:bold;">Tüm Masalar</h2>
                 </div>
               </div>
-              <div *ngFor="let floor of floors" [ngClass]="{'bg-danger text-white':selectedFloor === floor?._id}"
+              @for (floor of floors(); track floor._id) {
+              <div [ngClass]="{'bg-danger text-white':selectedFloorId() === floor?._id}"
                 (click)="filterTables(floor?._id!)" class="card mb-2 dark-bg">
                 <div class="card-body p-2 pt-3">
                   <h2 style="font-size:1.7vw; font-weight:bold;">{{floor?.name}}</h2>
                 </div>
               </div>
+              }
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-          <button *ngIf="onProductChange" oneShot type="button" class="btn btn-danger btn-lg" (click)="splitProduct()"
-            [disabled]="selectedTable === undefined">Ürün
+          @if (onProductChange()) {
+          <button oneShot type="button" class="btn btn-danger btn-lg" (click)="splitProduct()"
+            [disabled]="selectedTableId() === undefined">Ürün
             Taşı
           </button>
-          <button *ngIf="!onProductChange" oneShot type="button" class="btn btn-danger btn-lg" (click)="splitTable()"
-            [disabled]="selectedTable === undefined">Masa
+          } @else {
+          <button oneShot type="button" class="btn btn-danger btn-lg" (click)="splitTable()"
+            [disabled]="selectedTableId() === undefined">Masa
             Değiştir
           </button>
+          }
         </div>
       </div>
     </div>
@@ -579,7 +631,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title">{{productWithSpecs?.name}}</h4>
+          <h4 class="modal-title">{{productWithSpecs()?.name}}</h4>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -589,9 +641,10 @@
             <!-- <div class="card-header">Miktar</div> -->
             <div class="card-body p-0" class="tareClass">
               <div class="input-group">
-                <input #specsInput type="text" readonly class="form-control form-control-lg" [ngModel]="numpad" />
+                <input #specsInput type="text" readonly class="form-control form-control-lg" [ngModel]="numpad()" />
                 <div class="input-group-append normal">
-                  <div #specsUnit class="input-group-text">{{productStock?.stock_id | general:'stocks':'unit' | async}}
+                  <div #specsUnit class="input-group-text">{{productStock()?.stock_id | general:'stocks':'unit' |
+                    async}}
                   </div>
                 </div>
                 <div class="input-group-append normal">
@@ -600,19 +653,24 @@
               </div>
             </div>
             <div class="card-footer">
-              <div *ngFor="let keys of numboard;" class="row mb-1">
-                <div *ngFor="let key of keys;" class="col-lg-4 pr-1 pl-1 mb-1">
+              @for (keys of numboard; track $index) {
+              <div class="row mb-1">
+                @for (key of keys; track key) {
+                <div class="col-lg-4 pr-1 pl-1 mb-1">
                   <button type="button"
-                    [disabled]="key === '◂' && numpad === '' || key === '.' && numpad === '' || key === '0' && numpad === '' || key === '.' && isFirstTime || key === '.' && specsUnit.innerHTML === 'Adet'"
+                    [disabled]="key === '◂' && numpad() === '' || key === '.' && numpad() === '' || key === '0' && numpad() === '' || key === '.' && isFirstTime() || key === '.' && specsUnit.innerHTML === 'Adet'"
                     (click)="pushKey(key)"
                     class="btn dark-bg btn-outline-primary font-weight-bold btn-lg p-3 btn-block numpad">{{key}}</button>
                 </div>
+                }
               </div>
+              }
             </div>
             <div class="card-footer">
               <b>
                 <h2 class="mb-0">Tutar:
-                  <span class="pull-right">{{((+(numpad ?? 0)) * (productWithSpecs?.price ?? 0)) / (productStock?.amount
+                  <span class="pull-right">{{((+(numpad() ?? 0)) * (productWithSpecs()?.price ?? 0)) /
+                    (productStock()?.amount
                     ?? 1) | price }}
                   </span>
                 </h2>
@@ -623,7 +681,7 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
           <button type="button" (click)="numpadToCheck()"
-            [disabled]="((+(numpad ?? 0)) * (productWithSpecs?.price ?? 0)) === 0" class="btn btn-primary btn-lg">
+            [disabled]="((+(numpad() ?? 0)) * (productWithSpecs()?.price ?? 0)) === 0" class="btn btn-primary btn-lg">
             <i class="fa fa-check" aria-hidden="true"></i> Onayla</button>
         </div>
       </div>
@@ -641,7 +699,8 @@
         </div>
         <div class="modal-body">
           <div class="row">
-            <div *ngFor="let method of paymentMethods" class="col pr-2 pl-2">
+            @for (method of paymentMethods; track method.name) {
+            <div class="col pr-2 pl-2">
               <button oneShot [ngStyle]="{'color': method.color, 'border': '1px solid', 'border-color': method.color}"
                 (click)="closeCheck(method.name)" class="btn btn-secondary btn-block btn-lg sellButton">
                 <i class="fa {{method.icon}}"></i>
@@ -650,6 +709,7 @@
                 </p>
               </button>
             </div>
+            }
           </div>
         </div>
         <div class="modal-footer">
@@ -680,7 +740,7 @@
               </button>
             </div>
             <div class="col pr-2 pl-2">
-              <button [disabled]="!permissions.discount" data-toggle="modal" data-dismiss="modal"
+              <button [disabled]="!permissions()?.discount" data-toggle="modal" data-dismiss="modal"
                 data-target="#checkDiscount"
                 class="btn btn-secondary text-danger border-danger btn-block btn-lg sellButton">
                 <i class="fa fa-arrow-down"></i>
@@ -722,12 +782,14 @@
                 <div class="input-group-prepend normal">
                   <div class="input-group-text humanIcon"><i class="fa fa-male" aria-hidden="true"></i></div>
                 </div>
-                <input type="number" readonly value="{{check.occupation.male}}" class="form-control form-contol-lg"
-                  style="font-weight: bolder; font-size: 20px;">
-                <div *ngFor="let item of [1,2,3,4,5,6,7,8]" class="input-group-append normal">
-                  <button (click)="check.occupation.male = item" class="btn btn-outline-success"
-                    [ngClass]="{'active': check.occupation.male === item}">{{item}}</button>
+                <input type="number" readonly [value]="check().occupation?.male || 0"
+                  class="form-control form-contol-lg" style="font-weight: bolder; font-size: 20px;">
+                @for (item of [1,2,3,4,5,6,7,8]; track item) {
+                <div class="input-group-append normal">
+                  <button (click)="setMale(item)" class="btn btn-outline-success"
+                    [ngClass]="{'active': (check().occupation?.male ?? 0) === item}">{{item}}</button>
                 </div>
+                }
               </div>
             </div>
           </div>
@@ -737,12 +799,14 @@
                 <div class="input-group-prepend normal">
                   <div class="input-group-text humanIcon"><i class="fa fa-female" aria-hidden="true"></i></div>
                 </div>
-                <input type="number" readonly value="{{check.occupation.female}}" class="form-control form-contol-lg"
-                  style="font-weight: bolder; font-size: 20px;">
-                <div *ngFor="let item of [1,2,3,4,5,6,7,8]" class="input-group-append normal">
-                  <button (click)="check.occupation.female = item" class="btn btn-outline-success"
-                    [ngClass]="{'active': check.occupation.female === item}">{{item}}</button>
+                <input type="number" readonly [value]="check().occupation?.female || 0"
+                  class="form-control form-contol-lg" style="font-weight: bolder; font-size: 20px;">
+                @for (item of [1,2,3,4,5,6,7,8]; track item) {
+                <div class="input-group-append normal">
+                  <button (click)="setFemale(item)" class="btn btn-outline-success"
+                    [ngClass]="{'active': (check().occupation?.female ?? 0) === item}">{{item}}</button>
                 </div>
+                }
               </div>
             </div>
           </div>
@@ -774,8 +838,8 @@
                 </div>
                 <span class="input-group-append">
                   <button class="btn btn-primary btn-lg"
-                    [disabled]="+discountInput.value >= (check?.total_price ?? 0) || +discountInput.value <= 0"
-                    (click)="setDiscount((+discountInput.value*100)/(check?.total_price ?? 1))" type="button">
+                    [disabled]="+discountInput.value >= (check().total_price ?? 0) || +discountInput.value <= 0"
+                    (click)="setDiscount((+discountInput.value*100)/(check().total_price ?? 1))" type="button">
                     <i class="fa fa-arrow-down" aria-hidden="true"></i> İndirim Yap
                   </button>
                 </span>
@@ -794,17 +858,21 @@
             </div>
           </div>
           <div class="row mt-4 pr-2 pl-2">
-            <div *ngFor="let item of discounts;" class="col-lg-4 mb-2 pr-1 pl-1">
+            @for (item of discounts; track item) {
+            <div class="col-lg-4 mb-2 pr-1 pl-1">
               <button type="button" (click)="setDiscount(item)"
                 class="btn btn-primary btn-block btn-lg btn-discount">{{item}}
                 %</button>
             </div>
+            }
           </div>
         </div>
         <div class="modal-footer">
-          <button *ngIf="check.discountPercent" type="button" class="btn btn-danger btn-lg" data-dismiss="modal"
+          @if (check().discountPercent) {
+          <button type="button" class="btn btn-danger btn-lg" data-dismiss="modal"
             (click)="setDiscount(undefined)">İndirimi
             İptal Et</button>
+          }
           <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
         </div>
       </div>

@@ -1,19 +1,17 @@
-import { Component, ElementRef, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, OnDestroy, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Check, CheckProduct, ClosedCheck, PaymentStatus, CheckStatus, CheckType, CheckNo } from '../../../core/models/check.model';
-import { Printer, PaymentMethod } from '../../../core/models/settings.model';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Check, CheckProduct, ClosedCheck, PaymentStatus, CheckNo } from '../../../core/models/check.model';
+import { PaymentMethod } from '../../../core/models/settings.model';
 import { MessageService } from '../../../core/services/message.service';
 import { PrinterService } from '../../../core/services/printer.service';
 import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
 import { SettingsService } from '../../../core/services/settings.service';
-import { Customer } from 'app/core/models/customer.model';
-
+import { DatabaseService } from '../../../core/services/database.service';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
-import { FormsModule } from '@angular/forms';
 
 @Component({
   standalone: true,
@@ -22,265 +20,334 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './payment-screen.component.html',
   styleUrls: ['./payment-screen.component.scss'],
 })
-
 export class PaymentScreenComponent implements OnInit, OnDestroy {
-  id!: string;
-  check!: Check;
-  table!: string;
-  userId!: string;
-  userName!: string;
-  payedShow!: boolean;
-  payedTitle!: string;
-  canceledProducts!: Array<CheckProduct>;
-  numboard!: Array<any>;
-  numpad!: string;
-  isFirstTime!: boolean;
-  productsWillPay!: Array<CheckProduct>;
-  priceWillPay!: number;
-  payedPrice!: number;
-  changePrice!: number;
-  changeMessage!: string;
-  printers!: Array<Printer>;
-  discounts!: Array<number>;
-  discount!: number;
-  discountAmount!: number;
-  currentAmount!: number;
-  check_id!: string;
-  check_type!: string;
-  askForPrint!: boolean;
-  onClosing!: boolean;
-  permissions!: any;
-  day!: number;
-  changes!: any;
-  paymentMethods!: Array<PaymentMethod>
-  customers!: Array<Customer>;
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly settingsService = inject(SettingsService);
+  private readonly mainService = inject(MainService);
+  private readonly databaseService = inject(DatabaseService);
+  private readonly printerService = inject(PrinterService);
+  private readonly messageService = inject(MessageService);
+  private readonly logService = inject(LogService);
+
+  readonly id = signal<string | undefined>(undefined);
+  readonly check_type = signal<'Normal' | 'Fast' | 'Order'>('Normal');
+
+  readonly numpad = signal<string>('');
+  readonly isFirstTime = signal<boolean>(true);
+  readonly payedPrice = signal<number>(0);
+  readonly discount = signal<number | undefined>(undefined);
+  readonly discountAmount = signal<number>(0);
+  readonly productsWillPay = signal<CheckProduct[]>([]);
+  readonly askForPrint = signal<boolean>(false);
+  readonly onClosing = signal<boolean>(false);
+  readonly payedShow = signal<boolean>(false);
+
+  readonly check = computed(() => {
+    const checkId = this.id();
+    return this.databaseService.checks().find(c => c._id === checkId);
+  });
+
+  readonly table = computed(() => {
+    const c = this.check();
+    if (!c) return '';
+    if (c.type === 1) {
+      const t = this.databaseService.tables().find(tbl => tbl._id === c.table_id);
+      return t?.name || '';
+    }
+    return c.note === '' ? 'Hızlı Satış' : c.note;
+  });
+
+  readonly priceWillPay = computed(() => {
+    return this.productsWillPay().reduce((acc, p) => acc + (p.price || 0), 0);
+  });
+
+  readonly currentAmount = computed(() => {
+    return this.priceWillPay() - this.discountAmount();
+  });
+
+  readonly changePrice = computed(() => {
+    return this.payedPrice() - this.priceWillPay() + this.discountAmount();
+  });
+
+  readonly changeMessage = computed(() => {
+    return this.changePrice() > 0 ? 'Para Üstü' : 'Kalan Ödeme';
+  });
+
+  readonly payedTitle = computed(() => {
+    return this.payedShow() ? 'Ödemeleri Gizle' : 'Ödemeleri Göster';
+  });
+
+  readonly userId = signal<string | undefined>(undefined);
+  readonly userName = signal<string | undefined>(undefined);
+  readonly day = signal<number>(0);
+  readonly permissions = signal<any>({});
+
+  readonly printers = this.databaseService.receipts;
+  readonly customers = this.databaseService.customers;
+
+  readonly discounts = signal([5, 10, 15, 20, 25, 40]);
+  readonly numboard = signal([[1, 2, 3], [4, 5, 6], [7, 8, 9], [".", 0, "✔"]]);
+
+  readonly paymentMethods = signal([
+    new PaymentMethod('Nakit', 'Nakit Ödeme', '#5cb85c', 'fa-money', 1, 1),
+    new PaymentMethod('Kart', 'Kredi veya Banka Kartı', '#f0ad4e', 'fa-credit-card', 2, 1),
+    new PaymentMethod('Kupon', 'İndirim Kuponu veya Yemek Çeki', '#5bc0de', 'fa-bookmark', 3, 1),
+    new PaymentMethod('İkram', 'İkram Hesap', '#c9302c', 'fa-handshake-o', 4, 1)
+  ]);
+
   @ViewChild('discountInput') discountInput!: ElementRef;
   @ViewChild('customerInput') customerInput!: ElementRef;
   @ViewChild('creditNote') creditNote!: ElementRef;
 
-  constructor(private route: ActivatedRoute, private router: Router, private settingsService: SettingsService, private mainService: MainService, private printerService: PrinterService, private messageService: MessageService, private logService: LogService) {
+  constructor() {
     this.route.params.subscribe(params => {
-      this.id = params['id'];
-      this.fillData();
+      this.id.set(params['id']);
+      if (params['type']) {
+        this.check_type.set(params['type']);
+      }
     });
-    this.paymentMethods = [
-      new PaymentMethod('Nakit', 'Nakit Ödeme', '#5cb85c', 'fa-money', 1, 1),
-      new PaymentMethod('Kart', 'Kredi veya Banka Kartı', '#f0ad4e', 'fa-credit-card', 2, 1),
-      new PaymentMethod('Kupon', 'İndirim Kuponu veya Yemek Çeki', '#5bc0de', 'fa-bookmark', 3, 1),
-      new PaymentMethod('İkram', 'İkram Hesap', '#c9302c', 'fa-handshake-o', 4, 1)
-    ];
+
     try {
       const userPermissions = localStorage.getItem('userPermissions');
-      this.permissions = userPermissions ? JSON.parse(userPermissions) : {};
+      this.permissions.set(userPermissions ? JSON.parse(userPermissions) : {});
     } catch (error) {
       console.error('Error parsing userPermissions:', error);
-      this.permissions = {};
     }
+
     this.settingsService.DateSettings.subscribe((res: any) => {
-      this.day = res.value.day;
-    })
-    this.settingsService.getPrinters().subscribe((res: any) => this.printers = res.value);
+      if (res && res.value) {
+        this.day.set(res.value.day);
+      }
+    });
+
+    this.userId.set(this.settingsService.getUser('id') as string);
+    this.userName.set(this.settingsService.getUser('name') as string);
+
+    effect(() => {
+      const c = this.check();
+      if (c && c.discountPercent) {
+        this.discount.set(c.discountPercent);
+        this.discountAmount.set((this.priceWillPay() * c.discountPercent) / 100);
+      }
+    });
   }
 
   ngOnInit() {
-    this.discounts = [5, 10, 15, 20, 25, 40];
-    this.numboard = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [".", 0, "✔"]];
-    this.setDefault();
-    this.payedShow = false;
-    this.payedTitle = 'Ödemeleri Göster';
-    this.userId = this.settingsService.getUser('id') as string;
-    this.userName = this.settingsService.getUser('name') as string;
-    this.onClosing = false;
-    this.changes = this.mainService.LocalDB['checks'].changes({ since: 'now', live: true }).on('change', (change: any) => {
-      if (change.id == this.id) {
-        if (!change.deleted) {
-          this.mainService.getData('checks', change.id).then((res: any) => {
-            this.fillData();
-          })
-        } else {
-          this.router.navigate(['/store']);
-        }
+    this.settingsService.getAppSettings().subscribe((res: any) => {
+      if (res && res.value) {
+        this.askForPrint.set(res.value.ask_print_check === 'Sor');
       }
     });
   }
 
   ngOnDestroy() {
-    if (this.changes) {
-      this.changes.cancel();
-    }
-    if (this.onClosing && this.check && this.productsWillPay) {
-      this.productsWillPay.forEach(element => {
-        this.check.products.push(element);
-        this.check.total_price += element.price;
+    if (this.onClosing() && this.check() && this.productsWillPay().length > 0) {
+      const currentCheck = { ...this.check()! };
+      this.productsWillPay().forEach(element => {
+        currentCheck.products.push(element);
+        currentCheck.total_price += element.price;
       });
-      if (this.check._id) {
-        this.mainService.updateData('checks', this.check._id, this.check);
+      if (currentCheck._id) {
+        this.mainService.updateData('checks', currentCheck._id, currentCheck);
       }
     }
   }
 
+  readonly availableProducts = computed(() => {
+    const c = this.check();
+    if (!c) return [];
+    const willPay = this.productsWillPay();
+    return c.products.filter(p => p.status === 2 && !willPay.includes(p));
+  });
+
+  readonly canceledProducts = computed(() => {
+    return this.check()?.products.filter(p => p.status === 3) || [];
+  });
+
   payProducts(method: string) {
-    // if(method == 'Nakit'){
-    //   this.printerService.kickCashdraw(this.printers[0])
-    // }
-    if (this.discountAmount > 0) {
-      this.logService.createLog(logType.DISCOUNT, this.userId, `${this.table} Hesabına ${this.discountAmount} TL tutarında indirim yapıldı.`);
+    if (this.discountAmount() > 0) {
+      this.logService.createLog(logType.DISCOUNT, this.userId() || '', `${this.table()} Hesabına ${this.discountAmount()} TL tutarında indirim yapıldı.`);
     }
-    if (this.check.total_price == 0 && this.changePrice >= 0) {
+
+    const c = this.check();
+    if (!c) return;
+
+    if (c.total_price === 0 && this.changePrice() >= 0) {
       this.closeCheck(method);
     } else {
-      this.onClosing = true;
+      this.onClosing.set(true);
       let newPayment: PaymentStatus = undefined!;
-      const isAnyEqual = this.productsWillPay.some(obj => obj.price == (this.payedPrice + (this.discount ? this.discountAmount : 0)));
-      const isAnyGreat = this.productsWillPay.some(obj => obj.price > (this.payedPrice + (this.discount ? this.discountAmount : 0)));
-      const isAnyLittle = this.productsWillPay.some(obj => obj.price < (this.payedPrice + (this.discount ? this.discountAmount : 0)));
-      if (this.changePrice < 0) {
-        if (this.discount) {
-          this.payedPrice = this.payedPrice + this.discountAmount;
-        }
+      const willPay = [...this.productsWillPay()];
+      let activePayPrice = this.payedPrice();
+      if (this.discount()) {
+        activePayPrice += this.discountAmount();
+      }
+
+      if (this.changePrice() < 0) {
+        const isAnyEqual = willPay.some(obj => obj.price === activePayPrice);
+        const isAnyGreat = willPay.some(obj => obj.price > activePayPrice);
+        const isAnyLittle = willPay.some(obj => obj.price < activePayPrice);
+
         if (isAnyEqual) {
-          const equalProduct = this.productsWillPay.find(obj => obj.price == this.payedPrice);
-          if (equalProduct) {
-            const indexOfEqual = this.productsWillPay.findIndex(obj => obj == equalProduct);
-            newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), [equalProduct]);
-            this.productsWillPay.splice(indexOfEqual, 1);
+          const indexOfEqual = willPay.findIndex(obj => obj.price === activePayPrice);
+          if (indexOfEqual > -1) {
+            const equalProduct = willPay[indexOfEqual];
+            newPayment = new PaymentStatus(this.userName() || '', method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), [equalProduct]);
+            willPay.splice(indexOfEqual, 1);
+            this.productsWillPay.set(willPay);
           }
         } else if (isAnyGreat) {
-          const sortedProducts = [...this.productsWillPay].sort((a: any, b: any) => b.price - a.price);
+          const sortedProducts = [...willPay].sort((a: any, b: any) => b.price - a.price);
           const greatOne = sortedProducts[0];
           if (greatOne) {
-            const greatOneCopy = Object.assign({}, greatOne);
-            greatOneCopy.price = this.payedPrice;
-            newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), [greatOneCopy]);
-            greatOne.price -= this.payedPrice;
+            const greatOneCopy = { ...greatOne };
+            greatOneCopy.price = activePayPrice;
+            newPayment = new PaymentStatus(this.userName() || '', method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), [greatOneCopy]);
+            greatOne.price -= activePayPrice;
+            this.productsWillPay.set(willPay);
           }
         } else if (isAnyLittle) {
-          newPayment = new PaymentStatus(this.userName, method, (this.payedPrice - this.discountAmount), this.discountAmount, Date.now(), []);
-          let priceCount = this.payedPrice;
+          newPayment = new PaymentStatus(this.userName() || '', method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), []);
+          let priceCount = activePayPrice;
           let willRemove = 0;
-          this.productsWillPay = this.productsWillPay.filter(obj => obj).sort((a: any, b: any) => b.price - a.price);
-          this.productsWillPay.forEach((product: any, index: number) => {
+          const sorted = [...willPay].sort((a: any, b: any) => b.price - a.price);
+          sorted.forEach((product: any, index: number) => {
             if (priceCount > 0) {
               if (priceCount >= product.price) {
-                newPayment.payed_products.push(Object.assign({}, product));
+                newPayment.payed_products.push({ ...product });
                 willRemove++;
                 priceCount -= product.price;
               } else {
-                const productWillPush = Object.assign({}, product);
+                const productWillPush = { ...product };
                 productWillPush.price = priceCount;
                 newPayment.payed_products.push(productWillPush);
-                if (product.price - priceCount == 0) {
-                  willRemove++;
-                } else {
-                  const pro = this.productsWillPay[index];
-                  pro.price -= priceCount;
-                }
+                product.price -= priceCount;
                 priceCount = 0;
               }
             }
           });
-          this.productsWillPay.splice(0, willRemove);
+          this.productsWillPay.set(sorted.slice(willRemove));
         }
-        this.priceWillPay -= this.payedPrice;
-        this.currentAmount -= (this.payedPrice - this.discountAmount);
-        this.numpad = this.priceWillPay.toFixed(2).toString();
+
+        if (newPayment) {
+          this.numpad.set((this.priceWillPay()).toFixed(2).toString());
+        }
       } else {
-        newPayment = new PaymentStatus(this.userName, method, this.currentAmount, this.discountAmount, Date.now(), this.productsWillPay);
+        newPayment = new PaymentStatus(this.userName() || '', method, this.currentAmount(), this.discountAmount(), Date.now(), willPay);
+        this.productsWillPay.set([]);
       }
-      if (this.check.payment_flow == undefined) {
-        this.check.payment_flow = [];
+
+      if (newPayment) {
+        const checkToUpdate = { ...c };
+        if (!checkToUpdate.payment_flow) checkToUpdate.payment_flow = [];
+        checkToUpdate.payment_flow.push(newPayment);
+        checkToUpdate.discount += newPayment.amount;
+
+        if (this.changePrice() >= 0) {
+          this.setPayment();
+          this.messageService.sendMessage(`Ürünler ${method} olarak ödendi`);
+        } else {
+          this.messageService.sendMessage(`Ürünlerin ${newPayment.amount} TL'si ${method} olarak ödendi`);
+          this.discount.set(undefined);
+          this.discountAmount.set(0);
+        }
+
+        this.mainService.updateData('checks', c._id!, checkToUpdate);
+        this.logService.createLog(logType.CHECK_PAYED, c._id!, `${this.table()} Hesabından ${newPayment.amount} TL tutarında ${method} ödeme alındı.`);
+        this.payedPrice.set(0);
+        this.isFirstTime.set(true);
       }
-      this.check.payment_flow.push(newPayment);
-      this.check.discount += newPayment.amount;
-      this.payedPrice = 0;
-      if (this.changePrice >= 0) {
-        this.setPayment();
-        this.messageService.sendMessage(`Ürünler ${method} olarak ödendi`);
-      } else {
-        delete this.check._rev;
-        this.messageService.sendMessage(`Ürünlerin ${newPayment.amount} TL'si ${method} olarak ödendi`);
-        this.discount = undefined!;
-        this.discountAmount = 0;
-      }
-      this.logService.createLog(logType.CHECK_PAYED, this.check._id!, `${this.table} Hesabından ${newPayment.amount} TL tutarında ${method} ödeme alındı.`)
-      this.togglePayed();
-      this.isFirstTime = true;
     }
   }
 
   closeCheck(method: string) {
+    const c = this.check();
+    if (!c) return;
+
     let total_discounts = 0;
-    let checkWillClose;
-    this.onClosing = false;
-    if (this.check.payment_flow !== undefined && this.check.payment_flow.length > 0) {
+    let checkWillClose: ClosedCheck;
+    this.onClosing.set(false);
+
+    const willPayProds = [...this.productsWillPay()];
+
+    if (c.payment_flow !== undefined && c.payment_flow.length > 0) {
       const realMethod = method;
       method = 'Parçalı';
-      const lastPayment = new PaymentStatus(this.userName, realMethod, this.currentAmount, this.discountAmount, Date.now(), this.productsWillPay);
-      this.check.payment_flow.push(lastPayment);
-      this.check.discount += this.priceWillPay;
-      total_discounts = this.check.payment_flow.length > 0
-        ? this.check.payment_flow.map(obj => obj.discount).reduce((a: number, b: number) => a + b, 0)
-        : 0;
-      const total_price = this.check.payment_flow.length > 0
-        ? this.check.payment_flow.map(obj => obj.amount).reduce((a: number, b: number) => a + b, 0)
-        : 0;
-      checkWillClose = new ClosedCheck(this.check.table_id, total_price, total_discounts, this.userName, this.check.note, this.check.status, this.check.products, Date.now(), this.check.type, method, this.check.payment_flow, undefined, this.check.occupation);
+      const lastPayment = new PaymentStatus(this.userName() || '', realMethod, this.currentAmount(), this.discountAmount(), Date.now(), willPayProds);
+
+      const checkUpdate = { ...c };
+      checkUpdate.payment_flow.push(lastPayment);
+      checkUpdate.discount += this.priceWillPay();
+
+      total_discounts = checkUpdate.payment_flow.reduce((acc, obj) => acc + (obj.discount || 0), 0);
+      const total_price = checkUpdate.payment_flow.reduce((acc, obj) => acc + (obj.amount || 0), 0);
+
+      checkWillClose = new ClosedCheck(c.table_id, total_price, total_discounts, this.userName() || '', c.note, c.status, c.products, Date.now(), c.type, method, checkUpdate.payment_flow, undefined, c.occupation);
     } else {
-      total_discounts = this.discountAmount;
-      checkWillClose = new ClosedCheck(this.check.table_id, this.currentAmount, total_discounts, this.userName, this.check.note, this.check.status, this.productsWillPay, Date.now(), this.check.type, method, undefined, undefined, this.check.occupation);
+      total_discounts = this.discountAmount();
+      checkWillClose = new ClosedCheck(c.table_id, this.currentAmount(), total_discounts, this.userName() || '', c.note, c.status, willPayProds, Date.now(), c.type, method, undefined, undefined, c.occupation);
     }
-    if (this.askForPrint) {
+
+    if (this.askForPrint()) {
       this.messageService.sendConfirm('Fiş Yazdırılsın mı ?').then((isOK: any) => {
         if (isOK) {
-          this.printerService.printCheck(this.printers[0], this.table, checkWillClose);
+          this.printerService.printCheck(this.printers()[0], this.table(), checkWillClose);
         }
       });
     } else {
-      this.printerService.printCheck(this.printers[0], this.table, checkWillClose);
+      this.printerService.printCheck(this.printers()[0], this.table(), checkWillClose);
     }
+
     this.mainService.addData('closed_checks', checkWillClose).then((res: any) => {
       if (res.ok) {
-        this.mainService.removeData('checks', this.check._id!).then((res: any) => {
-          if (this.check.type == 1) {
-            this.mainService.updateData('tables', this.check.table_id, { status: 1 });
+        this.mainService.removeData('checks', c._id!).then(() => {
+          if (c.type === 1) {
+            this.mainService.updateData('tables', c.table_id, { status: 1 });
           }
-          this.logService.createLog(logType.CHECK_CLOSED, res.id, `${this.table} Hesabı ${this.currentAmount} TL tutarında ödeme alınarak kapatıldı.`);
+          this.logService.createLog(logType.CHECK_CLOSED, res.id, `${this.table()} Hesabı ${this.currentAmount()} TL tutarında ödeme alınarak kapatıldı.`);
           this.messageService.sendMessage(`Hesap '${method}' olarak kapatıldı`);
+          this.updateSellingReport(method);
+          if (c.type === 1) {
+            this.updateTableReport(c, method);
+          }
+          this.router.navigate(['/store']);
         });
-        this.updateSellingReport(method);
-        if (this.check.type == 1) {
-          this.updateTableReport(this.check, method);
-        }
-        this.router.navigate(['/store']);
       }
     });
   }
 
   createCredit(customer: string, creditNote: string) {
-    if (this.check.payment_flow !== undefined) {
+    const c = this.check();
+    if (!c) return;
+
+    if (c.payment_flow !== undefined) {
       let paymentMethod;
-      (this.check.payment_flow.length > 0) ? paymentMethod = 'Parçalı' : paymentMethod = this.check.payment_flow[0].method;
-      const checkWillClose = new ClosedCheck(this.check.table_id, this.check.discount, 0, this.userName, '', this.check.status, this.check.products, Date.now(), this.check.type, paymentMethod, this.check.payment_flow, undefined, this.check.occupation);
+      (c.payment_flow.length > 1) ? paymentMethod = 'Parçalı' : (c.payment_flow.length === 1 ? paymentMethod = c.payment_flow[0].method : paymentMethod = 'Belirsiz');
+      const checkWillClose = new ClosedCheck(c.table_id, c.discount, 0, this.userName() || '', '', c.status, c.products, Date.now(), c.type, paymentMethod, c.payment_flow, undefined, c.occupation);
       this.updateSellingReport(paymentMethod);
-      this.updateTableReport(this.check, paymentMethod);
+      if (c.type === 1) {
+        this.updateTableReport(c, paymentMethod);
+      }
       this.mainService.addData('closed_checks', checkWillClose);
     }
-    // Credit document için uygun yapı oluştur
+
     const creditData = {
       customer_id: customer,
-      amount: this.priceWillPay,
+      amount: this.priceWillPay(),
       description: creditNote,
       timestamp: Date.now(),
       status: 0
     };
+
     this.mainService.addData('credits', creditData as any).then((res: any) => {
       if (res.ok) {
-        if (this.check.type == 1) {
-          this.mainService.updateData('tables', this.check.table_id, { status: 1 });
+        if (c.type === 1) {
+          this.mainService.updateData('tables', c.table_id, { status: 1 });
         }
-        this.mainService.removeData('checks', this.check._id!).then((res: any) => {
-          if (res.ok) {
-            (window as any).$('#otherOptions').modal('hide');
+        this.mainService.removeData('checks', c._id!).then((result: any) => {
+          if (result.ok) {
+            (window as any).$ ? (window as any).$('#otherOptions').modal('hide') : null;
             this.router.navigate(['/store']);
           }
         })
@@ -288,231 +355,157 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
     });
   }
 
-  setDiscount(discount: number) {
-    this.discount = discount;
-    if (this.payedPrice == 0) {
-      this.payedPrice = this.priceWillPay;
+  setDiscount(discount: number | undefined) {
+    this.discount.set(discount);
+    if (this.payedPrice() === 0) {
+      this.payedPrice.set(this.priceWillPay());
     }
-    this.setChange();
-    this.discountInput.nativeElement.value = 0;
-    (window as any).$('#discount').modal('hide');
+    if (discount === undefined) {
+      this.discountAmount.set(0);
+    } else {
+      this.discountAmount.set((this.priceWillPay() * discount) / 100);
+    }
+
+    if (this.discountInput) {
+      this.discountInput.nativeElement.value = 0;
+    }
+    (window as any).$ ? (window as any).$('#discount').modal('hide') : null;
   }
 
-
   divideWillPay(division: number) {
-    this.payedPrice = this.priceWillPay / division;
-    this.setChange();
-    this.numpad = this.payedPrice.toFixed(2).toString();
-    (window as any).$('#calculator').modal('hide');
+    if (division <= 0) return;
+    this.payedPrice.set(this.priceWillPay() / division);
+    this.numpad.set(this.payedPrice().toFixed(2).toString());
+    (window as any).$ ? (window as any).$('#calculator').modal('hide') : null;
   }
 
   togglePayed() {
-    if (this.payedShow) {
-      this.payedShow = false;
-      this.payedTitle = 'Ödemeleri Göster';
-    } else {
-      this.payedShow = true;
-      this.payedTitle = 'Ödemeleri Gizle';
-    }
+    this.payedShow.set(!this.payedShow());
   }
 
   addProductToList(product: CheckProduct) {
-    this.check.products = this.check.products.filter(obj => obj !== product);
-    this.productsWillPay.push(product);
-    this.check.total_price -= product.price;
-    this.priceWillPay += product.price;
-    this.numpad = this.priceWillPay.toFixed(2).toString();
-    this.payedShow = false;
-    this.payedTitle = 'Ödemeleri Göster';
-    this.setChange();
+    this.productsWillPay.update(prev => [...prev, product]);
+    this.numpad.set(this.priceWillPay().toFixed(2).toString());
+    this.payedShow.set(false);
   }
 
   addProductToCheck(product: CheckProduct) {
-    this.productsWillPay = this.productsWillPay.filter(obj => obj !== product);
-    this.check.products.push(product);
-    this.check.total_price += product.price;
-    this.priceWillPay -= product.price;
-    this.numpad = this.priceWillPay.toFixed(2).toString();
-    this.setChange();
+    this.productsWillPay.update(prev => prev.filter(obj => obj !== product));
+    this.numpad.set(this.priceWillPay().toFixed(2).toString());
   }
 
   sendAllProducts() {
-    this.check.products.forEach(element => {
-      this.productsWillPay.push(element);
-      this.check.products = this.check.products.filter(obj => obj !== element);
-    })
-    this.priceWillPay = this.productsWillPay.map(obj => obj.price).reduce((a: number, b: number) => a + b);
-    this.check.products = [];
-    this.numpad = this.priceWillPay.toFixed(2).toString();
-    this.check.total_price = 0;
-    this.setChange();
+    const c = this.check();
+    if (!c) return;
+
+    const allProds = c.products.filter(p => p.status === 2);
+    this.productsWillPay.set([...allProds]);
+    this.numpad.set(this.priceWillPay().toFixed(2).toString());
   }
 
   getPayment(number: number) {
-    this.payedPrice += number;
-    this.setChange();
-  }
-
-  setChange() {
-    if (this.discount) {
-      this.discountAmount = ((this.priceWillPay * this.discount) / 100);
-    }
-    this.currentAmount = this.priceWillPay - this.discountAmount;
-    this.changePrice = this.payedPrice - this.priceWillPay;
-    this.changePrice += this.discountAmount;
-    if (this.changePrice > 0) {
-      this.changeMessage = 'Para Üstü';
-    } else {
-      this.changeMessage = 'Kalan Ödeme';
-    }
+    this.payedPrice.update(prev => prev + number);
+    this.numpad.set(this.payedPrice().toString());
   }
 
   pushKey(key: any) {
     if (key === "✔") {
-      this.payedPrice = parseFloat(this.numpad);
-      this.setChange();
-      this.numpad = '';
+      this.payedPrice.set(parseFloat(this.numpad()) || 0);
+      this.numpad.set('');
     } else {
-      if (this.isFirstTime) {
-        this.numpad = '';
-        this.isFirstTime = false;
+      if (this.isFirstTime()) {
+        this.numpad.set('');
+        this.isFirstTime.set(false);
       }
-      this.numpad += key;
+      this.numpad.update(prev => prev + key);
     }
   }
 
   cleanPad() {
-    this.numpad = '';
-    this.payedPrice = 0;
-    this.discount = undefined!;
-    this.discountAmount = 0;
-    this.currentAmount = 0;
-    this.setChange();
+    this.numpad.set('');
+    this.payedPrice.set(0);
+    this.discount.set(undefined);
+    this.discountAmount.set(0);
+    this.isFirstTime.set(true);
   }
 
   printCheck() {
-    this.printerService.printCheck(this.printers[0], this.table, this.check);
-  }
-
-  setDefault() {
-    this.numpad = '';
-    this.isFirstTime = true;
-    this.productsWillPay = [];
-    this.currentAmount = 0;
-    this.priceWillPay = 0;
-    this.changePrice = 0;
-    this.payedPrice = 0;
-    this.discountAmount = 0;
-    this.discount = undefined!;
+    const c = this.check();
+    if (c) {
+      this.printerService.printCheck(this.printers()[0], this.table(), c);
+    }
   }
 
   setPayment() {
-    this.productsWillPay = [];
-    this.discountAmount = 0;
-    this.changePrice = 0;
-    this.currentAmount = 0;
-    this.priceWillPay = 0;
-    this.numpad = '';
-    this.isFirstTime = true;
-    this.discount = undefined!;
+    this.productsWillPay.set([]);
+    this.discountAmount.set(0);
+    this.payedPrice.set(0);
+    this.numpad.set('');
+    this.isFirstTime.set(true);
+    this.discount.set(undefined);
   }
 
   updateSellingReport(method: string) {
+    const reports = this.databaseService.reports();
     if (method !== 'Parçalı') {
-      this.mainService.getAllBy('reports', { connection_id: method }).then((res: any) => {
-        if (res.docs.length > 0) {
-          const doc = res.docs[0];
-          doc.count++;
-          doc.weekly_count[this.day]++;
-          doc.monthly_count[new Date().getMonth()]++;
-          doc.amount += this.currentAmount;
-          doc.weekly[this.day] += this.currentAmount;
-          doc.monthly[new Date().getMonth()] += this.currentAmount;
-          doc.timestamp = Date.now();
-          this.mainService.updateData('reports', doc._id, doc);
-        }
-      });
+      const doc = reports.find(r => r.connection_id === method);
+      if (doc) {
+        const updated = { ...doc };
+        updated.count++;
+        updated.weekly_count[this.day()]++;
+        updated.monthly_count[new Date().getMonth()]++;
+        updated.amount += this.currentAmount();
+        updated.weekly[this.day()] += this.currentAmount();
+        updated.monthly[new Date().getMonth()] += this.currentAmount();
+        updated.timestamp = Date.now();
+        this.mainService.updateData('reports', doc._id, updated);
+      }
     } else {
-      this.mainService.getAllBy('reports', { type: "Store" }).then((res: any) => {
-        const sellingReports = res.docs;
-        this.check.payment_flow?.forEach((obj: any, index: number) => {
-          const reportWillChange = sellingReports.find((report: any) => report.connection_id == obj.method);
-          if (reportWillChange) {
-            reportWillChange.count++;
-            reportWillChange.weekly_count[this.day]++;
-            reportWillChange.monthly_count[new Date().getMonth()] += obj.amount;
-            reportWillChange.amount += obj.amount;
-            reportWillChange.weekly[this.day] += obj.amount;
-            reportWillChange.monthly[new Date().getMonth()] += obj.amount;
-            reportWillChange.timestamp = Date.now();
-          }
-          if (this.check.payment_flow?.length == index + 1) {
-            sellingReports.forEach((report: any) => {
-              if (this.check.payment_flow?.some((payflowObj: any) => payflowObj.method == report.connection_id)) {
-                this.mainService.updateData('reports', report._id, report);
-              }
-            });
-          }
-        });
+      const sellingReports = reports.filter(r => r.type === "Store");
+      const c = this.check();
+      if (!c) return;
+
+      c.payment_flow?.forEach((obj: any) => {
+        const reportWillChange = sellingReports.find((report: any) => report.connection_id == obj.method);
+        if (reportWillChange) {
+          const updated = { ...reportWillChange };
+          updated.count++;
+          updated.weekly_count[this.day()]++;
+          updated.amount += obj.amount;
+          updated.weekly[this.day()] += obj.amount;
+          updated.monthly[new Date().getMonth()] += obj.amount;
+          updated.timestamp = Date.now();
+          this.mainService.updateData('reports', updated._id, updated);
+        }
       });
     }
   }
 
   updateTableReport(check: Check, method: string) {
-    this.mainService.getAllBy('reports', { connection_id: check.table_id }).then((res: any) => {
-      const report = res.docs[0];
-      if (method !== 'Parçalı') {
-        report.count++;
-        report.amount += this.currentAmount;
-        report.timestamp = Date.now();
-        report.weekly[this.day] += this.currentAmount;
-        report.weekly_count[this.day]++;
-        report.monthly[new Date().getMonth()] += this.currentAmount;
-        report.monthly_count[new Date().getMonth()]++;
-      } else {
-        report.count++;
-        report.weekly_count[this.day]++;
-        report.monthly_count[new Date().getMonth()]++;
-        report.timestamp = Date.now();
-        this.check.payment_flow?.forEach((obj: any, index: number) => {
-          report.amount += obj.amount;
-          report.weekly[this.day] += obj.amount;
-          report.monthly[new Date().getMonth()] += obj.amount;
-        });
-      }
-      this.mainService.updateData('reports', report._id, report);
-    });
-  }
+    const reports = this.databaseService.reports();
+    const doc = reports.find(r => r.connection_id === check.table_id);
+    if (!doc) return;
 
-  fillData() {
-    this.mainService.getData('checks', this.id).then((res: any) => {
-      this.check = res;
-      if (this.check.type == 1) {
-        this.check_id = this.check.table_id;
-        this.check_type = 'Normal';
-        this.mainService.getData('tables', this.check.table_id).then((res: any) => {
-          this.table = res.name;
-        });
-      } else {
-        this.check_id = this.id;
-        this.check_type = 'Fast';
-        this.table = (this.check.note == '' ? 'Hızlı Satış' : this.check.note);
-      }
-      if (this.check.discountPercent) {
-        this.setDiscount(this.check.discountPercent);
-      }
-      this.canceledProducts = this.check.products.filter(obj => obj.status == 3);
-      this.check.products = this.check.products.filter(obj => obj.status == 2);
-    });
-    this.settingsService.getAppSettings().subscribe((res: any) => {
-      if (res.value.ask_print_check == 'Sor') {
-        this.askForPrint = true;
-      } else {
-        this.askForPrint = false;
-      }
-    });
-    this.mainService.getAllBy('customers', {}).then((res: any) => {
-      this.customers = res.docs;
-    })
+    const updated = { ...doc };
+    if (method !== 'Parçalı') {
+      updated.count++;
+      updated.amount += this.currentAmount();
+      updated.timestamp = Date.now();
+      updated.weekly[this.day()] += this.currentAmount();
+      updated.weekly_count[this.day()]++;
+      updated.monthly[new Date().getMonth()] += this.currentAmount();
+      updated.monthly_count[new Date().getMonth()]++;
+    } else {
+      updated.count++;
+      updated.weekly_count[this.day()]++;
+      updated.monthly_count[new Date().getMonth()]++;
+      updated.timestamp = Date.now();
+      check.payment_flow?.forEach((obj: any) => {
+        updated.amount += obj.amount;
+        updated.weekly[this.day()] += obj.amount;
+        updated.monthly[new Date().getMonth()] += obj.amount;
+      });
+    }
+    this.mainService.updateData('reports', updated._id, updated);
   }
 }

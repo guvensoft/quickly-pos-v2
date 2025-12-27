@@ -70,8 +70,11 @@
         <h5 class="mt-2">Günlük Gelir Endeksi Aktivitesi</h5>
       </div>
       <div class="card-body tab-height p-0">
-        <canvas *ngIf="ChartLoaded" baseChart style="height: 468px; width:77vw; margin:auto;" [datasets]="activityData"
-          [labels]="activityLabels" [options]="SalesActivityOptions" [legend]="activityLegend" [type]="'line'"></canvas>
+        @if (ChartLoaded()) {
+        <canvas baseChart style="height: 468px; width:77vw; margin:auto;" [datasets]="activityData()"
+          [labels]="activityLabels()" [options]="SalesActivityOptions" [legend]="activityLegend()"
+          [type]="'line'"></canvas>
+        }
       </div>
       <div class="card-footer">
         <i class="fa fa-question-circle" aria-hidden="true"></i> Belirtilen Saatlerde Oturan Müşterilerin Ortalama Hesap
@@ -86,8 +89,11 @@
         <h5 class="mt-2">Günlük Doluluk Aktivitesi</h5>
       </div>
       <div class="card-body tab-height p-0">
-        <canvas *ngIf="ChartLoaded" baseChart style="height: 468px; width:77vw; margin:auto;" [datasets]="activityData"
-          [labels]="activityLabels" [options]="CrowdActivityOptions" [legend]="activityLegend" [type]="'line'"></canvas>
+        @if (ChartLoaded()) {
+        <canvas baseChart style="height: 468px; width:77vw; margin:auto;" [datasets]="activityData()"
+          [labels]="activityLabels()" [options]="CrowdActivityOptions" [legend]="activityLegend()"
+          [type]="'line'"></canvas>
+        }
       </div>
       <div class="card-footer">
         <i class="fa fa-question-circle" aria-hidden="true"></i> Zaman Bazlı Mekan Doluluk Oranı

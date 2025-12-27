@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ElectronService } from '../../core/services/electron/electron.service';
 import { SettingsService } from '../../core/services/settings.service';
@@ -21,28 +21,27 @@ import { RestaurantSettingsComponent } from './restaurant-settings/restaurant-se
     MenuSettingsComponent,
     RecipeSettingsComponent,
     ApplicationSettingsComponent,
-    RestaurantSettingsComponent
+    RestaurantSettingsComponent,
+    PrinterSettingsComponent
   ],
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
 })
 export class SettingsComponent implements OnInit, OnDestroy {
-  storeInfo: any;
-  selected!: number;
-  logo!: string;
+  private readonly electron = inject(ElectronService);
+  private readonly settingsService = inject(SettingsService);
 
-  constructor(private electron: ElectronService, private settingsService: SettingsService) {
-    this.logo = this.electron.appRealPath + '/data/customer.png';
-  }
+  readonly storeInfo = signal<any>(undefined);
+  readonly selected = signal<number>(0);
+  readonly logo = signal<string>(this.electron.appRealPath + '/data/customer.png');
 
   ngOnInit() {
     this.settingsService.RestaurantInfo.subscribe(res => {
-      this.storeInfo = res.value;
+      this.storeInfo.set(res.value);
     })
   }
 
   ngOnDestroy() {
-
   }
 }
