@@ -1,4 +1,4 @@
-import { Component, input, OnInit } from '@angular/core';
+import { Component, input, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Cashbox } from '../../../core/models/cashbox.model';
 import { ClosedCheck } from '../../../core/models/check.model';
@@ -22,161 +22,181 @@ import { BaseChartDirective } from 'ng2-charts';
   styleUrls: ['./day-detail.component.scss']
 })
 export class DayDetailComponent implements OnInit {
+  private readonly electronService = inject(ElectronService);
+  private readonly printerService = inject(PrinterService);
+  private readonly settingsService = inject(SettingsService);
+
+  // Input signals (already modern)
   detailData = input.required<EndDay>({ alias: 'data' });
   printers = input<any>();
-  oldBackupData!: Array<BackupData>;
-  oldChecks: any;
-  oldCashbox: any;
-  oldReports: any;
-  oldLogs: any;
-  selectedCat!: string;
-  currentSection!: string | undefined;
-  checksTable!: Array<ClosedCheck>;
-  cashboxTable!: Array<Cashbox>;
-  reportsTable!: Array<Report>;
-  productsTable!: Array<Report>;
-  usersTable!: Array<Report>;
-  tablesTable!: Array<Report>;
-  logsTable!: Array<Log>;
-  checkDetail!: ClosedCheck;
-  activityData: any;
-  activityLabels: any;
-  activityOptions: any;
-  cashDetail!: Cashbox;
-  syncStatus!: boolean;
-  pieData!: Array<any>;
-  pieLabels!: Array<any>;
-  pieOptions: any;
-  pieColors!: Array<any>;
-  detailTitle!: string;
-  detailDay!: number;
-  selectedCHECK!: ClosedCheck;
-  selectedCASH!: Cashbox;
-  selected: any;
-  constructor(private electronService: ElectronService, private printerService: PrinterService, private settingsService: SettingsService) {
 
-    this.pieOptions = { responsive: false, legend: { labels: { fontColor: 'rgb(255, 255, 255)' } } };
-    this.activityOptions = {
-      responsive: false,
-      elements: {
-        line: {
-          tension: 0.5,
+  // Backup data signals (5)
+  readonly oldBackupData = signal<Array<BackupData>>([]);
+  readonly oldChecks = signal<any>(undefined);
+  readonly oldCashbox = signal<any>(undefined);
+  readonly oldReports = signal<any>(undefined);
+  readonly oldLogs = signal<any>(undefined);
+
+  // Selection signals (2)
+  readonly selectedCat = signal<string>("");
+  readonly currentSection = signal<string | undefined>(undefined);
+
+  // Table data signals (7)
+  readonly checksTable = signal<Array<ClosedCheck>>([]);
+  readonly cashboxTable = signal<Array<Cashbox>>([]);
+  readonly reportsTable = signal<Array<Report>>([]);
+  readonly productsTable = signal<Array<Report>>([]);
+  readonly usersTable = signal<Array<Report>>([]);
+  readonly tablesTable = signal<Array<Report>>([]);
+  readonly logsTable = signal<Array<Log>>([]);
+
+  // Detail record signals (2)
+  readonly checkDetail = signal<ClosedCheck | undefined>(undefined);
+  readonly cashDetail = signal<Cashbox | undefined>(undefined);
+
+  // Activity signals (3)
+  readonly activityData = signal<any>(undefined);
+  readonly activityLabels = signal<any>(undefined);
+  readonly activityOptions = signal<any>({
+    responsive: false,
+    elements: {
+      line: {
+        tension: 0.5,
+      }
+    },
+    legend: { labels: { fontColor: 'rgb(255, 255, 255)' } },
+    scales: {
+      xAxes: [{
+        ticks: {
+          beginAtZero: true,
+          fontColor: 'rgba(255,255,255)'
+        },
+        gridLines: {
+          color: 'rgba(255,255,255)',
+          lineWidth: 0.4
         }
-      },
-      legend: { labels: { fontColor: 'rgb(255, 255, 255)' } },
-      scales: {
-        xAxes: [{
-          ticks: {
-            beginAtZero: true,
-            fontColor: 'rgba(255,255,255)'
-          },
-          gridLines: {
-            color: 'rgba(255,255,255)',
-            lineWidth: 0.4
-          }
-        }],
-        yAxes: [{
-          ticks: {
-            fontColor: 'rgba(255,255,255)'
-          },
-          gridLines: {
-            color: 'rgba(255,255,255)',
-            lineWidth: 0.4
-          }
-        }]
-      },
-    };
-  }
+      }],
+      yAxes: [{
+        ticks: {
+          fontColor: 'rgba(255,255,255)'
+        },
+        gridLines: {
+          color: 'rgba(255,255,255)',
+          lineWidth: 0.4
+        }
+      }]
+    },
+  });
+
+  // Sync status signal (1)
+  readonly syncStatus = signal<boolean>(false);
+
+  // Pie chart signals (4)
+  readonly pieData = signal<Array<any>>([]);
+  readonly pieLabels = signal<Array<any>>([]);
+  readonly pieOptions = signal<any>({ responsive: false, legend: { labels: { fontColor: 'rgb(255, 255, 255)' } } });
+  readonly pieColors = signal<Array<any>>([]);
+
+  // Detail metadata signals (2)
+  readonly detailTitle = signal<string>('Genel Detaylar & Grafik');
+  readonly detailDay = signal<number>(0);
+
+  // Selected item signals (2)
+  readonly selectedCHECK = signal<ClosedCheck | undefined>(undefined);
+  readonly selectedCASH = signal<Cashbox | undefined>(undefined);
+
+  // Generic selected signal (1)
+  readonly selected = signal<any>(undefined);
 
   ngOnInit() {
     // this.settingsService.getPrinters().subscribe(res => this.printers = res.value);
     console.log(this.detailData(), this.printers());
 
-    this.detailTitle = 'Genel Detaylar & Grafik';
-    this.pieColors = [];
-    this.pieData = [];
-    this.pieLabels = [];
-    this.cashboxTable = [];
-    this.checksTable = [];
+    this.detailTitle.set('Genel Detaylar & Grafik');
+    this.pieColors.set([]);
+    this.pieData.set([]);
+    this.pieLabels.set([]);
+    this.cashboxTable.set([]);
+    this.checksTable.set([]);
     this.fillData();
   }
 
   filterOldData(section: any, filter: any) {
-    if (this.syncStatus) {
-      this.currentSection = section;
+    if (this.syncStatus()) {
+      this.currentSection.set(section);
       switch (section) {
         case 'Checks':
-          this.detailTitle = 'Kapatılan Hesap Detayları';
-          if (this.oldChecks && this.oldChecks.docs) {
+          this.detailTitle.set('Kapatılan Hesap Detayları');
+          if (this.oldChecks() && this.oldChecks().docs) {
             if (filter == 'All') {
-              this.checksTable = this.oldChecks.docs.sort((a: any, b: any) => a.timestamp - b.timestamp);
+              this.checksTable.set(this.oldChecks().docs.sort((a: any, b: any) => a.timestamp - b.timestamp));
             } else if (filter == 'İptal') {
-              this.checksTable = this.oldChecks.docs.filter((obj: any) => obj.type == 3).sort((a: any, b: any) => a.timestamp - b.timestamp);
+              this.checksTable.set(this.oldChecks().docs.filter((obj: any) => obj.type == 3).sort((a: any, b: any) => a.timestamp - b.timestamp));
             } else {
-              this.checksTable = this.oldChecks.docs.filter((obj: any) => obj.type !== 3).sort((a: any, b: any) => a.timestamp - b.timestamp);
-              this.checksTable = this.oldChecks.docs.filter((obj: any) => obj.payment_method == filter).sort((a: any, b: any) => a.timestamp - b.timestamp);
+              this.checksTable.set(this.oldChecks().docs.filter((obj: any) => obj.type !== 3).sort((a: any, b: any) => a.timestamp - b.timestamp));
+              this.checksTable.set(this.oldChecks().docs.filter((obj: any) => obj.payment_method == filter).sort((a: any, b: any) => a.timestamp - b.timestamp));
             }
           } else {
-            this.checksTable = [];
+            this.checksTable.set([]);
           }
           break;
         case 'Cashbox':
-          this.detailTitle = 'Kasa Gelir-Gider Detayları';
-          if (this.oldCashbox && this.oldCashbox.docs) {
+          this.detailTitle.set('Kasa Gelir-Gider Detayları');
+          if (this.oldCashbox() && this.oldCashbox().docs) {
             if (filter == 'All') {
-              this.cashboxTable = this.oldCashbox.docs;
+              this.cashboxTable.set(this.oldCashbox().docs);
             }
             else if (filter == 'Gelir') {
-              this.cashboxTable = this.oldCashbox.docs.filter((obj: any) => obj.type == 'Gelir').sort((a: any, b: any) => a.timestamp - b.timestamp);
+              this.cashboxTable.set(this.oldCashbox().docs.filter((obj: any) => obj.type == 'Gelir').sort((a: any, b: any) => a.timestamp - b.timestamp));
             } else if (filter == 'Gider') {
-              this.cashboxTable = this.oldCashbox.docs.filter((obj: any) => obj.type == 'Gider').sort((a: any, b: any) => a.timestamp - b.timestamp);
+              this.cashboxTable.set(this.oldCashbox().docs.filter((obj: any) => obj.type == 'Gider').sort((a: any, b: any) => a.timestamp - b.timestamp));
             }
           } else {
-            this.cashboxTable = [];
+            this.cashboxTable.set([]);
           }
           break;
         case 'Products':
-          this.detailTitle = 'Güne Ait Ürün Satış Detayları';
-          if (this.oldReports && this.oldReports.docs) {
-            this.productsTable = this.oldReports.docs.filter((obj: any) => obj.type == 'Product').sort((a: any, b: any) => b.weekly[this.detailDay] - a.weekly[this.detailDay]);
-            this.productsTable = this.productsTable.filter((obj: any) => obj.weekly[this.detailDay] !== 0);
+          this.detailTitle.set('Güne Ait Ürün Satış Detayları');
+          if (this.oldReports() && this.oldReports().docs) {
+            this.productsTable.set(this.oldReports().docs.filter((obj: any) => obj.type == 'Product').sort((a: any, b: any) => b.weekly[this.detailDay()] - a.weekly[this.detailDay()]));
+            this.productsTable.set(this.productsTable().filter((obj: any) => obj.weekly[this.detailDay()] !== 0));
           } else {
-            this.productsTable = [];
+            this.productsTable.set([]);
           }
           break;
         case 'Users':
-          this.detailTitle = 'Güne Ait Kullanıcı Satış Detayları';
-          if (this.oldReports && this.oldReports.docs) {
-            this.usersTable = this.oldReports.docs.filter((obj: any) => obj.type == 'User').sort((a: any, b: any) => b.weekly[this.detailDay] - a.weekly[this.detailDay]);
-            this.usersTable = this.usersTable.filter((obj: any) => obj.weekly[this.detailDay] !== 0);
+          this.detailTitle.set('Güne Ait Kullanıcı Satış Detayları');
+          if (this.oldReports() && this.oldReports().docs) {
+            this.usersTable.set(this.oldReports().docs.filter((obj: any) => obj.type == 'User').sort((a: any, b: any) => b.weekly[this.detailDay()] - a.weekly[this.detailDay()]));
+            this.usersTable.set(this.usersTable().filter((obj: any) => obj.weekly[this.detailDay()] !== 0));
           } else {
-            this.usersTable = [];
+            this.usersTable.set([]);
           }
           break;
         case 'Tables':
-          this.detailTitle = 'Güne Ait Masa Satış Detayları';
-          if (this.oldReports && this.oldReports.docs) {
-            this.tablesTable = this.oldReports.docs.filter((obj: any) => obj.type == 'Table').sort((a: any, b: any) => b.weekly[this.detailDay] - a.weekly[this.detailDay]);
-            this.tablesTable = this.tablesTable.filter((obj: any) => obj.weekly[this.detailDay] !== 0);
+          this.detailTitle.set('Güne Ait Masa Satış Detayları');
+          if (this.oldReports() && this.oldReports().docs) {
+            this.tablesTable.set(this.oldReports().docs.filter((obj: any) => obj.type == 'Table').sort((a: any, b: any) => b.weekly[this.detailDay()] - a.weekly[this.detailDay()]));
+            this.tablesTable.set(this.tablesTable().filter((obj: any) => obj.weekly[this.detailDay()] !== 0));
           } else {
-            this.tablesTable = [];
+            this.tablesTable.set([]);
           }
           break;
         case 'Logs':
-          this.detailTitle = 'Güne Ait Sistem Kayıtları';
-          if (this.oldLogs && this.oldLogs.docs) {
-            this.logsTable = this.oldLogs.docs.sort((a: any, b: any) => b.timestamp - a.timestamp);
+          this.detailTitle.set('Güne Ait Sistem Kayıtları');
+          if (this.oldLogs() && this.oldLogs().docs) {
+            this.logsTable.set(this.oldLogs().docs.sort((a: any, b: any) => b.timestamp - a.timestamp));
           } else {
-            this.logsTable = [];
+            this.logsTable.set([]);
           }
           break;
         case 'Activity':
-          this.detailTitle = 'Güne Ait Aktivite Grafiği';
-          if (this.oldReports && this.oldReports.docs) {
-            const sellingActivity = this.oldReports.docs.find((obj: any) => obj.type == 'Activity');
+          this.detailTitle.set('Güne Ait Aktivite Grafiği');
+          if (this.oldReports() && this.oldReports().docs) {
+            const sellingActivity = this.oldReports().docs.find((obj: any) => obj.type == 'Activity');
             if (sellingActivity) {
-              this.activityData = [{ data: sellingActivity.activity, label: 'Gelir Endeksi' }, { data: sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
-              this.activityLabels = sellingActivity.activity_time;
+              this.activityData.set([{ data: sellingActivity.activity, label: 'Gelir Endeksi' }, { data: sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }]);
+              this.activityLabels.set(sellingActivity.activity_time);
             }
           }
           break;
@@ -190,47 +210,48 @@ export class DayDetailComponent implements OnInit {
   }
 
   printEndday() {
-    const printers = this.printers();
-    if (printers && printers.length > 0) {
-      this.printerService.printEndDay(printers[0], this.detailData());
+    const printerList = this.printers();
+    if (printerList && printerList.length > 0) {
+      this.printerService.printEndDay(printerList[0], this.detailData());
     } else {
       console.warn('No printers available');
     }
   }
 
   showCheckDetail(check: any) {
-    this.checkDetail = check;
+    this.checkDetail.set(check);
     (window as any).$('#checkDetail').modal('show');
   }
 
   showCashDetail(cash: any) {
-    this.cashDetail = cash;
+    this.cashDetail.set(cash);
     (window as any).$('#cashDetail').modal('show');
   }
 
   fillData() {
     const data = this.detailData();
-    this.pieColors = [{ backgroundColor: ['#5cb85c', '#f0ad4e', '#5bc0de', '#d9534f'] }];
-    this.pieLabels.push('Nakit', 'Kart', 'Kupon', 'İkram');
-    this.pieData.push(data.cash_total, data.card_total, data.coupon_total, data.free_total);
-    this.detailDay = new Date(data.timestamp).getDay();
+    this.pieColors.set([{ backgroundColor: ['#5cb85c', '#f0ad4e', '#5bc0de', '#d9534f'] }]);
+    const newLabels = ['Nakit', 'Kart', 'Kupon', 'İkram'];
+    this.pieLabels.set(newLabels);
+    this.pieData.set([data.cash_total, data.card_total, data.coupon_total, data.free_total]);
+    this.detailDay.set(new Date(data.timestamp).getDay());
     this.electronService.readBackupData(data.data_file).then((result: Array<BackupData>) => {
       if (result && Array.isArray(result) && result.length >= 4) {
-        this.oldBackupData = result;
-        this.oldChecks = this.oldBackupData[0];
-        this.oldCashbox = this.oldBackupData[1];
-        this.oldReports = this.oldBackupData[2];
-        this.oldLogs = this.oldBackupData[3];
-        this.syncStatus = true;
+        this.oldBackupData.set(result);
+        this.oldChecks.set(this.oldBackupData()[0]);
+        this.oldCashbox.set(this.oldBackupData()[1]);
+        this.oldReports.set(this.oldBackupData()[2]);
+        this.oldLogs.set(this.oldBackupData()[3]);
+        this.syncStatus.set(true);
       } else {
         console.warn('Invalid backup data structure');
-        this.oldBackupData = [];
-        this.syncStatus = false;
+        this.oldBackupData.set([]);
+        this.syncStatus.set(false);
       }
     }).catch(err => {
       console.error('Error reading backup data:', err);
-      this.oldBackupData = [];
-      this.syncStatus = false;
+      this.oldBackupData.set([]);
+      this.syncStatus.set(false);
     });
   }
 
