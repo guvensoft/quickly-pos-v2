@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ElectronService } from '../../core/services/electron/electron.service';
 import { SettingsService } from '../../core/services/settings.service';
@@ -28,15 +28,18 @@ import { RestaurantSettingsComponent } from './restaurant-settings/restaurant-se
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent {
   private readonly electron = inject(ElectronService);
   private readonly settingsService = inject(SettingsService);
 
   readonly storeInfo = signal<any>(undefined);
   readonly selected = signal<number>(0);
-  readonly logo = signal<string>(this.electron.appRealPath + '/data/customer.png');
+  readonly logo = signal<string>('');
 
-  ngOnInit() {
+  constructor() {
+    // Initialize logo path after DI is ready
+    this.logo.set(this.electron.appRealPath + '/data/customer.png');
+
     // Set up reactive effect for RestaurantInfo changes
     effect(() => {
       this.settingsService.RestaurantInfo.subscribe(res => {

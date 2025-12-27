@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MessageService } from '../../../core/services/message.service';
 
@@ -10,13 +10,13 @@ import { MessageService } from '../../../core/services/message.service';
 	styleUrls: ['./message.component.scss']
 })
 
-export class MessageComponent implements OnInit {
+export class MessageComponent {
 	private readonly messageService = inject(MessageService);
 
 	readonly message = signal<any>(null);
 	readonly show = signal<boolean>(false);
 
-	ngOnInit() {
+	constructor() {
 		// Set up reactive effect for message changes
 		effect(() => {
 			this.messageService.getMessage().subscribe((message) => {
