@@ -9,7 +9,7 @@
       </div>
       <div class="modal-body">
         <h4 class="text-center">Arayan Numara:</h4>
-        <h1 class="text-center">{{call()?.number | mask: '0 (000) 000 00 00'}}</h1>
+        <h1 class="text-center">{{call().number | mask: '0 (000) 000 00 00'}}</h1>
         @if (customer()) {
         <div class="alert alert-success text-center mt-5" role="alert">
           <small>Müşteri Bulundu !</small>
@@ -27,7 +27,7 @@
           <div>
             <input type="hidden" name="_id" ngModel>
             <input type="hidden" name="_rev" ngModel>
-            <input type="hidden" name="phone_number" [value]="call()?.number" ngModel>
+            <input type="hidden" name="phone_number" [value]="call().number" ngModel>
             <input type="hidden" name="type" value="1" ngModel>
             <input type="hidden" name="timestamp" value="{{Date()?.now()}}" ngModel>
           </div>
