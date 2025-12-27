@@ -20,7 +20,7 @@ import { GeneralPipe } from '../../../shared/pipes/general.pipe';
   templateUrl: './payment-screen.component.html',
   styleUrls: ['./payment-screen.component.scss'],
 })
-export class PaymentScreenComponent implements OnInit, OnDestroy {
+export class PaymentScreenComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly settingsService = inject(SettingsService);
@@ -101,12 +101,15 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
   creditNote = viewChild<ElementRef>('creditNote');
 
   constructor() {
-    this.route.params.subscribe(params => {
-      this.id.set(params['id']);
-      if (params['type']) {
-        this.check_type.set(params['type']);
-      }
-    });
+    // route.params subscription wrapped in effect
+    effect(() => {
+      this.route.params.subscribe(params => {
+        this.id.set(params['id']);
+        if (params['type']) {
+          this.check_type.set(params['type']);
+        }
+      });
+    }, { allowSignalWrites: true });
 
     try {
       const userPermissions = localStorage.getItem('userPermissions');
@@ -115,28 +118,33 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
       console.error('Error parsing userPermissions:', error);
     }
 
-    this.settingsService.DateSettings.subscribe((res: any) => {
-      if (res && res.value) {
-        this.day.set(res.value.day);
-      }
-    });
+    // DateSettings subscription wrapped in effect
+    effect(() => {
+      this.settingsService.DateSettings.subscribe((res: any) => {
+        if (res && res.value) {
+          this.day.set(res.value.day);
+        }
+      });
+    }, { allowSignalWrites: true });
+
+    // AppSettings subscription wrapped in effect
+    effect(() => {
+      this.settingsService.getAppSettings().subscribe((res: any) => {
+        if (res && res.value) {
+          this.askForPrint.set(res.value.ask_print_check === 'Sor');
+        }
+      });
+    }, { allowSignalWrites: true });
 
     this.userId.set(this.settingsService.getUser('id') as string);
     this.userName.set(this.settingsService.getUser('name') as string);
 
+    // Discount calculation effect (already existed)
     effect(() => {
       const c = this.check();
       if (c && c.discountPercent) {
         this.discount.set(c.discountPercent);
         this.discountAmount.set((this.priceWillPay() * c.discountPercent) / 100);
-      }
-    });
-  }
-
-  ngOnInit() {
-    this.settingsService.getAppSettings().subscribe((res: any) => {
-      if (res && res.value) {
-        this.askForPrint.set(res.value.ask_print_check === 'Sor');
       }
     });
   }
