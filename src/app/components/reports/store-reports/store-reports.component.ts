@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, viewChild } from '@angular/core';
+import { Component, inject, signal, computed, viewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -22,7 +22,7 @@ import { NgxMaskPipe } from 'ngx-mask';
   styleUrls: ['./store-reports.component.scss'],
 })
 
-export class StoreReportsComponent implements OnInit {
+export class StoreReportsComponent {
   private readonly mainService = inject(MainService);
   private readonly printerService = inject(PrinterService);
   private readonly settingsService = inject(SettingsService);
@@ -67,16 +67,7 @@ export class StoreReportsComponent implements OnInit {
   editForm = viewChild<NgForm>('checkEdit');
 
   constructor() {
-    this.settingsService.DateSettings.subscribe(res => {
-      this.day.set(res.value.day);
-    });
-    this.settingsService.getPrinters().subscribe(res => {
-      this.printers.set(res.value);
-    });
-    this.fillData();
-  }
-
-  ngOnInit() {
+    // Initialize permissions from localStorage
     try {
       const userPermissions = localStorage.getItem('userPermissions');
       this.permissions.set(userPermissions ? JSON.parse(userPermissions) : {});
@@ -84,6 +75,22 @@ export class StoreReportsComponent implements OnInit {
       console.error('Error parsing userPermissions:', error);
       this.permissions.set({});
     }
+
+    // DateSettings subscription
+    effect(() => {
+      this.settingsService.DateSettings.subscribe(res => {
+        this.day.set(res.value.day);
+      });
+    }, { allowSignalWrites: true });
+
+    // getPrinters subscription
+    effect(() => {
+      this.settingsService.getPrinters().subscribe(res => {
+        this.printers.set(res.value);
+      });
+    }, { allowSignalWrites: true });
+
+    this.fillData();
   }
 
   getDetail(check: any) {
