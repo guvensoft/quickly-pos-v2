@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, OnDestroy, inject, signal, computed, effect } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, inject, signal, computed, effect, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -96,9 +96,9 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
     new PaymentMethod('İkram', 'İkram Hesap', '#c9302c', 'fa-handshake-o', 4, 1)
   ]);
 
-  @ViewChild('discountInput') discountInput!: ElementRef;
-  @ViewChild('customerInput') customerInput!: ElementRef;
-  @ViewChild('creditNote') creditNote!: ElementRef;
+  discountInput = viewChild<ElementRef>('discountInput');
+  customerInput = viewChild<ElementRef>('customerInput');
+  creditNote = viewChild<ElementRef>('creditNote');
 
   constructor() {
     this.route.params.subscribe(params => {
@@ -366,8 +366,8 @@ export class PaymentScreenComponent implements OnInit, OnDestroy {
       this.discountAmount.set((this.priceWillPay() * discount) / 100);
     }
 
-    if (this.discountInput) {
-      this.discountInput.nativeElement.value = 0;
+    if (this.discountInput()) {
+      this.discountInput()!.nativeElement.value = 0;
     }
     (window as any).$ ? (window as any).$('#discount').modal('hide') : null;
   }
