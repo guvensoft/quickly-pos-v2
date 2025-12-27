@@ -59,7 +59,7 @@ export class DatabaseService {
      * Refreshes all core signals by fetching from PouchDB
      */
     async refreshAll() {
-        const [tables, orders, checks, categories, products, floors, receipts] = await Promise.all([
+        const [tables, orders, checks, categories, products, floors, receipts, customers, reports] = await Promise.all([
             this.mainService.getAllBy('tables', {}),
             this.mainService.getAllBy('orders', {}),
             this.mainService.getAllBy('checks', {}),
