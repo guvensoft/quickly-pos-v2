@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ElectronService } from '../../core/services/electron/electron.service';
 import { MainService } from '../../core/services/main.service';
@@ -13,14 +13,14 @@ import { SettingsService } from '../../core/services/settings.service';
   providers: [SettingsService, MainService]
 })
 
-export class ActivationComponent implements OnInit {
+export class ActivationComponent {
   private readonly settingsService = inject(SettingsService);
   private readonly mainService = inject(MainService);
   private readonly electronService = inject(ElectronService);
 
   readonly restInfo = signal<any>(undefined);
 
-  ngOnInit() {
+  constructor() {
     // Set up reactive effect for RestaurantInfo changes
     effect(() => {
       this.settingsService.RestaurantInfo.subscribe(res => {
