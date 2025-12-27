@@ -1,4 +1,4 @@
-import { Component, OnInit, viewChild } from '@angular/core';
+import { Component, OnInit, viewChild, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CallerIDService } from '../../../core/services/caller-id.service';
@@ -19,41 +19,41 @@ import { Call } from '../../../core/models/caller.model';
   styleUrls: ['./caller.component.scss']
 })
 export class CallerComponent implements OnInit {
-  call: Call = {} as Call;
-  customer!: Customer | null;
-  owner: any;
-  onUpdate: boolean = false;
-  Date: any = Date;
+  private readonly router = inject(Router);
+  private readonly callerService = inject(CallerIDService);
+  private readonly mainService = inject(MainService);
+  private readonly settingsService = inject(SettingsService);
+
+  readonly call = signal<Call>({} as Call);
+  readonly customer = signal<Customer | null>(null);
+  readonly owner = signal<any>(this.settingsService.getUser('name'));
+  readonly onUpdate = signal<boolean>(false);
+  readonly Date = signal<any>(Date);
 
   customerForm = viewChild<NgForm>('customerForm');
 
-  constructor(
-    private router: Router,
-    private callerService: CallerIDService,
-    private mainService: MainService,
-    private settingsService: SettingsService
-  ) {
-    this.owner = this.settingsService.getUser('name');
-  }
-
   ngOnInit() {
-    this.callerService.listenCallEvent().subscribe(res => {
-      this.call = res;
-      this.mainService.getAllBy('customers', { phone_number: this.call.number }).then(customers => {
-        if (customers.docs.length > 0) {
-          this.customer = customers.docs[0];
-        } else {
-          this.customer = null;
-        }
-        (window as any).$('#callerModal').modal('show');
+    // Set up reactive effect for call events
+    effect(() => {
+      this.callerService.listenCallEvent().subscribe(res => {
+        this.call.set(res);
+        this.mainService.getAllBy('customers', { phone_number: res.number }).then(customers => {
+          if (customers.docs.length > 0) {
+            this.customer.set(customers.docs[0]);
+          } else {
+            this.customer.set(null);
+          }
+          (window as any).$('#callerModal').modal('show');
+        });
       });
-    });
+    }, { allowSignalWrites: true });
   }
 
 
   openCheck() {
-    if (this.customer) {
-      const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner, `${this.customer.name} | ${this.customer.phone_number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
+    const currentCustomer = this.customer();
+    if (currentCustomer) {
+      const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner(), `${currentCustomer.name} | ${currentCustomer.phone_number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
       this.mainService.addData('checks', checkWillOpen).then(res => {
         (window as any).$('#callerModal').modal('hide');
         this.router.navigate(['/selling-screen', 'Order', res.id]);
@@ -63,9 +63,10 @@ export class CallerComponent implements OnInit {
 
   saveCustomer(form?: any) {
     const unknownCustomer = this.customerForm()?.value;
-    const customerWillCreate = new Customer(unknownCustomer.name, unknownCustomer.surname, this.call.number, unknownCustomer.address, '', CustomerType.FAR, Date.now())
+    const currentCall = this.call();
+    const customerWillCreate = new Customer(unknownCustomer.name, unknownCustomer.surname, currentCall.number, unknownCustomer.address, '', CustomerType.FAR, Date.now())
     this.mainService.addData('customers', customerWillCreate as any).then(res => {
-      const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner, `${unknownCustomer.name} | ${this.call.number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
+      const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner(), `${unknownCustomer.name} | ${currentCall.number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
       this.mainService.addData('checks', checkWillOpen).then(res => {
         (window as any).$('#callerModal').modal('hide');
         this.router.navigate(['/selling-screen', 'Order', res.id]);
