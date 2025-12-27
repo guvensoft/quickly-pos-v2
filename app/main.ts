@@ -48,14 +48,12 @@ function createWindow(): BrowserWindow {
     });
   });
 
-  import('electron-debug').then(debug => {
-    debug.default({ isEnabled: true, showDevTools: true });
-  });
-
-
   if (serve) {
+    // Open DevTools in development mode
+    win.webContents.openDevTools();
+
     import('electron-debug').then(debug => {
-      debug.default({ isEnabled: true, showDevTools: true });
+      debug.default({ isEnabled: true, showDevTools: false }); // Already opened above
     });
 
     import('electron-reloader').then(reloader => {

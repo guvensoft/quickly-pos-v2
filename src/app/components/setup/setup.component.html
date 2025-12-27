@@ -5,7 +5,8 @@
   <div class="card-body p-0">
     <div class="row justify-content-md-center">
       <div class="col-lg-8 text-center" style="height:220px">
-        <img src="../../../assets/logo.svg" class="mt-4" style="width: 350px; margin-left:auto; margin-right:auto;" alt="">
+        <img src="../../../assets/logo.svg" class="mt-4" style="width: 350px; margin-left:auto; margin-right:auto;"
+          alt="">
       </div>
     </div>
     <div class="row justify-content-md-center">
@@ -45,15 +46,17 @@
                 Kullanıcı Adı
               </div>
             </div>
-            <input name="username" type="text" placeholder="Kullanıcı Adı Giriniz.." class="form-control form-control-lg" ngModel />
+            <input name="username" value="quickly" type="text" placeholder="Kullanıcı Adı Giriniz.."
+              class="form-control form-control-lg" ngModel />
           </div>
           <div class="input-group">
-            <div class="input-group-prepend">
+            <div class="input-group-prepend">. <!-- TODO: Şifre ve Kullanıcı Adını Kaldırmayı Unutmayın -->
               <div class="input-group-text">
                 Şifre
               </div>
             </div>
-            <input name="password" type="password" placeholder="Şifre Giriniz.." class="form-control form-control-lg" ngModel />
+            <input name="password" value="quickly" type="password" placeholder="Şifre Giriniz.."
+              class="form-control form-control-lg" ngModel />
           </div>
           <div class="mt-3">
             <button type="submit" class="btn btn-danger btn-lg pull-right">Bilgileri Kaydet</button>
@@ -70,7 +73,8 @@
           </div>
         </div> -->
         <div class="row justify-content-md-center storeList">
-          <div *ngFor="let store of stores" class="col-xl-4 col-lg-5"  style="min-height: 130px; max-height: 300px; margin-bottom: 5px;">
+          <div *ngFor="let store of stores" class="col-xl-4 col-lg-5"
+            style="min-height: 130px; max-height: 300px; margin-bottom: 5px;">
             <div (click)="makeAuth(store)" class="card storeCard">
               <!-- <div class="card-header">
                 <strong>{{store.name}}</strong>
@@ -106,7 +110,8 @@
                 Yönetici Adı
               </div>
             </div>
-            <input name="admin_name" placeholder="Yönetici Adı Giriniz.." type="text" class="form-control form-control-lg" ngModel />
+            <input name="admin_name" placeholder="Yönetici Adı Giriniz.." type="text"
+              class="form-control form-control-lg" ngModel />
           </div>
           <div class="input-group">
             <div class="input-group-prepend">
@@ -114,7 +119,8 @@
                 Yönetici Parolası
               </div>
             </div>
-            <input name="admin_pass" type="password" placeholder="Şifre Giriniz.. ( 4 Haneli Sayı )" maxlength="4" class="form-control form-control-lg" ngModel />
+            <input name="admin_pass" type="password" placeholder="Şifre Giriniz.. ( 4 Haneli Sayı )" maxlength="4"
+              class="form-control form-control-lg" ngModel />
           </div>
           <div class="mt-3">
             <button type="submit" class="btn btn-danger btn-lg pull-right">Bilgileri Kaydet</button>
@@ -134,7 +140,8 @@
                   Makina Adresi
                 </div>
               </div>
-              <input type="text" name="address" class="form-control form-control-lg" placeholder="IP adresini giriniz." ngModel />
+              <input type="text" name="address" class="form-control form-control-lg" placeholder="IP adresini giriniz."
+                ngModel />
             </div>
             <div class="input-group">
               <div class="input-group-prepend">
@@ -146,7 +153,8 @@
               <div class="input-group-prepend">
                 <div class="input-group-text">Anahtar</div>
               </div>
-              <input type="text" name="key" class="form-control form-control-lg" placeholder="Ana Makina anahtarını giriniz." ngModel />
+              <input type="text" name="key" class="form-control form-control-lg"
+                placeholder="Ana Makina anahtarını giriniz." ngModel />
             </div>
           </div>
           <div class="mt-3">
@@ -165,7 +173,8 @@
   </div>
   <div class="card-footer text-muted">
     <div class="progress">
-      <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" [ngStyle]="{'width': progress}"></div>
+      <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar"
+        [ngStyle]="{'width': progress}"></div>
     </div>
   </div>
 </div>

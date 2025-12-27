@@ -36,6 +36,7 @@ export class SetupComponent implements OnInit {
     this.options = { headers: this.headers };
     // Use HTTPS directly to avoid redirect issues with CORS preflight
     this.baseUrl = 'https://hq.quickly.com.tr';
+    // this.baseUrl = 'http://localhost:3000';
   }
 
   ngOnInit() {
