@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -30,6 +30,43 @@ export class RestaurantSettingsComponent implements OnInit {
   areaForm = viewChild<NgForm>('areaForm');
   areaDetailForm = viewChild<NgForm>('areaDetailForm');
   tableForm = viewChild<NgForm>('tableForm');
+
+  // Computed properties for reactive filtering and lookups
+  readonly tablesByFloor = computed(() => {
+    const floorId = this.selectedFloor();
+    if (!floorId) return this.tables();
+    return this.tables()
+      .filter(t => t.floor_id === floorId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  readonly selectedFloorObj = computed(() => {
+    const floorId = this.selectedFloor();
+    if (!floorId) return undefined;
+    return this.floors().find(f => f._id === floorId);
+  });
+
+  readonly selectedTableObj = computed(() => {
+    const tableId = this.selectedTable();
+    if (!tableId) return undefined;
+    return this.tables().find(t => t._id === tableId);
+  });
+
+  readonly floorStats = computed(() => {
+    return this.floors().map(floor => ({
+      floorId: floor._id,
+      name: floor.name,
+      tableCount: this.tables().filter(t => t.floor_id === floor._id).length
+    }));
+  });
+
+  readonly isUpdatingFloor = computed(() => {
+    return this.onUpdate() && this.selectedFloor() !== undefined;
+  });
+
+  readonly isUpdatingTable = computed(() => {
+    return this.onUpdate() && this.selectedTable() !== undefined;
+  });
 
   constructor() {
     this.fillData();

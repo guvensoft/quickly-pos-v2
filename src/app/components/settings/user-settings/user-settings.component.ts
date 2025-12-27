@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -31,10 +31,46 @@ export class UserSettingsComponent implements OnInit {
   groupForm = viewChild<NgForm>('groupForm');
   groupDetailForm = viewChild<NgForm>('groupDetailForm');
 
+  // Computed properties for reactive state and lookups
+  readonly selectedGroupObj = computed(() => {
+    const groupId = this.selectedGroup();
+    if (!groupId) return undefined;
+    return this.groups().find(g => g._id === groupId);
+  });
+
+  readonly hasSelectedGroup = computed(() => {
+    return this.selectedGroup() !== undefined;
+  });
+
+  readonly isInUpdateMode = computed(() => {
+    return this.onUpdate() && this.selectedUser() !== undefined;
+  });
+
+  readonly selectedUserObj = computed(() => {
+    const userId = this.selectedUser();
+    if (!userId) return undefined;
+    return this.users().find(u => u._id === userId);
+  });
+
   constructor() { }
 
   ngOnInit() {
     this.onUpdate.set(false);
+
+    // Load group details when selected
+    effect(() => {
+      const groupId = this.selectedGroup();
+      if (groupId) {
+        this.getGroup(groupId);
+      }
+    });
+
+    // Load users when group selected
+    effect(() => {
+      const groupId = this.selectedGroup();
+      this.getUsersByGroup(groupId);
+    });
+
     this.fillData();
   }
 
