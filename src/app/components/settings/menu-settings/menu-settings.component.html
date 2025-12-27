@@ -151,11 +151,13 @@
                       }
                     </div>
                     <div class="col pr-1 pl-1">
-                      <button type="button" *ngIf="selectedCat() !== undefined" [disabled]="subCats().length === 4"
-                        (click)="onUpdate.set(false); subCatForm.reset();" class="btn btn-warning btn-block btn-md"
-                        data-toggle="modal" data-target="#subCatModal">
-                        <i class="fa fa-plus"></i> Alt Kategori Ekle
-                      </button>
+                      @if (selectedCat() !== undefined) {
+                        <button type="button" [disabled]="subCats().length === 4"
+                          (click)="onUpdate.set(false); subCatForm.reset();" class="btn btn-warning btn-block btn-md"
+                          data-toggle="modal" data-target="#subCatModal">
+                          <i class="fa fa-plus"></i> Alt Kategori Ekle
+                        </button>
+                      }
                     </div>
                     <div class="col pl-1">
                       <button type="submit" class="btn btn-md btn-block btn-success">
@@ -410,7 +412,10 @@
             data-dismiss="modal">Alt Kategoriyi Sil</button>
           }
           <button type="submit" class="btn btn-danger btn-lg">
-            <span *ngIf="onUpdate()">Değişiklikleri</span> Kaydet</button>
+            @if (onUpdate()) {
+              <span>Değişiklikleri</span>
+            }
+             Kaydet</button>
         </div>
       </form>
     </div>

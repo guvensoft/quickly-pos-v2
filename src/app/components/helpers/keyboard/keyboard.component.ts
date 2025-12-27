@@ -19,6 +19,13 @@ export class KeyboardComponent implements OnInit {
   keyboard!: Array<any>;
   numboard!: Array<any>;
   keyIndex!: number;
+
+  // Computed properties for each key row
+  get keyRow0() { return this.keytype?.[0] ?? []; }
+  get keyRow1() { return this.keytype?.[1] ?? []; }
+  get keyRow2() { return this.keytype?.[2] ?? []; }
+  get keyRow3() { return this.keytype?.[3] ?? []; }
+  get keyRow4() { return this.keytype?.[4] ?? []; }
   signalListener!: Subscription;
   selectedInput!: ElementRef;
   selectedForm!: NgForm;
