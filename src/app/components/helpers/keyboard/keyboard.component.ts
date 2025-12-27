@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, effect, ElementRef } from '@angular/core';
+import { Component, inject, signal, computed, effect, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { KeyboardService } from '../../../core/services/keyboard.service';
@@ -12,11 +12,11 @@ import { SettingsService } from '../../../core/services/settings.service';
   styleUrls: ['./keyboard.component.scss'],
 })
 
-export class KeyboardComponent implements OnInit {
+export class KeyboardComponent {
   private readonly keyboardService = inject(KeyboardService);
   private readonly settings = inject(SettingsService);
 
-  // Keyboard layout configuration (initialized in constructor)
+  // Keyboard layout configuration
   private readonly keyboardLayout = [
     [["1", "!"], ["2", "@"], ["3", "#"], ["4", "$"], ["5", "%"], ["6", "¨"], ["7", "&"], ["8", "*"], ["9", "("], ["0", ")"], ["*", "?"], ["-", "_"], ["◂", "◂"]],
     [["q", "Q"], ["w", "W"], ["e", "E"], ["r", "R"], ["t", "T"], ["y", "Y"], ["u", "U"], ["ı", "I"], ["o", "O"], ["p", "P"], ["ğ", "Ğ"], ["ü", "Ü"], ["▴", "▴"]],
@@ -51,7 +51,10 @@ export class KeyboardComponent implements OnInit {
   readonly keyRow3 = computed(() => this.keytype()?.[3] ?? []);
   readonly keyRow4 = computed(() => this.keytype()?.[4] ?? []);
 
-  ngOnInit() {
+  constructor() {
+    // Initialize signal with keyboard layout
+    this.keytype.set(this.keyboardLayout);
+
     // Set up reactive effect for AppSettings changes
     effect(() => {
       this.settings.AppSettings.subscribe(res => {

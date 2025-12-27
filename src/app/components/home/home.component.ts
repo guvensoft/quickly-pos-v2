@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
   styleUrls: ['./home.component.scss'],
 })
 
-export class HomeComponent implements OnInit {
+export class HomeComponent {
   private readonly router = inject(Router);
 
   readonly menus = signal<Array<any>>([
@@ -21,9 +21,6 @@ export class HomeComponent implements OnInit {
     { name: 'Raporlar', color: 'info', icon: 'fa-pie-chart', link: 'reports' },
     { name: 'Ayarlar', color: 'primary', icon: 'fa-cogs', link: 'settings' }
   ]);
-
-  ngOnInit() {
-  }
 
   closeProgram() {
     localStorage.removeItem('userType');
