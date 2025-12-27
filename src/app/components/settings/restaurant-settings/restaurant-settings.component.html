@@ -42,10 +42,13 @@
               </div>
               <div class="card-body p-0 flow">
                 <div class="list-group">
-                  <div *ngFor="let item of floors" class="btn-group btn-group-justify">
-                    <button (click)="getFloor(item)" [ngClass]="{'list-group-item-warning' : selectedFloor === item._id}"
-                      type="button" class="list-group-item list-group-item-action">{{item.name}}</button>
+                  @for (item of floors(); track item._id) {
+                  <div class="btn-group btn-group-justify">
+                    <button (click)="getFloor(item)"
+                      [ngClass]="{'list-group-item-warning' : selectedFloor() === item._id}" type="button"
+                      class="list-group-item list-group-item-action">{{item.name}}</button>
                   </div>
+                  }
                 </div>
               </div>
             </div>
@@ -57,8 +60,10 @@
                   Ayrıntılar
                 </div>
                 <div class="card-body p-2 flow">
-                  <h1 *ngIf="selectedFloor === undefined" class="text-center mt-5">Listeden Bölge Seçiniz</h1>
-                  <div [hidden]="selectedFloor === undefined">
+                  @if (selectedFloor() === undefined) {
+                  <h1 class="text-center mt-5">Listeden Bölge Seçiniz</h1>
+                  }
+                  <div [hidden]="selectedFloor() === undefined">
                     <input type="hidden" name="_id" ngModel>
                     <input type="hidden" name="_rev" ngModel>
                     <input type="hidden" name="status" ngModel>
@@ -130,7 +135,7 @@
                     </table>
                   </div>
                 </div>
-                <div class="card-footer" [hidden]="selectedFloor === undefined">
+                <div class="card-footer" [hidden]="selectedFloor() === undefined">
                   <div class="row">
                     <div class="col pr-1">
                       <button type="button" (click)="removeFloor()" class="btn btn-md btn-block btn-danger">
@@ -161,7 +166,7 @@
             <h5 class="mt-2">Masa Ayarları</h5>
           </div>
           <div class="col-lg-4 pr-2 pl-0">
-            <button [disabled]="floors.length === 0" class="btn btn-danger btn-md btn-block" (click)="setDefault()"
+            <button [disabled]="floors().length === 0" class="btn btn-danger btn-md btn-block" (click)="setDefault()"
               data-toggle="modal" data-target="#tableModal">
               <i class="fa fa-plus"></i> Masa Ekle
             </button>
@@ -179,10 +184,12 @@
                 <div class="list-group">
                   <button (click)="fillData()" type="button" class="list-group-item list-group-item-action">Bütün
                     Masalar</button>
-                  <div *ngFor="let item of floors" class="btn-group btn-group-justify">
+                  @for (item of floors(); track item._id) {
+                  <div class="btn-group btn-group-justify">
                     <button (click)="getTablesByFloor(item._id!)" type="button"
                       class="list-group-item list-group-item-action">{{item.name}}</button>
                   </div>
+                  }
                 </div>
               </div>
             </div>
@@ -209,12 +216,15 @@
                 </div>
               </div>
               <div class="card-body p-0 flow">
-                <div *ngIf="tables.length === 0" class="row mt-5">
+                @if (tables().length === 0) {
+                <div class="row mt-5">
                   <div class="col-lg-12 mt-5">
                     <h2 class="text-center mt3">Eşleşen Masa Bulunamadı</h2>
                   </div>
                 </div>
-                <div *ngIf="tables.length > 0">
+                }
+                @if (tables().length > 0) {
+                <div>
                   <table class="table table-hover  table-bordered table-striped table-dark mb-0">
                     <thead class="thead-dark">
                       <tr>
@@ -225,24 +235,18 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let table of tables; let i = index;" (click)="updateTable(table._id!)">
+                      @for (table of tables(); track table._id; let i = $index) {
+                      <tr (click)="updateTable(table._id!)">
                         <td>{{i+1}}</td>
                         <td>{{table.name}}</td>
                         <td><i class="fa fa-user"></i> {{table.capacity}} Kişilik</td>
                         <td>{{table.floor_id | general:'floors':'name' | async}}</td>
                       </tr>
+                      }
                     </tbody>
                   </table>
-                  <!-- <div class="col-lg-4 mb-2 col-card">
-                    <div  class="card tableCard">
-                      <div class="card-body">
-                        <h2 class="card-title">{{table.name}}</h2>
-                        <p class="card-text">
-                           {{table.capacity}} </p>
-                      </div>
-                    </div>
-                  </div> -->
                 </div>
+                }
               </div>
             </div>
           </div>
@@ -268,59 +272,6 @@
   </div>
 </div>
 
-
-<div *ngIf="false" class="row">
-  <div class="col-lg-4">
-    <button class="btn btn-danger btn-lg btn-block" (click)="setDefault()" data-toggle="modal" data-target="#areaModal">
-      <i class="fa fa-plus"></i> Bölüm Ekle</button>
-    <div class="card inside-height mt-3">
-      <div class="card-header">
-        Bölümler
-      </div>
-      <div class="card-body p-0 flow">
-        <div class="list-group">
-          <button type="button" (click)="fillData()" class="list-group-item list-group-item-action">Bütün
-            Bölümler</button>
-          <div *ngFor="let floor of floors" class="btn-group btn-group-justify">
-            <button (click)="getTablesByFloor(floor._id!)" type="button"
-              class="list-group-item list-group-item-action">{{floor.name}}</button>
-            <button (click)="getFloor(floor); removeFloor()" class="btn btn-danger">
-              <i class="fa fa-remove" aria-hidden="true"></i>
-            </button>
-            <button (click)="getFloor(floor)" class="btn btn-warning">
-              <i class="fa fa-edit" aria-hidden="true"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-8">
-    <button class="btn btn-danger btn-lg btn-block" (click)="setDefault()" data-toggle="modal"
-      data-target="#tableModal">
-      <i class="fa fa-plus"></i> Masa Ekle</button>
-    <div class="card inside-height mt-3">
-      <div class="card-header">
-        Masalar
-      </div>
-      <div id="productHolder" class="card-body">
-        <div class="row">
-          <div *ngFor="let table of tables" class="col-lg-4 mb-2 col-card">
-            <div (click)="getFloor(table)" class="card tableCard">
-              <div class="card-body">
-                <h2 class="card-title">{{table.name}}</h2>
-                <p class="card-text">
-                  <i class="fa fa-user"></i> {{table.capacity}} Kişilik
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="modal fade" id="areaModal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
@@ -331,12 +282,14 @@
         </button>
       </div>
       <form #areaForm="ngForm" (ngSubmit)="addFloor(areaForm)">
-        <div *ngIf="onUpdate">
+        @if (onUpdate()) {
+        <div>
           <input type="hidden" name="_id" ngModel />
           <input type="hidden" name="_rev" ngModel />
           <input type="hidden" name="status" ngModel />
           <input type="hidden" name="timestamp" ngModel />
         </div>
+        }
         <div class="modal-body">
           <div class="form-group">
             <div class="input-group">
@@ -413,13 +366,15 @@
         </button>
       </div>
       <form #tableForm="ngForm" (ngSubmit)="addTable(tableForm)">
-        <div *ngIf="onUpdate">
+        @if (onUpdate()) {
+        <div>
           <input type="hidden" name="_id" ngModel>
           <input type="hidden" name="_rev" ngModel>
           <input type="hidden" name="status" ngModel>
           <input type="hidden" name="timestamp" ngModel>
           <input type="hidden" name="position" ngModel>
         </div>
+        }
         <div class="modal-body">
           <div class="form-group">
             <div class="input-group">
@@ -433,7 +388,9 @@
                 <div class="input-group-text">Bağlı Bölüm</div>
               </div>
               <select type="text" name="floor_id" class="form-control form-control-lg" ngModel>
-                <option *ngFor="let item of floors" value="{{item._id}}">{{item.name}}</option>
+                @for (item of floors(); track item._id) {
+                <option [value]="item._id">{{item.name}}</option>
+                }
               </select>
             </div>
             <div class="input-group">
@@ -452,9 +409,11 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-          <button *ngIf="onUpdate" type="button" (click)="removeTable()" class="btn btn-danger btn-lg">Masayı
+          @if (onUpdate()) {
+          <button type="button" (click)="removeTable()" class="btn btn-danger btn-lg">Masayı
             Sil</button>
-          <button type="button" type="submit" class="btn btn-primary btn-lg">Kaydet</button>
+          }
+          <button type="submit" class="btn btn-primary btn-lg">Kaydet</button>
         </div>
       </form>
     </div>
