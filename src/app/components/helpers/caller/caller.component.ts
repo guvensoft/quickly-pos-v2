@@ -1,4 +1,4 @@
-import { Component, OnInit, viewChild, inject, signal, effect } from '@angular/core';
+import { Component, viewChild, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CallerIDService } from '../../../core/services/caller-id.service';
@@ -18,7 +18,7 @@ import { Call } from '../../../core/models/caller.model';
   templateUrl: './caller.component.html',
   styleUrls: ['./caller.component.scss']
 })
-export class CallerComponent implements OnInit {
+export class CallerComponent {
   private readonly router = inject(Router);
   private readonly callerService = inject(CallerIDService);
   private readonly mainService = inject(MainService);
@@ -26,13 +26,16 @@ export class CallerComponent implements OnInit {
 
   readonly call = signal<Call>({} as Call);
   readonly customer = signal<Customer | null>(null);
-  readonly owner = signal<any>(this.settingsService.getUser('name'));
+  readonly owner = signal<any>(null);
   readonly onUpdate = signal<boolean>(false);
   readonly Date = signal<any>(Date);
 
   customerForm = viewChild<NgForm>('customerForm');
 
-  ngOnInit() {
+  constructor() {
+    // Initialize owner from service
+    this.owner.set(this.settingsService.getUser('name'));
+
     // Set up reactive effect for call events
     effect(() => {
       this.callerService.listenCallEvent().subscribe(res => {
