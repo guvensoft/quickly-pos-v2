@@ -23,7 +23,7 @@
           <div class="card-body p-0 flow">
             <table class="table table-hover table-striped">
               <tbody>
-                <tr *ngFor="let item of documents" (click)="showDocument(item)">
+                <tr *ngFor="let item of documents; let i = index" (click)="showDocument(item)">
                   <td>{{item| json}}</td>
                 </tr>
               </tbody>
@@ -95,9 +95,13 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-        <button *ngIf="!onCreate" type="button" (click)="removeDocument(selectedDoc?._id)" class="btn btn-danger btn-lg">Sil</button>
-        <button *ngIf="!onCreate" type="button" (click)="editDocument(editArea.value)" class="btn btn-success btn-lg">Kaydet</button>
-        <button *ngIf="onCreate" type="button" (click)="createDocument(editArea.value)" class="btn btn-success btn-lg">Oluştur</button>
+        @if (!onCreate) {
+        <button type="button" (click)="removeDocument(selectedDoc?._id)" class="btn btn-danger btn-lg">Sil</button>
+        <button type="button" (click)="editDocument(editArea.value)" class="btn btn-success btn-lg">Kaydet</button>
+        }
+        @if (onCreate) {
+        <button type="button" (click)="createDocument(editArea.value)" class="btn btn-success btn-lg">Oluştur</button>
+        }
       </div>
     </div>
   </div>
