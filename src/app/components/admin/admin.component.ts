@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, viewChild } from '@angular/core';
+import { Component, OnInit, viewChild, inject, signal, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpService } from '../../core/services/http.service';
 import { MainService } from '../../core/services/main.service';
@@ -18,45 +18,48 @@ import { Table } from '../../core/models/table.model';
 })
 
 export class AdminComponent implements OnInit {
-  databases!: Array<string>;
-  documents: any;
-  selectedDoc!: any;
-  selectedDB!: string;
-  storeReports!: Array<any>;
-  onCreate!: boolean;
+  private readonly mainService = inject(MainService);
+  private readonly httpService = inject(HttpService);
+
+  readonly databases = signal<Array<string>>(Object.keys(this.mainService.LocalDB));
+  readonly documents = signal<any>(undefined);
+  readonly selectedDoc = signal<any>(undefined);
+  readonly selectedDB = signal<string>("");
+  readonly storeReports = signal<Array<any>>([]);
+  readonly onCreate = signal<boolean>(false);
   editArea = viewChild<ElementRef>('editArea');
 
-  constructor(private mainService: MainService, private httpService: HttpService) {
-    this.databases = Object.keys(this.mainService.LocalDB);
+  ngOnInit() {
   }
 
-  ngOnInit() {
-
+  getEditAreaValue(): string {
+    const editAreaElement = this.editArea();
+    return editAreaElement?.nativeElement?.value || '';
   }
 
   syncData() {
-    this.mainService.syncToLocal(this.selectedDB).then((message: any) => {
+    this.mainService.syncToLocal(this.selectedDB()).then((message: any) => {
       alert(message);
     });
   }
 
   showDatabase(db_name: string) {
-    this.selectedDB = db_name;
+    this.selectedDB.set(db_name);
     this.mainService.getAllBy(db_name as any, {}).then((res: any) => {
       if (res && res.docs) {
-        this.documents = res.docs;
+        this.documents.set(res.docs);
       } else {
-        this.documents = [];
+        this.documents.set([]);
       }
     }).catch(err => {
       console.error('Error showing database:', err);
-      this.documents = [];
+      this.documents.set([]);
     });
   }
 
   showDocument(doc: any) {
     // this.editArea.nativeElement.value == '';
-    this.selectedDoc = doc;
+    this.selectedDoc.set(doc);
     (window as any).$('#docModal').modal('show');
   }
 
@@ -64,10 +67,10 @@ export class AdminComponent implements OnInit {
     try {
       const newDocument = JSON.parse(document);
       let db_name: string;
-      if (this.selectedDB == 'allData') {
+      if (this.selectedDB() === 'allData') {
         db_name = newDocument.db_name;
       } else {
-        db_name = this.selectedDB;
+        db_name = this.selectedDB();
       }
       this.mainService.updateData(db_name as any, newDocument._id, newDocument).then((res: any) => {
         (window as any).$('#docModal').modal('hide');
@@ -75,8 +78,8 @@ export class AdminComponent implements OnInit {
         if (this.editArea()) {
           this.editArea()!.nativeElement.value = '';
         }
-        this.selectedDoc = undefined!;
-        this.showDatabase(this.selectedDB);
+        this.selectedDoc.set(undefined);
+        this.showDatabase(this.selectedDB());
       }).catch(err => {
         console.error('Error updating document:', err);
         alert('Döküman güncellenemedi: ' + err.message);
@@ -91,15 +94,15 @@ export class AdminComponent implements OnInit {
   createDocument(document: any) {
     try {
       const newDocument = JSON.parse(document);
-      this.mainService.addData(this.selectedDB as any, newDocument).then((res: any) => {
+      this.mainService.addData(this.selectedDB() as any, newDocument).then((res: any) => {
         if (res.ok) {
           (window as any).$('#docModal').modal('hide');
           console.log('Döküman Oluşturuldu');
           if (this.editArea()) {
             this.editArea()!.nativeElement.value = '';
           }
-          this.selectedDoc = undefined!;
-          this.showDatabase(this.selectedDB);
+          this.selectedDoc.set(undefined);
+          this.showDatabase(this.selectedDB());
         }
       }).catch(err => {
         console.error('Error creating document:', err);
@@ -114,26 +117,26 @@ export class AdminComponent implements OnInit {
   getByFilter(key: string, value: any) {
     const filter = new Object() as any;
     filter[key] = value;
-    if (this.selectedDB) {
-      this.mainService.getAllBy(this.selectedDB as any, filter).then((res: any) => {
+    if (this.selectedDB()) {
+      this.mainService.getAllBy(this.selectedDB() as any, filter).then((res: any) => {
         if (res && res.docs) {
-          this.documents = res.docs;
+          this.documents.set(res.docs);
         } else {
-          this.documents = [];
+          this.documents.set([]);
         }
       }).catch(err => {
         console.error('Error filtering documents:', err);
-        this.documents = [];
+        this.documents.set([]);
       });
     }
   }
 
   removeDocument(id: string) {
-    this.mainService.removeData(this.selectedDB as any, id).then((res: any) => {
+    this.mainService.removeData(this.selectedDB() as any, id).then((res: any) => {
       (window as any).$('#docModal').modal('hide');
       console.log('Döküman Silindi');
-      this.selectedDoc = undefined!;
-      this.showDatabase(this.selectedDB);
+      this.selectedDoc.set(undefined);
+      this.showDatabase(this.selectedDB());
     }).catch(err => {
       console.error('Error removing document:', err);
       alert('Döküman silinemedi: ' + err.message);
@@ -164,7 +167,7 @@ export class AdminComponent implements OnInit {
   }
 
   compactDB() {
-    this.mainService.compactDB(this.selectedDB).then((res: any) => {
+    this.mainService.compactDB(this.selectedDB()).then((res: any) => {
       console.log(res);
     }).catch((err: any) => {
       console.log(err);
@@ -172,13 +175,13 @@ export class AdminComponent implements OnInit {
   }
 
   clearDB() {
-    this.mainService.getAllBy(this.selectedDB as any, {}).then((res: any) => {
+    this.mainService.getAllBy(this.selectedDB() as any, {}).then((res: any) => {
       if (!res || !res.docs || res.docs.length === 0) {
         console.warn('No documents to clear');
         return;
       }
       res.docs.forEach((element: any, index: number) => {
-        this.mainService.removeData(this.selectedDB as any, element._id);
+        this.mainService.removeData(this.selectedDB() as any, element._id);
         console.log(index);
       });
     }).catch(err => {
@@ -223,7 +226,7 @@ export class AdminComponent implements OnInit {
   }
 
   resolveDB() {
-    this.mainService.LocalDB[this.selectedDB].allDocs({ include_docs: true, conflicts: true }).then((res: any) => {
+    this.mainService.LocalDB[this.selectedDB()].allDocs({ include_docs: true, conflicts: true }).then((res: any) => {
       if (!res || !res.rows || res.rows.length === 0) {
         console.warn('No documents to resolve');
         return;
@@ -232,7 +235,7 @@ export class AdminComponent implements OnInit {
       test.forEach((element: any) => {
         if (element.hasOwnProperty('_conflicts')) {
           console.log(element);
-          this.mainService.LocalDB[this.selectedDB].resolveConflicts(element, (a: any, b: any) => {
+          this.mainService.LocalDB[this.selectedDB()].resolveConflicts(element, (a: any, b: any) => {
             if (element.hasOwnProperty('timestamp')) {
               if (a.timestamp > b.timestamp) return a;
               if (b.timestamp > a.timestamp) return b;
@@ -277,7 +280,7 @@ export class AdminComponent implements OnInit {
     //     let table = new Table(`S${index}`,'05800961-4aaa-4add-baa8-9f8fbfb3f2fb',4,'',1,Date.now(),[]);
     //     this.mainService.addData('tables',table).then(res => {
     //       console.log(res);
-    //     }); 
+    //     });
     // }
 
 
