@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Cashbox } from '../../core/models/cashbox.model';
@@ -32,7 +32,7 @@ export class CashboxComponent implements OnInit {
   readonly onUpdate = signal<boolean>(false);
   readonly day = signal<number>(0);
 
-  @ViewChild('cashboxForm') cashboxForm!: NgForm;
+  cashboxForm = viewChild<NgForm>('cashboxForm');
 
   constructor() {
     this.user.set(this.settingsService.getUser('name') as string || '');
@@ -75,7 +75,7 @@ export class CashboxComponent implements OnInit {
         this.messageService.sendMessage(this.type() + ' Düzenlendi');
       });
     }
-    this.cashboxForm.reset();
+    this.cashboxForm()?.reset();
     (window as any).$('#cashboxModal').modal('hide');
     return true;
   }
@@ -86,8 +86,8 @@ export class CashboxComponent implements OnInit {
     this.type.set(data.type);
     this.mainService.getData('cashbox', data._id!).then(res => {
       this.logService.createLog(logType.CASHBOX_UPDATED, (res as any).id, `Kasa '${data.description}' adlı ${this.type()}'i güncellendi.`);
-      if (this.cashboxForm) {
-        this.cashboxForm.setValue(res);
+      if (this.cashboxForm()) {
+        this.cashboxForm()!.setValue(res);
       }
       this.fillData();
       (window as any).$('#cashboxModal').modal('show');
@@ -105,8 +105,8 @@ export class CashboxComponent implements OnInit {
   }
 
   setDefault() {
-    if (this.cashboxForm) {
-      this.cashboxForm.reset();
+    if (this.cashboxForm()) {
+      this.cashboxForm()!.reset();
     }
     this.onUpdate.set(false);
   }
