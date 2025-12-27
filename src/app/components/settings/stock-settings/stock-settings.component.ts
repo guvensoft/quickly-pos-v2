@@ -6,6 +6,7 @@ import { Stock, StockCategory } from '../../../core/models/stocks.model';
 import { MessageService } from '../../../core/services/message.service';
 import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
+import { SignalValidatorService } from '../../../core/services/signal-validator.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 
 @Component({
@@ -19,6 +20,7 @@ export class StockSettingsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly validatorService = inject(SignalValidatorService);
 
   readonly categories = signal<Array<StockCategory>>([]);
   readonly stocks = signal<Array<Stock>>([]);
@@ -26,6 +28,18 @@ export class StockSettingsComponent implements OnInit {
   readonly selectedCat = signal<StockCategory | undefined>(undefined);
   readonly onUpdate = signal<boolean>(false);
   readonly units = signal<Array<string>>(['Gram', 'Mililitre', 'Adet']);
+
+  // Stock validation signals
+  readonly stockName = signal<string>('');
+  readonly stockQuantity = signal<number>(0);
+  readonly stockWarningLimit = signal<number>(0);
+  readonly stockPrice = signal<number>(0);
+
+  // Validation error signals
+  readonly nameError = signal<string | null>(null);
+  readonly quantityError = signal<string | null>(null);
+  readonly warningError = signal<string | null>(null);
+  readonly priceError = signal<string | null>(null);
 
   stockCatForm = viewChild<NgForm>('stockCatForm');
   stockCatDetailForm = viewChild<NgForm>('stockCatDetailForm');
@@ -59,6 +73,11 @@ export class StockSettingsComponent implements OnInit {
     };
   });
 
+  // Stock form validation computed property
+  readonly isStockFormValid = computed(() => {
+    return !this.nameError() && !this.quantityError() && !this.warningError() && !this.priceError();
+  });
+
   constructor() {
     this.fillData();
   }
@@ -83,12 +102,62 @@ export class StockSettingsComponent implements OnInit {
         }
       }
     }, { allowSignalWrites: true });
+
+    // Validate stock name
+    effect(() => {
+      const name = this.stockName();
+      if (!name || !name.trim()) {
+        this.nameError.set('Stok Adı Belirtmelisiniz');
+      } else {
+        this.nameError.set(null);
+      }
+    });
+
+    // Validate stock quantity (must be greater than 0)
+    effect(() => {
+      const qty = this.stockQuantity();
+      if (qty <= 0) {
+        this.quantityError.set('Stok Miktarı 0 dan büyük olmalıdır');
+      } else {
+        this.quantityError.set(null);
+      }
+    });
+
+    // Validate warning limit (must be between 0 and quantity)
+    effect(() => {
+      const warning = this.stockWarningLimit();
+      const qty = this.stockQuantity();
+      if (warning < 0 || warning > qty) {
+        this.warningError.set('Uyarı Sınırı 0 ile miktar arasında olmalıdır');
+      } else {
+        this.warningError.set(null);
+      }
+    });
+
+    // Validate price (must be greater than or equal to 0)
+    effect(() => {
+      const price = this.stockPrice();
+      if (price < 0) {
+        this.priceError.set('Fiyat negatif olamaz');
+      } else {
+        this.priceError.set(null);
+      }
+    });
   }
 
   setDefault() {
     if (this.stockCatForm()) this.stockCatForm()!.reset();
     if (this.stockForm()) this.stockForm()!.reset();
     this.onUpdate.set(false);
+    // Clear validation signals
+    this.stockName.set('');
+    this.stockQuantity.set(0);
+    this.stockWarningLimit.set(0);
+    this.stockPrice.set(0);
+    this.nameError.set(null);
+    this.quantityError.set(null);
+    this.warningError.set(null);
+    this.priceError.set(null);
   }
 
   getStockCatDetail(category: StockCategory) {
@@ -163,13 +232,19 @@ export class StockSettingsComponent implements OnInit {
 
   addStock(stockForm: NgForm) {
     const form = stockForm.value;
-    if (!form.name) {
-      this.messageService.sendMessage('Stok Adı Belirtmelisiniz');
-      return false;
-    } else if (!form.category) {
-      this.messageService.sendMessage('Kategori Seçmelisiniz');
+
+    // Update validation signals from form
+    this.stockName.set(form.name || '');
+    this.stockQuantity.set(form.quantity || 0);
+    this.stockWarningLimit.set(form.warning_limit || 0);
+    this.stockPrice.set(form.price || 0);
+
+    // Check if form is valid
+    if (!this.isStockFormValid()) {
+      this.messageService.sendMessage('Lütfen tüm zorunlu alanları kontrol ediniz.');
       return false;
     }
+
     if (form._id == undefined) {
       // Logic for adding new stock was commented out in original component
       // const left_total = form.total * form.quantity;
