@@ -1,6 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subscription } from 'rxjs';
 import { MessageService } from '../../../core/services/message.service';
 
 @Component({
@@ -11,22 +10,19 @@ import { MessageService } from '../../../core/services/message.service';
 	styleUrls: ['./message.component.scss']
 })
 
-export class MessageComponent implements OnInit, OnDestroy {
-	subscription!: Subscription;
-	message!: any;
-	show!: boolean;
+export class MessageComponent implements OnInit {
+	private readonly messageService = inject(MessageService);
 
-	constructor(private messageService: MessageService) {
-	}
+	readonly message = signal<any>(null);
+	readonly show = signal<boolean>(false);
 
 	ngOnInit() {
-		this.subscription = this.messageService.getMessage().subscribe((message) => {
-			this.message = message;
-		});
-	}
-
-	ngOnDestroy() {
-		this.subscription.unsubscribe();
+		// Set up reactive effect for message changes
+		effect(() => {
+			this.messageService.getMessage().subscribe((message) => {
+				this.message.set(message);
+			});
+		}, { allowSignalWrites: true });
 	}
 
 }

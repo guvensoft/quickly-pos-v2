@@ -1,5 +1,5 @@
 <div class="row pr-2 pl-2 animated fadeIn">
-  @for (menu of menus; track $index; let i = $index) {
+  @for (menu of menus(); track $index; let i = $index) {
   <div class="col-lg-4 pr-2 pl-2">
     <a routerLink="/{{menu.link}}">
       <div class="card text-white bg-{{menu.color}} mb-3 mainCard {{menu.link}}">
