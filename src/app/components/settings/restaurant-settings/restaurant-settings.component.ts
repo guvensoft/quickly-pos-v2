@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -27,9 +27,9 @@ export class RestaurantSettingsComponent implements OnInit {
   readonly selectedTable = signal<string | undefined>(undefined);
   readonly selectedFloor = signal<string | undefined>(undefined);
 
-  @ViewChild('areaForm') areaForm!: NgForm;
-  @ViewChild('areaDetailForm') areaDetailForm!: NgForm;
-  @ViewChild('tableForm') tableForm!: NgForm;
+  areaForm = viewChild<NgForm>('areaForm');
+  areaDetailForm = viewChild<NgForm>('areaDetailForm');
+  tableForm = viewChild<NgForm>('tableForm');
 
   constructor() {
     this.fillData();
@@ -42,11 +42,11 @@ export class RestaurantSettingsComponent implements OnInit {
     this.onUpdate.set(false);
     this.selectedTable.set(undefined);
     this.selectedFloor.set(undefined);
-    if (this.areaForm) {
-      this.areaForm.reset();
+    if (this.areaForm()) {
+      this.areaForm()!.reset();
     }
-    if (this.tableForm) {
-      this.tableForm.reset();
+    if (this.tableForm()) {
+      this.tableForm()!.reset();
     }
   }
 
@@ -76,8 +76,8 @@ export class RestaurantSettingsComponent implements OnInit {
     this.selectedFloor.set(floor._id);
     const floorData = { ...floor, ...floor.conditions };
     delete floorData.conditions;
-    if (this.areaDetailForm) {
-      this.areaDetailForm.form.patchValue(floorData);
+    if (this.areaDetailForm()) {
+      this.areaDetailForm()!.form.patchValue(floorData);
     }
   }
 
@@ -180,8 +180,8 @@ export class RestaurantSettingsComponent implements OnInit {
     this.mainService.getData('tables', id).then((result: Table) => {
       const tableData = { ...result };
       delete (tableData as any).customers;
-      if (this.tableForm) {
-        this.tableForm.form.patchValue(tableData);
+      if (this.tableForm()) {
+        this.tableForm()!.form.patchValue(tableData);
       }
       (window as any).$('#tableModal').modal('show');
     });
@@ -193,7 +193,7 @@ export class RestaurantSettingsComponent implements OnInit {
     if (isOk && currentTableId) {
       this.mainService.removeData('tables', currentTableId).then((result) => {
         if (result && result.id) {
-          const tableName = this.tableForm?.value?.name || 'Masa';
+          const tableName = this.tableForm()?.value?.name || 'Masa';
           this.logService.createLog(logType.TABLE_DELETED, result.id, `${tableName} adlı Masa Silindi.`);
           this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
             if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
