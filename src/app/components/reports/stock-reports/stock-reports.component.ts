@@ -37,7 +37,7 @@ export class StockReportsComponent implements OnInit {
     this.selectedCat.set(undefined);
     this.mainService.getAllBy('stocks', {}).then(result => {
       if (result && result.docs) {
-        let allS = result.docs as Stock[];
+        let allS = result.docs as unknown as Stock[];
         allS = allS.sort((b: any, a: any) => (b.left_total / (b.total * b.first_quantity)) * 100 - (a.left_total / (a.total * a.first_quantity)) * 100);
         this.allStocks.set(allS);
         this.stocksView.set([...allS].sort((b: any, a: any) => (b.left_total / (b.total * b.first_quantity)) * 100 - (a.left_total / (a.total * a.first_quantity)) * 100));

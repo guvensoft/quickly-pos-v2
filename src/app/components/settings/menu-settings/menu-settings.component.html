@@ -143,10 +143,12 @@
                 <div class="card-footer" [hidden]="selectedCat() === undefined">
                   <div class="row">
                     <div class="col pr-1 pl-2">
-                      <button type="button" @if (selectedCat(); as cat) { (click)="removeCategory(cat._id!)" }
-                        class="btn btn-md btn-block btn-danger">
-                        <i class="fa fa-remove" aria-hidden="true"></i> Kategoriyi Sil
-                      </button>
+                      @if (selectedCat()) {
+                        <button type="button" (click)="removeCategory(selectedCat()?._id!)"
+                          class="btn btn-md btn-block btn-danger">
+                          <i class="fa fa-remove" aria-hidden="true"></i> Kategoriyi Sil
+                        </button>
+                      }
                     </div>
                     <div class="col pr-1 pl-1">
                       <button type="button" *ngIf="selectedCat() !== undefined" [disabled]="subCats().length === 4"
