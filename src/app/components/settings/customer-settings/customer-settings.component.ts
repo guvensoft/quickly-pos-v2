@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MainService } from '../../../core/services/main.service';
@@ -41,14 +41,58 @@ export class CustomerSettingsComponent implements OnInit {
   readonly day = signal<number>(new Date().getDay());
   readonly printers = signal<any[]>([]);
 
+  // Computed properties for reactive filtering and derived state
+  readonly selectedCustomerObj = computed(() => {
+    const custId = this.selectedCustomer();
+    if (!custId) return undefined;
+    return this.customers().find(c => c._id === custId);
+  });
+
+  readonly sortedCreditsView = computed(() => {
+    return [...this.creditsView()].sort((a: any, b: any) => a.timestamp - b.timestamp);
+  });
+
+  readonly selectedCustomerCredits = computed(() => {
+    const custId = this.selectedCustomer();
+    if (!custId) return [];
+    return this.creditsView().filter((c: any) => c.table_id === custId);
+  });
+
+  readonly customerCredits = computed(() => {
+    const creditsMap = new Map<string, number>();
+    this.credits().forEach((credit: any) => {
+      const customerId = credit.table_id;
+      const currentTotal = creditsMap.get(customerId) ?? 0;
+      creditsMap.set(customerId, currentTotal + (credit.total_price || 0));
+    });
+    return creditsMap;
+  });
+
   ngOnInit() {
     this.onUpdate.set(false);
-    this.settingsService.DateSettings.subscribe((res: any) => {
-      this.day.set(res.value.day);
+
+    // Set up reactive effect for DateSettings changes
+    effect(() => {
+      this.settingsService.DateSettings.subscribe((res: any) => {
+        this.day.set(res.value.day);
+      });
+    }, { allowSignalWrites: true });
+
+    // Set up reactive effect for Printer changes
+    effect(() => {
+      this.settingsService.getPrinters().subscribe((res: any) => {
+        this.printers.set(res.value || []);
+      });
+    }, { allowSignalWrites: true });
+
+    // Auto-filter credits when customer selected
+    effect(() => {
+      const custId = this.selectedCustomer();
+      if (custId) {
+        this.filterChecks(custId);
+      }
     });
-    this.settingsService.getPrinters().subscribe((res: any) => {
-      this.printers.set(res.value || []);
-    });
+
     this.fillData();
   }
 
