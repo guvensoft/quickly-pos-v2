@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -34,6 +34,36 @@ export class ApplicationSettingsComponent implements OnInit {
   readonly choosenPrinter = signal<any>(undefined);
   readonly currentSection = signal<string>('AppSettings');
 
+  // Computed properties for reactive state
+  readonly isPrinterSelected = computed(() => {
+    const selected = this.selectedPrinter();
+    return selected !== undefined && Object.keys(selected).length > 0;
+  });
+
+  readonly isAnyPrinterFound = computed(() => {
+    return this.printersFound().length > 0;
+  });
+
+  readonly hasChosenPrinter = computed(() => {
+    return this.choosenPrinter() !== undefined;
+  });
+
+  readonly currentSectionLabel = computed(() => {
+    const section = this.currentSection();
+    const labels: Record<string, string> = {
+      'AppSettings': 'Uygulama Ayarları',
+      'Restaurant': 'Restoran Bilgileri',
+      'Server': 'Sunucu Ayarları',
+      'Printers': 'Yazıcılar'
+    };
+    return labels[section] || section;
+  });
+
+  readonly canAddPrinter = computed(() => {
+    const process = this.printerProcess();
+    return process !== undefined && process !== null;
+  });
+
   // Form references using Signal-based viewChild API
   settingsForm = viewChild<NgForm>('settingsForm');
   appServerForm = viewChild<NgForm>('appServerForm');
@@ -48,32 +78,53 @@ export class ApplicationSettingsComponent implements OnInit {
 
   ngOnInit() {
     this.currentSection.set('AppSettings');
-    this.settings.AppSettings.subscribe((res: any) => {
-      if (res && res.value) {
-        this.appSettings.set(res.value);
-        if (this.settingsForm() && res.value) {
-          this.settingsForm()!.form.patchValue(res.value);
+
+    // Set up reactive effect for AppSettings changes
+    effect(() => {
+      this.settings.AppSettings.subscribe((res: any) => {
+        if (res && res.value) {
+          this.appSettings.set(res.value);
+          if (this.settingsForm() && res.value) {
+            this.settingsForm()!.form.patchValue(res.value);
+          }
         }
-      }
-    });
-    this.settings.RestaurantInfo.subscribe((res: any) => {
-      if (res && res.value) {
-        const info = { ...res.value };
-        delete info.auth;
-        delete info.remote;
-        delete info.settings;
-        this.restInfo.set(info);
-        this.restMap.set(info.geolocation);
-        this.appLogo.set(info.logo);
-        // if (this.restInfo.last_seen) delete this.restInfo.last_seen;
-        // this.restaurantForm.setValue(this.restInfo);
-      }
-    });
-    this.settings.ServerSettings.subscribe((res: any) => {
-      if (res && res.value && this.serverSettingsForm()) {
-        this.serverSettingsForm()!.form.patchValue(res.value);
-      }
-    })
+      });
+    }, { allowSignalWrites: true });
+
+    // Set up reactive effect for RestaurantInfo changes
+    effect(() => {
+      this.settings.RestaurantInfo.subscribe((res: any) => {
+        if (res && res.value) {
+          const info = { ...res.value };
+          delete info.auth;
+          delete info.remote;
+          delete info.settings;
+          this.restInfo.set(info);
+          this.restMap.set(info.geolocation);
+          this.appLogo.set(info.logo);
+        }
+      });
+    }, { allowSignalWrites: true });
+
+    // Set up reactive effect for ServerSettings changes
+    effect(() => {
+      this.settings.ServerSettings.subscribe((res: any) => {
+        if (res && res.value && this.serverSettingsForm()) {
+          this.serverSettingsForm()!.form.patchValue(res.value);
+        }
+      });
+    }, { allowSignalWrites: true });
+
+    // Set up reactive effect for Printers changes
+    effect(() => {
+      this.settings.getPrinters().subscribe((res: any) => {
+        if (res && res.value) {
+          this.printers.set(res.value);
+        } else {
+          this.printers.set([]);
+        }
+      });
+    }, { allowSignalWrites: true });
   }
 
   getSettingsDetail(section: string) {
@@ -233,12 +284,6 @@ export class ApplicationSettingsComponent implements OnInit {
   }
 
   fillData() {
-    this.settings.getPrinters().subscribe((res: any) => {
-      if (res && res.value) {
-        this.printers.set(res.value);
-      } else {
-        this.printers.set([]);
-      }
-    });
+    // Printers are now loaded via effect() in ngOnInit()
   }
 }
