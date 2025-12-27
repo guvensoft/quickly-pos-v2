@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -34,12 +34,13 @@ export class ApplicationSettingsComponent implements OnInit {
   readonly choosenPrinter = signal<any>(undefined);
   readonly currentSection = signal<string>('AppSettings');
 
-  @ViewChild('settingsForm') settingsForm!: NgForm;
-  @ViewChild('appServerForm') appServerForm!: NgForm;
-  @ViewChild('restaurantForm') restaurantForm!: NgForm;
-  @ViewChild('printerForm') printerForm!: NgForm;
-  @ViewChild('printerDetailForm') printerDetailForm!: NgForm; // Typing it correctly as NgForm
-  @ViewChild('serverSettingsForm') serverSettingsForm!: NgForm;
+  // Form references using Signal-based viewChild API
+  settingsForm = viewChild<NgForm>('settingsForm');
+  appServerForm = viewChild<NgForm>('appServerForm');
+  restaurantForm = viewChild<NgForm>('restaurantForm');
+  printerForm = viewChild<NgForm>('printerForm');
+  printerDetailForm = viewChild<NgForm>('printerDetailForm');
+  serverSettingsForm = viewChild<NgForm>('serverSettingsForm');
 
   constructor() {
     this.fillData();
@@ -50,8 +51,8 @@ export class ApplicationSettingsComponent implements OnInit {
     this.settings.AppSettings.subscribe((res: any) => {
       if (res && res.value) {
         this.appSettings.set(res.value);
-        if (this.settingsForm && res.value) {
-          this.settingsForm.form.patchValue(res.value);
+        if (this.settingsForm() && res.value) {
+          this.settingsForm()!.form.patchValue(res.value);
         }
       }
     });
@@ -69,8 +70,8 @@ export class ApplicationSettingsComponent implements OnInit {
       }
     });
     this.settings.ServerSettings.subscribe((res: any) => {
-      if (res && res.value && this.serverSettingsForm) {
-        this.serverSettingsForm.form.patchValue(res.value);
+      if (res && res.value && this.serverSettingsForm()) {
+        this.serverSettingsForm()!.form.patchValue(res.value);
       }
     })
   }
@@ -114,8 +115,8 @@ export class ApplicationSettingsComponent implements OnInit {
 
   getPrinterDetail(printer: Printer) {
     this.choosenPrinter.set(printer);
-    if (this.printerDetailForm) {
-      this.printerDetailForm.form.patchValue(printer);
+    if (this.printerDetailForm()) {
+      this.printerDetailForm()!.form.patchValue(printer);
     }
   }
 
@@ -225,7 +226,7 @@ export class ApplicationSettingsComponent implements OnInit {
   }
 
   setDefault() {
-    if (this.printerForm) this.printerForm.reset();
+    if (this.printerForm()) this.printerForm()!.reset();
     this.choosenPrinter.set(undefined);
     this.printerProcess.set(undefined);
     this.selectedPrinter.set(undefined);
