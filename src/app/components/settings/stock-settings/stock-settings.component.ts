@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -16,47 +16,62 @@ import { GeneralPipe } from '../../../shared/pipes/general.pipe';
   styleUrls: ['./stock-settings.component.scss']
 })
 export class StockSettingsComponent implements OnInit {
-  categories!: Array<StockCategory>;
-  stocks!: Array<Stock>;
-  selectedStock!: Stock;
-  selectedCat!: StockCategory | undefined;
-  onUpdate!: boolean;
-  units!: Array<string>;
+  private readonly mainService = inject(MainService);
+  private readonly messageService = inject(MessageService);
+  private readonly logService = inject(LogService);
+
+  readonly categories = signal<Array<StockCategory>>([]);
+  readonly stocks = signal<Array<Stock>>([]);
+  readonly selectedStock = signal<Stock | undefined>(undefined);
+  readonly selectedCat = signal<StockCategory | undefined>(undefined);
+  readonly onUpdate = signal<boolean>(false);
+  readonly units = signal<Array<string>>(['Gram', 'Mililitre', 'Adet']);
+
   @ViewChild('stockCatForm') stockCatForm!: NgForm;
   @ViewChild('stockCatDetailForm') stockCatDetailForm!: NgForm;
   @ViewChild('stockForm') stockForm!: NgForm;
   @ViewChild('stockDetailForm') stockDetailForm!: NgForm;
-  constructor(private mainService: MainService, private messageService: MessageService, private logService: LogService) {
-    this.units = ['Gram', 'Mililitre', 'Adet'];
+
+  constructor() {
     this.fillData();
   }
 
   ngOnInit() {
-    this.onUpdate = false;
+    this.onUpdate.set(false);
   }
 
   setDefault() {
-    this.stockCatForm.reset();
-    this.stockForm.reset();
-    this.onUpdate = false;
+    if (this.stockCatForm) this.stockCatForm.reset();
+    if (this.stockForm) this.stockForm.reset();
+    this.onUpdate.set(false);
   }
 
-  getStockCatDetail(Category: any) {
-    this.selectedCat = Category;
-    this.stockCatDetailForm.setValue(Category);
+  getStockCatDetail(category: StockCategory) {
+    this.selectedCat.set(category);
+    if (this.stockCatDetailForm) {
+      this.stockCatDetailForm.form.patchValue(category);
+    }
   }
 
   getStocks(id: string | undefined) {
     this.mainService.getAllBy('stocks', { sub_category: id }).then((result) => {
-      this.stocks = result.docs as any;
+      if (result && result.docs) {
+        this.stocks.set(result.docs as any);
+      } else {
+        this.stocks.set([]);
+      }
     });
   }
 
   removeStock(id: string | undefined) {
+    if (!id) return;
     this.messageService.sendConfirm('Kaydı Silmek Üzeresiniz. Bu İşlem Geri Alınamaz').then(isOk => {
       if (isOk) {
-        this.mainService.removeData('stocks', id!).then(res => {
-          this.logService.createLog(logType.STOCK_DELETED, res.id, `${this.selectedStock.name} adlı Stok silindi.`);
+        this.mainService.removeData('stocks', id).then(res => {
+          const currentStock = this.selectedStock();
+          if (currentStock) {
+            this.logService.createLog(logType.STOCK_DELETED, res.id, `${currentStock.name} adlı Stok silindi.`);
+          }
           this.fillData();
           (window as any).$('#stock').modal('hide');
           this.messageService.sendMessage('Stok Silindi!');
@@ -65,20 +80,38 @@ export class StockSettingsComponent implements OnInit {
     })
   }
 
-  getStockDetail(stock: any) {
-    this.onUpdate = true;
+  getStockDetail(stock: Stock) {
+    this.onUpdate.set(true);
+    if (!stock._id) return;
     this.mainService.getData('stocks', stock._id).then(result => {
-      this.stockForm.setValue(result)
-      this.selectedStock = stock;
+      if (this.stockForm) {
+        this.stockForm.form.patchValue(result);
+      }
+      this.selectedStock.set(stock);
       (window as any).$('#stock').modal('show');
     });
   }
 
   addQuantity(value: any) {
-    const old_quantity = this.selectedStock.left_total / this.selectedStock.total;
-    const new_quantity = (old_quantity + parseFloat(value));
-    const after = { quantity: new_quantity, left_total: this.selectedStock.left_total + (this.selectedStock.total * parseFloat(value)), first_quantity: new_quantity, warning_limit: (this.selectedStock.total * new_quantity) * 25 / 100 };
-    this.stockForm.setValue(Object.assign(this.selectedStock, after));
+    const currentStock = this.selectedStock();
+    if (!currentStock) return;
+
+    const parsedValue = parseFloat(value);
+    const old_quantity = currentStock.left_total / currentStock.total;
+    const new_quantity = (old_quantity + parsedValue);
+
+    const updatedStock = {
+      ...currentStock,
+      quantity: new_quantity,
+      left_total: currentStock.left_total + (currentStock.total * parsedValue),
+      first_quantity: new_quantity,
+      warning_limit: (currentStock.total * new_quantity) * 25 / 100
+    };
+
+    if (this.stockForm) {
+      this.stockForm.form.patchValue(updatedStock);
+    }
+
     (window as any).$('#quantityModal').modal('hide');
     (window as any).$('#stock').modal('show');
   }
@@ -93,14 +126,9 @@ export class StockSettingsComponent implements OnInit {
       return false;
     }
     if (form._id == undefined) {
-      const left_total = form.total * form.quantity;
-      // let schema = new Stock(form.name, form.description, form.category, form.quantity, form.unit, form.total, left_total, form.quantity, (form.total * form.quantity) * form.warning_value / 100, form.warning_value, Date.now());
-      // this.mainService.addData('stocks', schema).then((res) => {
-      //   this.logService.createLog(logType.STOCK_CREATED, res.id, `${form.name} adlı Stok oluşturuldu.`);
-      //   this.fillData();
-      //   stockForm.reset();
-      //   this.messageService.sendMessage('Stok oluşturuldu');
-      // });
+      // Logic for adding new stock was commented out in original component
+      // const left_total = form.total * form.quantity;
+      // ...
     } else {
       form.warning_limit = (form.total * form.quantity) * form.warning_value / 100;
       this.mainService.updateData('stocks', form._id, form).then(() => {
@@ -111,6 +139,7 @@ export class StockSettingsComponent implements OnInit {
       });
     }
     (window as any).$('#stock').modal('hide');
+    return true;
   }
 
   addCategory(stockCatForm: NgForm) {
@@ -126,14 +155,15 @@ export class StockSettingsComponent implements OnInit {
       stockCatForm.reset();
     });
     (window as any).$('#stockCat').modal('hide');
+    return true;
   }
 
-  updateCategory(Form: NgForm) {
-    const form = Form.value;
+  updateCategory(formElement: NgForm) {
+    const form = formElement.value;
     this.mainService.updateData('stocks_cat', form._id, form).then(() => {
       this.fillData();
       this.messageService.sendMessage('Stok Kategorisi Güncellendi.');
-      this.selectedCat = undefined;
+      this.selectedCat.set(undefined);
     });
   }
 
@@ -142,16 +172,18 @@ export class StockSettingsComponent implements OnInit {
     if (isOk) {
       this.mainService.removeData('stocks_cat', id).then(() => {
         this.mainService.getAllBy('stocks', { cat_id: id }).then(result => {
-          const data = result.docs
-          if (data.length > 0) {
-            data.forEach((element: any) => {
-              if (element._id) {
-                this.mainService.removeData('stocks', element._id);
-              }
-            });
+          if (result && result.docs) {
+            const data = result.docs;
+            if (data.length > 0) {
+              data.forEach((element: any) => {
+                if (element._id) {
+                  this.mainService.removeData('stocks', element._id);
+                }
+              });
+            }
           }
           this.messageService.sendMessage('Stok Kategorisi ve Bağlı Stoklar Silindi.');
-          this.selectedCat = undefined;
+          this.selectedCat.set(undefined);
           this.fillData();
         });
       });
@@ -161,18 +193,30 @@ export class StockSettingsComponent implements OnInit {
   filterStocks(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('stocks', { name: { $regex: regexp } }).then(res => {
-      this.stocks = res.docs as any;
-      this.stocks = this.stocks.sort((a, b) => a.left_total - b.left_total);
+      if (res && res.docs) {
+        const sorted = (res.docs as any).sort((a: any, b: any) => a.left_total - b.left_total);
+        this.stocks.set(sorted);
+      } else {
+        this.stocks.set([]);
+      }
     });
   }
 
   fillData() {
     this.mainService.getAllBy('stocks_cat', {}).then(result => {
-      this.categories = result.docs as any;
+      if (result && result.docs) {
+        this.categories.set(result.docs as any);
+      } else {
+        this.categories.set([]);
+      }
     });
     this.mainService.getAllBy('stocks', {}).then(result => {
-      this.stocks = result.docs as any;
-      this.stocks = this.stocks.sort((a, b) => b.timestamp - a.timestamp);
+      if (result && result.docs) {
+        const sorted = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp);
+        this.stocks.set(sorted);
+      } else {
+        this.stocks.set([]);
+      }
     })
   }
 }

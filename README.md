@@ -43,6 +43,8 @@
 
 Bootstrap and package your project with Angular 21 and Electron 39 (Typescript + SASS + Hot Reload) for creating Desktop applications.
 
+👉 **[Angular 21 & TypeScript 5.9 Geliştirici Kılavuzu](./ANGULAR_21_GUIDE.md)**
+
 Currently runs with:
 
 - Angular v21.0.3

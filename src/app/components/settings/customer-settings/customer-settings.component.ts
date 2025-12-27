@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MainService } from '../../../core/services/main.service';
@@ -23,37 +23,39 @@ import { NgxMaskPipe } from 'ngx-mask';
   styleUrls: ['./customer-settings.component.scss']
 })
 export class CustomerSettingsComponent implements OnInit {
-  customers!: Array<Customer>;
-  selectedCustomer: any;
-  onUpdate!: boolean;
+  private readonly mainService = inject(MainService);
+  private readonly settingsService = inject(SettingsService);
+  private readonly printerService = inject(PrinterService);
+  private readonly messageService = inject(MessageService);
+  private readonly logService = inject(LogService);
 
-  credits!: Array<any>;
-  creditsView!: Array<any>;
+  readonly customers = signal<Array<Customer>>([]);
+  readonly selectedCustomer = signal<string | undefined>(undefined);
+  readonly onUpdate = signal<boolean>(false);
+
+  readonly credits = signal<Array<any>>([]);
+  readonly creditsView = signal<Array<any>>([]);
 
   @ViewChild('customerForm') customerForm!: NgForm;
-  checkDetail!: any;
-  day: any;
-  printers: any;
-
-  constructor(
-    private mainService: MainService, private settingsService: SettingsService, private printerService: PrinterService, private messageService: MessageService, private logService: LogService) {
-  }
+  readonly checkDetail = signal<any>(undefined);
+  readonly day = signal<number>(new Date().getDay());
+  readonly printers = signal<any[]>([]);
 
   ngOnInit() {
-    this.onUpdate = false;
+    this.onUpdate.set(false);
     this.settingsService.DateSettings.subscribe((res: any) => {
-      this.day = res.value.day;
+      this.day.set(res.value.day);
     });
     this.settingsService.getPrinters().subscribe((res: any) => {
-      this.printers = res.value;
+      this.printers.set(res.value || []);
     });
     this.fillData();
   }
 
   setDefault() {
-    this.onUpdate = false;
-    this.selectedCustomer = undefined;
-    this.customerForm.reset();
+    this.onUpdate.set(false);
+    this.selectedCustomer.set(undefined);
+    if (this.customerForm) this.customerForm.reset();
   }
 
   addCustomer(customerForm: NgForm) {
@@ -108,14 +110,17 @@ export class CustomerSettingsComponent implements OnInit {
         }
       });
     }
+    return true;
   }
 
   updateCustomer(id: string) {
-    this.onUpdate = true;
-    this.selectedCustomer = id;
+    this.onUpdate.set(true);
+    this.selectedCustomer.set(id);
     this.mainService.getData('customers', id).then((result: any) => {
       delete result.role;
-      this.customerForm.setValue(result);
+      if (this.customerForm) {
+        this.customerForm.form.patchValue(result);
+      }
       (window as any).$('#customerModal').modal('show');
     });
   }
@@ -124,7 +129,8 @@ export class CustomerSettingsComponent implements OnInit {
     const isOk = confirm('Müşteriyi Silmek Üzerisiniz. Bu işlem Geri Alınamaz.');
     if (isOk) {
       this.mainService.removeData('customers', id).then((result: any) => {
-        this.logService.createLog(logType.CUSTOMER_DELETED, result.id, `${this.customerForm.value.name} Adlı Müşteri Silindi`);
+        const customerName = this.customerForm ? this.customerForm.value.name : 'Müşteri';
+        this.logService.createLog(logType.CUSTOMER_DELETED, result.id, `${customerName} Adlı Müşteri Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id! }).then((res: any) => {
           if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
             this.mainService.removeData('reports', res.docs[0]._id);
@@ -155,30 +161,16 @@ export class CustomerSettingsComponent implements OnInit {
         this.messageService.sendAlert('Başarılı !', 'Hesap Geri Açıldı', 'success');
       });
     });
-    // if (check.payment_method !== 'Parçalı') {
-    //   this.mainService.getAllBy('reports', { connection_id: check.payment_method }).then(res => {
-    //     this.mainService.changeData('reports', res.docs[0]._id, (doc) => {
-    //       doc.weekly[this.day] -= check.total_price;
-    //       doc.weekly_count[this.day]--;
-    //       return doc;
-    //     });
-    //   });
-    // } else {
-    //   check.payment_flow.forEach(element => {
-    //     this.mainService.getAllBy('reports', { connection_id: element.method }).then(res => {
-    //       this.mainService.changeData('reports', res.docs[0]._id, (doc) => {
-    //         doc.weekly[this.day] -= element.amount;
-    //         return doc;
-    //       });
-    //     });
-    //   });
-    // }
   }
 
   rePrintCheck(check: any) {
+    const currentPrinters = this.printers();
+    const printer = currentPrinters.length > 0 ? currentPrinters[0] : undefined;
+    if (!printer) return;
+
     this.mainService.getData('tables', check.table_id).then((res: any) => {
       if (check.products && check.products.length > 0) {
-        this.printerService.printCheck(this.printers[0], res.name, check);
+        this.printerService.printCheck(printer, res.name, check);
       } else {
         if (check.payment_flow && Array.isArray(check.payment_flow)) {
           check.products = check.payment_flow.reduce((a: any, b: any) => {
@@ -187,15 +179,15 @@ export class CustomerSettingsComponent implements OnInit {
         } else {
           check.products = [];
         }
-        this.printerService.printCheck(this.printers[0], res.name, check);
+        this.printerService.printCheck(printer, res.name, check);
       }
     }).catch(err => {
-      this.printerService.printCheck(this.printers[0], check.table_id, check);
+      this.printerService.printCheck(printer, check.table_id, check);
     });
   }
 
   getDetail(check: Check) {
-    this.checkDetail = check;
+    this.checkDetail.set(check);
     (window as any).$('#reportDetail').modal('show');
   }
 
@@ -203,7 +195,9 @@ export class CustomerSettingsComponent implements OnInit {
     this.messageService.sendConfirm('Kapanmış Hesap İptal Edilecek! Bu işlem geri alınamaz!').then((isOK: any) => {
       if (isOK) {
         this.mainService.updateData('closed_checks', id, { description: note, type: 3 }).then((res: any) => {
-          this.logService.createLog(logType.CHECK_CANCELED, id, `${this.checkDetail!.total_price} TL tutarındaki kapatılan hesap iptal edildi. Açıklama:'${note}'`)
+          const detail = this.checkDetail();
+          const price = detail ? detail.total_price : 0;
+          this.logService.createLog(logType.CHECK_CANCELED, id, `${price} TL tutarındaki kapatılan hesap iptal edildi. Açıklama:'${note}'`)
           this.fillData();
           (window as any).$('#cancelDetail').modal('hide');
         });
@@ -212,27 +206,27 @@ export class CustomerSettingsComponent implements OnInit {
   }
 
   customerCredit(customer_id: string) {
-    return this.credits.filter(obj => obj.table_id == customer_id).map(obj => obj.total_price).reduce((a: number, b: number) => a + b, 0) || 0;
+    return this.credits().filter(obj => obj.table_id == customer_id).map(obj => obj.total_price).reduce((a: number, b: number) => a + b, 0) || 0;
   }
 
   filterChecks(customer_id: string) {
-    this.creditsView = this.credits.filter(obj => obj.table_id == customer_id);
+    this.creditsView.set(this.credits().filter(obj => obj.table_id == customer_id));
   }
 
   filterCustomers(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('customers', { name: { $regex: regexp } }).then((res: any) => {
-      this.customers = res.docs;
+      this.customers.set(res.docs);
     });
   }
 
   fillData() {
     this.mainService.getAllBy('customers', {}).then((result: any) => {
-      this.customers = result.docs;
+      this.customers.set(result.docs);
     });
     this.mainService.getAllBy('credits', {}).then((res: any) => {
-      this.credits = res.docs;
-      this.creditsView = this.credits.sort((a: any, b: any) => a.timestamp - b.timestamp);
+      this.credits.set(res.docs);
+      this.creditsView.set([...res.docs].sort((a: any, b: any) => a.timestamp - b.timestamp));
     })
   }
 }

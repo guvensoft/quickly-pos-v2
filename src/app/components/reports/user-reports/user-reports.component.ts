@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Log, logType } from '../../../core/models/log.model';
 import { Report } from '../../../core/models/report.model';
@@ -14,9 +14,11 @@ import { ChartType } from 'chart.js';
   styleUrls: ['./user-reports.component.scss']
 })
 export class UserReportsComponent implements OnInit {
-  usersList!: Array<Report>;
-  userLogs!: Array<Log>;
-  generalList!: Array<Report>;
+  private readonly mainService = inject(MainService);
+
+  readonly usersList = signal<Report[]>([]);
+  readonly userLogs = signal<Log[]>([]);
+  readonly generalList = signal<Report[]>([]);
 
 
   ChartOptions: any = {
@@ -65,23 +67,21 @@ export class UserReportsComponent implements OnInit {
       }]
     },
   };
-  ChartData!: Array<any>;
-  ChartLabels: Array<any> = ['Pzt', 'Sa', 'Ça', 'Pe', 'Cu', 'Cmt', 'Pa'];
-  ChartLegend: boolean = true;
-  ChartType: ChartType = 'bar';
-  ChartLoaded!: boolean;
+  readonly ChartData = signal<any[]>([]);
+  readonly ChartLabels = signal<any[]>(['Pzt', 'Sa', 'Ça', 'Pe', 'Cu', 'Cmt', 'Pa']);
+  readonly ChartLegend = signal<boolean>(true);
+  readonly ChartType: ChartType = 'bar';
+  readonly ChartLoaded = signal<boolean>(false);
 
-  ItemReport!: Report;
-  DetailData!: Array<any>;
-  DetailLoaded!: boolean;
+  readonly ItemReport = signal<Report | null>(null);
+  readonly DetailData = signal<any[]>([]);
+  readonly DetailLoaded = signal<boolean>(false);
 
-  constructor(private mainService: MainService) {
-    this.DetailLoaded = false;
-    this.DetailData = [];
-    this.fillData(false);
+  constructor() {
   }
 
   ngOnInit() {
+    this.fillData(false);
   }
 
 
@@ -109,33 +109,33 @@ export class UserReportsComponent implements OnInit {
   }
 
   getItemReport(report: Report) {
-    this.DetailLoaded = false;
-    this.ItemReport = report;
-    let detailLabel;
+    this.DetailLoaded.set(false);
+    this.ItemReport.set(report);
     this.mainService.getData('reports', report._id!).then(res => {
       res.weekly = this.normalWeekOrder(res.weekly || []);
       res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
-      this.DetailData = [{ data: res.weekly, label: 'Sipariş Tutarı' }, { data: res.weekly_count, label: 'Sipariş Adedi' }];
-      this.DetailLoaded = true;
+      this.DetailData.set([{ data: res.weekly, label: 'Sipariş Tutarı' }, { data: res.weekly_count, label: 'Sipariş Adedi' }]);
+      this.DetailLoaded.set(true);
       (window as any).$('#reportDetail').modal('show');
     });
   }
 
   changeListFilter(value: string) {
     let newArray: Array<Report> = [];
+    const general = this.generalList();
     switch (value) {
       case 'Genel':
-        newArray = JSON.parse(JSON.stringify(this.generalList));
+        newArray = JSON.parse(JSON.stringify(general));
         break;
       case 'Günlük':
-        newArray = JSON.parse(JSON.stringify(this.generalList));
+        newArray = JSON.parse(JSON.stringify(general));
         newArray.filter((obj) => {
           obj.count = obj.weekly_count[new Date().getDay()];
           obj.amount = obj.weekly[new Date().getDay()];
         });
         break;
       case 'Haftalık':
-        newArray = JSON.parse(JSON.stringify(this.generalList));
+        newArray = JSON.parse(JSON.stringify(general));
         newArray.filter((obj) => {
           obj.count = obj.weekly_count.reduce((a: number, b: number) => a + b, 0);
           obj.amount = obj.weekly.reduce((a: number, b: number) => a + b, 0);
@@ -145,25 +145,24 @@ export class UserReportsComponent implements OnInit {
         break;
     }
     newArray = newArray.sort((a: any, b: any) => b.count - a.count);
-    this.usersList = newArray;
+    this.usersList.set(newArray);
   }
 
   getLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.userLogs = (res.docs.filter((obj: any) => obj.type >= logType.USER_CREATED && obj.type <= logType.USER_CHECKPOINT || obj.type == logType.ORDER_CREATED).sort((a: any, b: any) => b.timestamp - a.timestamp)) as any;
+      this.userLogs.set((res.docs.filter((obj: any) => obj.type >= logType.USER_CREATED && obj.type <= logType.USER_CHECKPOINT || obj.type == logType.ORDER_CREATED).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[]);
     });
   }
 
   fillData(daily: boolean) {
+    this.ChartData.set([]);
+    this.ChartLoaded.set(false);
     this.mainService.getAllBy('reports', { type: 'User' }).then(res => {
-      this.usersList = res.docs as any;
-    });
-    this.ChartData = [];
-    this.ChartLoaded = false;
-    this.mainService.getAllBy('reports', { type: 'User' }).then(res => {
-      this.generalList = (res.docs.sort((a: any, b: any) => b.count - a.count)) as any;
-      this.usersList = JSON.parse(JSON.stringify(this.generalList));
-      const chartTable = this.usersList.slice(0, 5);
+      const general = (res.docs.sort((a: any, b: any) => b.count - a.count)) as Report[];
+      this.generalList.set(general);
+      const userL = JSON.parse(JSON.stringify(general)) as Report[];
+      this.usersList.set(userL);
+      const chartTable = userL.slice(0, 5);
       chartTable.forEach((obj, index) => {
         this.mainService.getData('users', obj.connection_id).then(res => {
           obj.weekly = this.normalWeekOrder(obj.weekly);
@@ -174,9 +173,9 @@ export class UserReportsComponent implements OnInit {
           } else {
             schema = { data: obj.weekly, label: res.name };
           }
-          this.ChartData.push(schema);
+          this.ChartData.update(data => [...data, schema]);
           if (chartTable.length - 1 == index) {
-            this.ChartLoaded = true;
+            this.ChartLoaded.set(true);
           };
         });
       });

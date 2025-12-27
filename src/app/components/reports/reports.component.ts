@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Activity, Report } from '../../core/models/report.model';
 import { MainService } from '../../core/services/main.service';
@@ -24,52 +24,47 @@ import { NotificationsReportsComponent } from './notifications-reports/notificat
   styleUrls: ['./reports.component.scss'],
 })
 export class ReportsComponent implements OnInit {
-  day!: number;
+  private readonly mainService = inject(MainService);
+  private readonly settingsService = inject(SettingsService);
 
-  selected!: number;
-  freeTotal!: number;
-  closedTotal!: number;
-  canceledTotal!: number;
-  activeTotal!: number;
-  generalTotal!: number;
-  sellingActivity!: Activity;
+  readonly day = signal<number>(0);
+  readonly selected = signal<number>(0);
+  readonly freeTotal = signal<number>(0);
+  readonly closedTotal = signal<number>(0);
+  readonly canceledTotal = signal<number>(0);
+  readonly activeTotal = signal<number>(0);
+  readonly generalTotal = signal<number>(0);
+  readonly sellingActivity = signal<Activity | undefined>(undefined);
 
-  ChartOptions: any;
-  ChartLegend: boolean = true;
-  ChartType: ChartType = 'bar';
-  ChartData!: Array<any>;
-  ChartColors!: Array<any>;
-  ChartLoaded!: boolean;
-  ChartLabels!: Array<string>;
+  readonly ChartOptions: any;
+  readonly ChartLegend = signal(true);
+  readonly ChartType: ChartType = 'bar';
+  readonly ChartData = signal<any[]>([]);
+  readonly ChartColors: any[];
+  readonly ChartLoaded = signal(false);
+  readonly ChartLabels = signal<string[]>(['Pzt', 'Sa', 'Ça', 'Pe', 'Cu', 'Cmt', 'Pa']);
 
-  monthlyData!: Array<any>;
-  monthlyLabels!: Array<string>;
-  monthlyLegends: boolean = true;
-  monthlyLoaded: boolean = false;
+  readonly monthlyData = signal<any[]>([]);
+  readonly monthlyLabels = signal<string[]>(["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]);
+  readonly monthlyLegends = signal(true);
+  readonly monthlyLoaded = signal(false);
 
-  activityData!: Array<any>;
-  activityLabels!: Array<string>;
-  activityLegend: boolean = true;
+  readonly activityData = signal<any[]>([]);
+  readonly activityLabels = signal<string[]>([]);
+  readonly activityLegend = signal(true);
 
-  salesReport: any = { cash: 0, card: 0, coupon: 0, free: 0, discount: 0, partial: null };
+  readonly salesReport = signal<any>({ cash: 0, card: 0, coupon: 0, free: 0, discount: 0, partial: null });
 
-  pieData!: Array<any>;
-  pieLabels!: Array<any>;
-  pieColors!: Array<any>;
-  pieOptions: any;
+  readonly pieData = signal<number[]>([]);
+  readonly pieLabels = signal<string[]>([]);
+  readonly pieColors: any[];
+  readonly pieOptions: any;
 
-  constructor(private mainService: MainService, private settingsService: SettingsService) {
+  constructor() {
     this.settingsService.DateSettings.subscribe((res: any) => {
-      this.day = res.value.day;
-    })
-    this.closedTotal = 0;
-    this.activeTotal = 0;
-    this.generalTotal = 0;
-    this.freeTotal = 0;
-    this.canceledTotal = 0;
-    this.selected = undefined!;
-    this.monthlyLabels = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-    this.ChartLabels = ['Pzt', 'Sa', 'Ça', 'Pe', 'Cu', 'Cmt', 'Pa'];
+      this.day.set(res.value.day);
+    });
+
     this.ChartOptions = {
       responsive: false,
       legend: {
@@ -80,7 +75,7 @@ export class ReportsComponent implements OnInit {
       },
       tooltips: {
         callbacks: {
-          label: function (value: any) {
+          label: (value: any) => {
             return ' ' + Number(value.yLabel).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
           }
         }
@@ -104,11 +99,10 @@ export class ReportsComponent implements OnInit {
         yAxes: [{
           ticks: {
             fontColor: 'rgba(255,255,255)',
-            callback: function (value: any, index: number, values: any) {
+            callback: (value: any) => {
               return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
             }
           },
-
           gridLines: {
             color: 'rgba(255,255,255)',
             lineWidth: 0.4
@@ -131,14 +125,14 @@ export class ReportsComponent implements OnInit {
       },
       tooltips: {
         callbacks: {
-          label: function (tooltipItem: any, data: any) {
+          label: (tooltipItem: any, data: any) => {
             const dataLabel = data.labels[tooltipItem.index];
             const value = ': ' + Number(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
             return dataLabel + value;
           }
         }
       },
-    }
+    };
   }
 
   ngOnInit() {
@@ -158,26 +152,28 @@ export class ReportsComponent implements OnInit {
 
 
   getMonthlyReport(year?: number) {
-    this.monthlyLoaded = false;
-    if (!year) {
-      year = new Date(Date.now()).getFullYear();
-    }
+    this.monthlyLoaded.set(false);
+    const finalYear = year || new Date().getFullYear();
     const Days: any[] = [];
     const Months: any[] = [];
+
     this.mainService.getAllBy('endday', {}).then((res: any) => {
       let endDayData = res.docs;
-      endDayData = endDayData.filter((obj: any) => new Date(obj.timestamp).getFullYear() == year);
+      endDayData = endDayData.filter((obj: any) => new Date(obj.timestamp).getFullYear() == finalYear);
+
       if (endDayData.length > 0) {
         endDayData.forEach((obj: any, index: number) => {
           const Schema = { cash: obj.cash_total, card: obj.card_total, coupon: obj.coupon_total, free: obj.free_total, total: obj.total_income, checks: obj.check_count, outcome: obj.outcomes, income: obj.incomes, month: new Date(obj.timestamp).getMonth(), year: new Date(obj.timestamp).getFullYear() };
           Days.push(Schema);
+
           if (index == endDayData.length - 1) {
             const cash: any = { label: 'Nakit', data: [] };
             const coupon: any = { label: 'Kupon', data: [] };
             const card: any = { label: 'Kart', data: [] };
             const free: any = { label: 'İkram', data: [] };
             const total: any = { label: 'Toplam', data: [] };
-            this.monthlyLabels.forEach((monthName: string, index2: number) => {
+
+            this.monthlyLabels().forEach((monthName: string, index2: number) => {
               const monthWillProcess = Days.filter((obj: any) => obj.month == index2);
               if (monthWillProcess.length > 1) {
                 cash.data[index2] = monthWillProcess.map((obj: any) => obj.cash).reduce((a: number, b: number) => a + b, 0);
@@ -198,51 +194,61 @@ export class ReportsComponent implements OnInit {
                 free.data[index2] = 0;
                 total.data[index2] = 0;
               }
-              if (index2 == this.monthlyLabels.length - 1) {
+
+              if (index2 == this.monthlyLabels().length - 1) {
                 Months.push(cash, coupon, card, free, total);
-                this.monthlyData = Months;
-                this.monthlyLoaded = true;
+                this.monthlyData.set(Months);
+                this.monthlyLoaded.set(true);
               }
             });
           }
         });
       }
-    })
+    });
   }
 
 
   fillData() {
     this.getMonthlyReport();
-    this.ChartData = [];
-    this.pieData = [];
-    this.pieLabels = [];
-    this.ChartLoaded = false;
+    this.ChartData.set([]);
+    this.pieData.set([]);
+    this.pieLabels.set([]);
+    this.ChartLoaded.set(false);
+
     this.mainService.getAllBy('reports', { type: 'Activity' }).then((res: any) => {
       if (res && res.docs && res.docs.length > 0) {
-        this.sellingActivity = res.docs[0];
-        this.activityData = [{ data: this.sellingActivity.activity, label: 'Gelir Endeksi' }, { data: this.sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
-        this.activityLabels = this.sellingActivity.activity_time;
+        this.sellingActivity.set(res.docs[0]);
+        const act = res.docs[0];
+        this.activityData.set([
+          { data: act.activity, label: 'Gelir Endeksi' },
+          { data: act.activity_count, label: 'Doluluk Oranı ( % )' }
+        ]);
+        this.activityLabels.set(act.activity_time);
       }
     });
+
     this.mainService.getAllBy('reports', { type: 'Store' }).then((res: any) => {
       if (res && res.docs) {
         let report: Array<Report> = res.docs;
         report = report.filter(obj => obj.connection_id !== 'Genel').sort((a, b) => b.connection_id.localeCompare(a.connection_id));
+        const newChartData: any[] = [];
         report.forEach((element: any, index: number) => {
           element.weekly = this.normalWeekOrder(element.weekly);
           const chartObj = { data: element.weekly, label: element.connection_id };
-          this.ChartData.push(chartObj);
+          newChartData.push(chartObj);
           if (report.length - 1 == index) {
-            this.ChartLoaded = true;
-          };
+            this.ChartData.set(newChartData);
+            this.ChartLoaded.set(true);
+          }
         });
       }
     });
+
     this.mainService.getAllBy('closed_checks', { type: 3 }).then((res: any) => {
       if (res && res.docs && res.docs.length > 0) {
-        this.canceledTotal = res.docs.map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
+        this.canceledTotal.set(res.docs.map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0));
       } else {
-        this.canceledTotal = 0;
+        this.canceledTotal.set(0);
       }
     });
   }
@@ -250,60 +256,59 @@ export class ReportsComponent implements OnInit {
   dailySalesActivity() {
     this.mainService.getAllBy('reports', { type: 'Activity' }).then((res: any) => {
       if (res && res.docs && res.docs.length > 0) {
-        this.sellingActivity = res.docs[0];
-        this.activityData = [{ data: this.sellingActivity.activity, label: 'Gelir Endeksi' }, { data: this.sellingActivity.activity_count, label: 'Doluluk Oranı ( % )' }];
-        this.activityLabels = this.sellingActivity.activity_time;
+        const act = res.docs[0];
+        this.sellingActivity.set(act);
+        this.activityData.set([
+          { data: act.activity, label: 'Gelir Endeksi' },
+          { data: act.activity_count, label: 'Doluluk Oranı ( % )' }
+        ]);
+        this.activityLabels.set(act.activity_time);
       }
     });
   }
 
   dailySalesReport() {
     this.mainService.getAllBy('checks', {}).then((res: any) => {
-      this.activeTotal = res.docs.map((obj: any) => obj.total_price + obj.discount).reduce((a: number, b: number) => a + b, 0);
+      this.activeTotal.set(res.docs.map((obj: any) => obj.total_price + obj.discount).reduce((a: number, b: number) => a + b, 0));
     });
 
     this.mainService.getAllBy('closed_checks', {}).then((res: any) => {
-
       const checks = (res.docs as any[]).filter(({ type }) => type !== 3);
+      const report = { cash: 0, card: 0, coupon: 0, free: 0, discount: 0, partial: [] as any[] };
 
-      this.salesReport.cash = checks.filter((obj: any) => obj.payment_method == 'Nakit').map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
-      this.salesReport.card = checks.filter((obj: any) => obj.payment_method == 'Kart').map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
-      this.salesReport.coupon = checks.filter((obj: any) => obj.payment_method == 'Kupon').map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
-      this.salesReport.free = checks.filter((obj: any) => obj.payment_method == 'İkram').map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
-      this.salesReport.discount = checks.filter((obj: any) => obj.hasOwnProperty('discount')).map((obj: any) => obj.discount).reduce((a: number, b: number) => a + b, 0);
+      report.cash = checks.filter((obj: any) => obj.payment_method == 'Nakit').map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
+      report.card = checks.filter((obj: any) => obj.payment_method == 'Kart').map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
+      report.coupon = checks.filter((obj: any) => obj.payment_method == 'Kupon').map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
+      report.free = checks.filter((obj: any) => obj.payment_method == 'İkram').map((obj: any) => obj.total_price).reduce((a: number, b: number) => a + b, 0);
+      report.discount = checks.filter((obj: any) => obj.hasOwnProperty('discount')).map((obj: any) => obj.discount).reduce((a: number, b: number) => a + b, 0);
 
-      this.salesReport.partial = checks.filter(obj => obj.payment_method == 'Parçalı')
-
-      this.salesReport.partial.forEach((element: any) => {
+      const partialChecks = checks.filter(obj => obj.payment_method == 'Parçalı');
+      partialChecks.forEach((element: any) => {
         element.payment_flow.forEach((payment: any) => {
           if (payment.method == 'Nakit') {
-            this.salesReport.cash += payment.amount;
+            report.cash += payment.amount;
           }
           if (payment.method == 'Kart') {
-            this.salesReport.card += payment.amount;
+            report.card += payment.amount;
           }
           if (payment.method == 'Kupon') {
-            this.salesReport.coupon += payment.amount;
+            report.coupon += payment.amount;
           }
           if (payment.method == 'İkram') {
-            this.salesReport.free += payment.amount;
+            report.free += payment.amount;
           }
-        })
+        });
       });
 
-      this.closedTotal = this.salesReport.cash + this.salesReport.card + this.salesReport.coupon;
-      this.generalTotal = this.closedTotal + this.activeTotal;
+      this.salesReport.set(report);
+      this.closedTotal.set(report.cash + report.card + report.coupon);
+      this.generalTotal.set(this.closedTotal() + this.activeTotal());
 
-      this.pieData.push(this.salesReport.cash);
-      this.pieData.push(this.salesReport.card);
-      this.pieData.push(this.salesReport.coupon);
-      this.pieData.push(this.salesReport.free);
+      const newPieData = [report.cash, report.card, report.coupon, report.free];
+      const newPieLabels = ['Nakit', 'Kart', 'Kupon', 'İkram'];
 
-      this.pieLabels.push('Nakit');
-      this.pieLabels.push('Kart');
-      this.pieLabels.push('Kupon');
-      this.pieLabels.push('İkram');
-
-    })
+      this.pieData.set(newPieData);
+      this.pieLabels.set(newPieLabels);
+    });
   }
 }
