@@ -114,7 +114,7 @@ export class StoreComponent implements OnInit, OnDestroy {
 
   async fetchClosedDelivery() {
     const res = await this.mainService.getAllBy('closed_checks', { type: CheckType.ORDER });
-    let delivery = res.docs.sort((a: any, b: any) => b.timestamp - a.timestamp);
+    const delivery = res.docs.sort((a: any, b: any) => b.timestamp - a.timestamp);
     // Combine with current delivery checks
     const deliveryChecks = this.checks().filter(obj => obj.type === CheckType.ORDER);
     deliveryChecks.forEach(check => {
@@ -257,7 +257,7 @@ export class StoreComponent implements OnInit, OnDestroy {
   }
 
   countProductsData = (counDataArray: Array<CountData>, id: string, price: number, manuelCount?: number): Array<CountData> => {
-    let countObj: CountData = { product: id, count: manuelCount ?? 1, total: price };
+    const countObj: CountData = { product: id, count: manuelCount ?? 1, total: price };
     const index = counDataArray.findIndex(p => p.product === id);
     if (index > -1) {
       counDataArray[index].count += (manuelCount ?? 1);

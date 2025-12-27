@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, inject, signal, viewChild, computed, eff
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
-import { Printer } from 'app/core/models/settings.model';
+import { Printer } from '../../../core/models/settings.model';
 import { Category, Ingredient, Product, ProductSpecs, Recipe, SubCategory } from '../../../core/models/product.model';
 import { Report } from '../../../core/models/report.model';
 import { MessageService } from '../../../core/services/message.service';

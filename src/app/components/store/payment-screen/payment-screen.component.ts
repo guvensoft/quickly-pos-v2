@@ -291,7 +291,7 @@ export class PaymentScreenComponent implements OnDestroy {
       total_discounts = checkUpdate.payment_flow!.reduce((acc, obj) => acc + (obj.discount || 0), 0);
       const total_price = checkUpdate.payment_flow!.reduce((acc, obj) => acc + (obj.amount || 0), 0);
 
-      checkWillClose = new ClosedCheck(c.table_id, total_price, total_discounts, this.userName() || '', c.note, c.status, c.products, Date.now(), c.type, method, checkUpdate.payment_flow!, undefined, c.occupation);
+      checkWillClose = new ClosedCheck(c.table_id, total_price, total_discounts, this.userName() || '', c.note, c.status, c.products, Date.now(), c.type, method, checkUpdate.payment_flow, undefined, c.occupation);
     } else {
       total_discounts = this.discountAmount();
       checkWillClose = new ClosedCheck(c.table_id, this.currentAmount(), total_discounts, this.userName() || '', c.note, c.status, willPayProds, Date.now(), c.type, method, undefined, undefined, c.occupation);

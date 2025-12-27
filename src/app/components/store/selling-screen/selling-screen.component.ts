@@ -1380,7 +1380,7 @@ export class SellingScreenComponent implements OnDestroy {
   splitTable() {
     const selectedTab = this.selectedTable() as any;
     const currentCheck = { ...this.check() };
-    const currentTable = this.table() as any;
+    const currentTable = this.table();
 
     if (!selectedTab) return;
 
