@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, inject, signal, viewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Cashbox } from '../../core/models/cashbox.model';
@@ -15,7 +15,7 @@ import { PricePipe } from '../../shared/pipes/price.pipe';
   templateUrl: './cashbox.component.html',
   styleUrls: ['./cashbox.component.scss'],
 })
-export class CashboxComponent implements OnInit {
+export class CashboxComponent {
   private readonly mainService = inject(MainService);
   private readonly settingsService = inject(SettingsService);
   private readonly messageService = inject(MessageService);
@@ -36,14 +36,15 @@ export class CashboxComponent implements OnInit {
 
   constructor() {
     this.user.set(this.settingsService.getUser('name') as string || '');
-    this.settingsService.DateSettings.subscribe(res => {
-      if (res && res.value) {
-        this.day.set(res.value.day);
-      }
-    });
-  }
 
-  ngOnInit() {
+    effect(() => {
+      this.settingsService.DateSettings.subscribe(res => {
+        if (res && res.value) {
+          this.day.set(res.value.day);
+        }
+      });
+    }, { allowSignalWrites: true });
+
     this.fillData();
   }
 
