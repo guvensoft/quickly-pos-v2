@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -32,12 +32,57 @@ export class StockSettingsComponent implements OnInit {
   stockForm = viewChild<NgForm>('stockForm');
   stockDetailForm = viewChild<NgForm>('stockDetailForm');
 
+  // Computed properties for reactive filtering and derived state
+  readonly stocksByCategory = computed(() => {
+    const catId = this.selectedCat()?._id;
+    if (!catId) return this.stocks();
+    return this.stocks().filter(s => s.sub_category === catId);
+  });
+
+  readonly lowStockItems = computed(() => {
+    return this.stocks().filter(s =>
+      s.left_total < (s.warning_limit || s.total * 0.25)
+    );
+  });
+
+  readonly totalStockValue = computed(() => {
+    return this.stocks().reduce((sum, s) => sum + (s.left_total || 0), 0);
+  });
+
+  readonly selectedStockDetails = computed(() => {
+    const stock = this.selectedStock();
+    if (!stock) return null;
+    return {
+      quantity: stock.left_total / stock.total,
+      percentageLeft: (stock.left_total / stock.total) * 100,
+      needsRefill: stock.left_total < (stock.warning_limit || stock.total * 0.25)
+    };
+  });
+
   constructor() {
     this.fillData();
   }
 
   ngOnInit() {
     this.onUpdate.set(false);
+
+    // Load stock details when selected
+    effect(() => {
+      const stock = this.selectedStock();
+      if (stock && stock._id) {
+        this.getStockDetail(stock);
+      }
+    });
+
+    // Validate quantity changes and recalculate warning limit
+    effect(() => {
+      const stock = this.selectedStock();
+      if (stock && stock.quantity) {
+        if (!stock.warning_limit || stock.warning_limit === 0) {
+          stock.warning_limit = (stock.total * stock.quantity) * 0.25;
+        }
+      }
+    }, { allowSignalWrites: true });
   }
 
   setDefault() {
