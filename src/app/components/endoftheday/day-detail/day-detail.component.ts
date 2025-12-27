@@ -109,9 +109,6 @@ export class DayDetailComponent {
   readonly selected = signal<any>(undefined);
 
   constructor() {
-    // this.settingsService.getPrinters().subscribe(res => this.printers = res.value);
-    console.log(this.detailData(), this.printers());
-
     this.detailTitle.set('Genel Detaylar & Grafik');
     this.pieColors.set([]);
     this.pieData.set([]);
