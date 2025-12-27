@@ -8,6 +8,7 @@ import { Report } from '../../../core/models/report.model';
 import { MessageService } from '../../../core/services/message.service';
 import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
+import { SignalValidatorService } from '../../../core/services/signal-validator.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 
 @Component({
@@ -21,6 +22,7 @@ export class MenuSettingsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly validatorService = inject(SignalValidatorService);
 
   readonly categories = signal<Array<Category>>([]);
   readonly sub_categories = signal<Array<SubCategory>>([]);
@@ -43,6 +45,18 @@ export class MenuSettingsComponent implements OnInit {
   readonly subCats = signal<Array<SubCategory>>([]);
   readonly printers = signal<Array<Printer>>([]);
   readonly productSpecs = signal<Array<ProductSpecs>>([]);
+
+  // Product validation signals
+  readonly productName = signal<string>('');
+  readonly productCategory = signal<string>('');
+  readonly productPrice = signal<number>(0);
+  readonly productTaxValue = signal<number>(0);
+
+  // Product validation error signals
+  readonly productNameError = signal<string | null>(null);
+  readonly productCategoryError = signal<string | null>(null);
+  readonly productPriceError = signal<string | null>(null);
+  readonly productTaxError = signal<string | null>(null);
 
   catDetails = viewChild<NgForm>('catDetails');
   subCatForm = viewChild<NgForm>('subCatForm');
@@ -75,6 +89,12 @@ export class MenuSettingsComponent implements OnInit {
   readonly productTypeLabel = computed(() => {
     const type = this.productType();
     return type === 1 ? 'Hazırlanmış' : 'Manuel';
+  });
+
+  // Product form validation computed property
+  readonly isProductFormValid = computed(() => {
+    return !this.productNameError() && !this.productCategoryError() &&
+           !this.productPriceError() && !this.productTaxError();
   });
 
   constructor() {
@@ -110,6 +130,46 @@ export class MenuSettingsComponent implements OnInit {
         this.hasRecipe.set(true);
       }
     }, { allowSignalWrites: true });
+
+    // Validate product name
+    effect(() => {
+      const name = this.productName();
+      if (!name || !name.trim()) {
+        this.productNameError.set('Ürün Adı Belirtmelisiniz');
+      } else {
+        this.productNameError.set(null);
+      }
+    });
+
+    // Validate product category
+    effect(() => {
+      const catId = this.productCategory();
+      if (!catId) {
+        this.productCategoryError.set('Kategori Seçmelisiniz');
+      } else {
+        this.productCategoryError.set(null);
+      }
+    });
+
+    // Validate product price (must be greater than 0)
+    effect(() => {
+      const price = this.productPrice();
+      if (price <= 0) {
+        this.productPriceError.set('Fiyat 0 dan büyük olmalıdır');
+      } else {
+        this.productPriceError.set(null);
+      }
+    });
+
+    // Validate tax value (must be between 0 and 100)
+    effect(() => {
+      const tax = this.productTaxValue();
+      if (tax < 0 || tax > 100) {
+        this.productTaxError.set('KDV Değeri 0 ile 100 arasında olmalıdır');
+      } else {
+        this.productTaxError.set(null);
+      }
+    });
   }
 
   getCategory(category: any) {
@@ -256,10 +316,19 @@ export class MenuSettingsComponent implements OnInit {
 
   addProduct(productForm: NgForm) {
     const form = productForm.value;
-    if (!form.name || !form.cat_id || !form.price || !form.tax_value) {
+
+    // Update validation signals from form
+    this.productName.set(form.name || '');
+    this.productCategory.set(form.cat_id || '');
+    this.productPrice.set(form.price || 0);
+    this.productTaxValue.set(form.tax_value || 0);
+
+    // Check if form is valid
+    if (!this.isProductFormValid()) {
       this.messageService.sendMessage('Gerekli Alanları Doldurmalısınız');
       return false;
     }
+
     if (form.type == 2 && this.oldRecipes().length == 0) {
       if (form.type == 2 && this.productRecipe().length == 0) {
         this.messageService.sendMessage('Stok Girişi Yapmalısınız!');
@@ -494,6 +563,15 @@ export class MenuSettingsComponent implements OnInit {
     this.selectedId.set(undefined);
     this.onUpdate.set(false);
     this.hasRecipe.set(false);
+    // Clear validation signals
+    this.productName.set('');
+    this.productCategory.set('');
+    this.productPrice.set(0);
+    this.productTaxValue.set(0);
+    this.productNameError.set(null);
+    this.productCategoryError.set(null);
+    this.productPriceError.set(null);
+    this.productTaxError.set(null);
 
     if (this.productForm()) this.productForm()!.reset();
     if (this.catDetails()) this.catDetails()!.reset();
