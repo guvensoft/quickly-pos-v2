@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unused-vars */
 import { Injectable, inject } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, ReplaySubject } from 'rxjs';
 import { Settings } from '../models/settings.model';
 import { MainService } from './main.service';
 
@@ -11,14 +11,14 @@ export class SettingsService {
   private mainService = inject(MainService);
 
   Settings!: Array<Settings>;
-  AppInformation: Subject<Settings> = new Subject<Settings>();
-  AppSettings: Subject<Settings> = new Subject<Settings>();
-  AuthInfo: Subject<Settings> = new Subject<Settings>();
-  ActivationStatus: Subject<Settings> = new Subject<Settings>();
-  RestaurantInfo: Subject<Settings> = new Subject<Settings>();
-  Printers: Subject<Settings> = new Subject<Settings>();
-  ServerSettings: Subject<Settings> = new Subject<Settings>();
-  DateSettings: Subject<Settings> = new Subject<Settings>();
+  AppInformation: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
+  AppSettings: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
+  AuthInfo: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
+  ActivationStatus: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
+  RestaurantInfo: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
+  Printers: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
+  ServerSettings: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
+  DateSettings: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
 
   constructor() {
     // Constructor'da mainService kullanımı - İş mantığı AYNEN
