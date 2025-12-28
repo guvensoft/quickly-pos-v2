@@ -116,7 +116,14 @@ export class DayDetailComponent {
     this.pieLabels.set([]);
     this.cashboxTable.set([]);
     this.checksTable.set([]);
-    this.fillData();
+
+    // Load data after inputs are initialized
+    effect(() => {
+      // Access detailData to trigger effect when it changes
+      if (this.detailData()) {
+        this.fillData();
+      }
+    });
   }
 
   filterOldData(section: any, filter: any) {
