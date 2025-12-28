@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -21,6 +21,7 @@ export class StockSettingsComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
   private readonly validatorService = inject(SignalValidatorService);
+  private readonly zone = inject(NgZone);
 
   readonly categories = signal<Array<StockCategory>>([]);
   readonly stocks = signal<Array<Stock>>([]);
@@ -187,7 +188,9 @@ export class StockSettingsComponent implements OnInit {
             this.logService.createLog(logType.STOCK_DELETED, res.id, `${currentStock.name} adlı Stok silindi.`);
           }
           this.fillData();
-          (window as any).$('#stock').modal('hide');
+          this.zone.run(() => {
+            (window as any).$('#stock').modal('hide');
+          });
           this.messageService.sendMessage('Stok Silindi!');
         });
       }
@@ -202,7 +205,9 @@ export class StockSettingsComponent implements OnInit {
         this.stockForm()!.form.patchValue(result);
       }
       this.selectedStock.set(stock);
-      (window as any).$('#stock').modal('show');
+      this.zone.run(() => {
+        (window as any).$('#stock').modal('show');
+      });
     });
   }
 
@@ -226,8 +231,12 @@ export class StockSettingsComponent implements OnInit {
       this.stockForm()!.form.patchValue(updatedStock);
     }
 
-    (window as any).$('#quantityModal').modal('hide');
-    (window as any).$('#stock').modal('show');
+    this.zone.run(() => {
+      (window as any).$('#quantityModal').modal('hide');
+    });
+    this.zone.run(() => {
+      (window as any).$('#stock').modal('show');
+    });
   }
 
   addStock(stockForm: NgForm) {
@@ -258,7 +267,9 @@ export class StockSettingsComponent implements OnInit {
         this.messageService.sendMessage('Stok Düzenlendi');
       });
     }
-    (window as any).$('#stock').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#stock').modal('hide');
+    });
     return true;
   }
 
@@ -274,7 +285,9 @@ export class StockSettingsComponent implements OnInit {
       this.messageService.sendMessage('Stok Kategorisi Oluşturuldu.');
       stockCatForm.reset();
     });
-    (window as any).$('#stockCat').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#stockCat').modal('hide');
+    });
     return true;
   }
 

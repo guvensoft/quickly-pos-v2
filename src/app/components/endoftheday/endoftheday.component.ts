@@ -1,4 +1,4 @@
-import { Component, signal, effect, inject } from '@angular/core';
+import { Component, signal, effect, inject, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Cashbox } from '../../core/models/cashbox.model';
 import { CheckType, ClosedCheck } from '../../core/models/check.model';
@@ -52,6 +52,7 @@ export class EndofthedayComponent {
   private settingsService = inject(SettingsService);
   private httpService = inject(HttpService);
   private conflictService = inject(ConflictService);
+  private readonly zone = inject(NgZone);
 
   constructor() {
     this.owner.set(this.settingsService.getUser('id') || '');
@@ -152,7 +153,9 @@ export class EndofthedayComponent {
     if (this.isStarted()) {
       this.mainService.getAllBy('checks', {}).then((res) => {
         if (res.docs.length == 0) {
-          (window as any).$('#endDayModal').modal({ backdrop: 'static', keyboard: false });
+          this.zone.run(() => {
+            (window as any).$('#endDayModal').modal({ backdrop: 'static', keyboard: false });
+          });
           clearInterval(this.conflictService.conflictListener());
           setTimeout(() => {
             this.stepChecks();
@@ -460,7 +463,9 @@ export class EndofthedayComponent {
       }
     }, err => {
       console.log(err);
-      (window as any).$('#endDayModal').modal('hide');
+      this.zone.run(() => {
+        (window as any).$('#endDayModal').modal('hide');
+      });
       this.messageService.sendAlert('Hata!', 'Sunucudan İzin Alınamadı', 'error');
       setTimeout(() => {
         this.electronService.relaunchProgram();
@@ -485,7 +490,9 @@ export class EndofthedayComponent {
                     })
                     .on('complete', (info: any) => {
                       this.progress.set('Gün Sonu Tamamlanıyor..');
-                      (window as any).$('#endDayModal').modal('hide');
+                      this.zone.run(() => {
+                        (window as any).$('#endDayModal').modal('hide');
+                      });
                       this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program Yeniden Başlatılacak', 'success');
                       setTimeout(() => {
                         this.electronService.relaunchProgram();
@@ -512,7 +519,9 @@ export class EndofthedayComponent {
         }
       }, err => {
         console.log(err);
-        (window as any).$('#endDayModal').modal('hide');
+        this.zone.run(() => {
+          (window as any).$('#endDayModal').modal('hide');
+        });
         this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program Yeniden Başlatılacak', 'success');
         setTimeout(() => {
           this.electronService.relaunchProgram();

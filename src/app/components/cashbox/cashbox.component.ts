@@ -1,4 +1,4 @@
-import { Component, inject, signal, viewChild, effect } from '@angular/core';
+import { Component, inject, signal, viewChild, effect, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Cashbox } from '../../core/models/cashbox.model';
@@ -20,6 +20,7 @@ export class CashboxComponent {
   private readonly settingsService = inject(SettingsService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly zone = inject(NgZone);
 
   readonly cashboxData = signal<Cashbox[]>([]);
   readonly selectedData = signal<Cashbox | undefined>(undefined);
@@ -77,7 +78,9 @@ export class CashboxComponent {
       });
     }
     this.cashboxForm()?.reset();
-    (window as any).$('#cashboxModal').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#cashboxModal').modal('hide');
+    });
     return true;
   }
 
@@ -91,7 +94,9 @@ export class CashboxComponent {
         this.cashboxForm()!.setValue(res);
       }
       this.fillData();
-      (window as any).$('#cashboxModal').modal('show');
+      this.zone.run(() => {
+        (window as any).$('#cashboxModal').modal('show');
+      });
     })
   }
 
@@ -102,7 +107,9 @@ export class CashboxComponent {
       this.messageService.sendMessage('Kayıt Silindi');
       this.fillData();
     });
-    (window as any).$('#cashboxModal').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#cashboxModal').modal('hide');
+    });
   }
 
   setDefault() {

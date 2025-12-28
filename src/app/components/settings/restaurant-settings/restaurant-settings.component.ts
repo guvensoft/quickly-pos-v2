@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -20,6 +20,7 @@ export class RestaurantSettingsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly zone = inject(NgZone);
 
   readonly floors = signal<Array<Floor>>([]);
   readonly tables = signal<Array<Table>>([]);
@@ -131,7 +132,9 @@ export class RestaurantSettingsComponent implements OnInit {
       this.messageService.sendMessage('Bölüm Oluşturuldu!');
       areaForm.reset();
     });
-    (window as any).$('#areaModal').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#areaModal').modal('hide');
+    });
     return true;
   }
 
@@ -206,7 +209,9 @@ export class RestaurantSettingsComponent implements OnInit {
         tableForm.reset();
       });
     }
-    (window as any).$('#tableModal').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#tableModal').modal('hide');
+    });
     return true;
   }
 
@@ -220,7 +225,9 @@ export class RestaurantSettingsComponent implements OnInit {
       if (this.tableForm()) {
         this.tableForm()!.form.patchValue(tableData);
       }
-      (window as any).$('#tableModal').modal('show');
+      this.zone.run(() => {
+        (window as any).$('#tableModal').modal('show');
+      });
     });
   }
 
@@ -240,7 +247,9 @@ export class RestaurantSettingsComponent implements OnInit {
         }
         this.fillData();
         this.messageService.sendMessage('Masa Silindi.');
-        (window as any).$('#tableModal').modal('hide');
+        this.zone.run(() => {
+          (window as any).$('#tableModal').modal('hide');
+        });
       });
     } else {
       return false;

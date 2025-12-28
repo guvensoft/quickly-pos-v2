@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -20,6 +20,7 @@ export class UserSettingsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly zone = inject(NgZone);
 
   readonly users = signal<Array<User>>([]);
   readonly groups = signal<Array<UserGroup>>([]);
@@ -137,7 +138,9 @@ export class UserSettingsComponent implements OnInit {
           this.fillData();
           this.messageService.sendMessage('Grup Oluşturuldu!');
           groupForm.reset();
-          (window as any).$('#groupModal').modal('hide');
+          this.zone.run(() => {
+            (window as any).$('#groupModal').modal('hide');
+          });
         });
       }
     });
@@ -221,7 +224,9 @@ export class UserSettingsComponent implements OnInit {
               this.messageService.sendMessage('Kullanıcı Oluşturuldu!');
               this.fillData();
               userForm.reset();
-              (window as any).$('#userModal').modal('hide');
+              this.zone.run(() => {
+                (window as any).$('#userModal').modal('hide');
+              });
             });
           });
         }
@@ -237,7 +242,9 @@ export class UserSettingsComponent implements OnInit {
             this.messageService.sendMessage('Bilgiler Güncellendi!');
             this.fillData();
             userForm.reset();
-            (window as any).$('#userModal').modal('hide');
+            this.zone.run(() => {
+              (window as any).$('#userModal').modal('hide');
+            });
           });
         }
       });
@@ -255,7 +262,9 @@ export class UserSettingsComponent implements OnInit {
       if (this.userForm()) {
         this.userForm()!.form.patchValue(resultCopy);
       }
-      (window as any).$('#userModal').modal('show');
+      this.zone.run(() => {
+        (window as any).$('#userModal').modal('show');
+      });
     });
   }
 
@@ -273,7 +282,9 @@ export class UserSettingsComponent implements OnInit {
         });
         this.messageService.sendMessage('Kullanıcı Silindi!');
         this.fillData();
-        (window as any).$('#userModal').modal('hide');
+        this.zone.run(() => {
+          (window as any).$('#userModal').modal('hide');
+        });
       });
     }
   }

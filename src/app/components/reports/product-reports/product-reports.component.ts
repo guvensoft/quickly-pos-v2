@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Log, logType } from '../../../core/models/log.model';
 import { Report } from '../../../core/models/report.model';
@@ -23,6 +23,7 @@ export class ProductReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly settingsService = inject(SettingsService);
   private readonly printerService = inject(PrinterService);
+  private readonly zone = inject(NgZone);
 
   readonly categoriesList = signal<Category[]>([]);
   readonly selectedCat = signal<string | undefined>(undefined);
@@ -140,7 +141,9 @@ export class ProductReportsComponent implements OnInit {
       res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
       this.DetailData.set([{ data: res.weekly, label: 'Satış Tutarı' }]);
       this.DetailLoaded.set(true);
-      (window as any).$('#reportDetail').modal('show');
+      this.zone.run(() => {
+        (window as any).$('#reportDetail').modal('show');
+      });
     });
   }
 

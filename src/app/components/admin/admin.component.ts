@@ -1,4 +1,4 @@
-import { Component, viewChild, inject, signal, ElementRef } from '@angular/core';
+import { Component, viewChild, inject, signal, ElementRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpService } from '../../core/services/http.service';
 import { MainService } from '../../core/services/main.service';
@@ -20,6 +20,7 @@ import { Table } from '../../core/models/table.model';
 export class AdminComponent {
   private readonly mainService = inject(MainService);
   private readonly httpService = inject(HttpService);
+  private readonly zone = inject(NgZone);
 
   readonly databases = signal<Array<string>>([]);
   readonly documents = signal<any>(undefined);
@@ -62,7 +63,9 @@ export class AdminComponent {
   showDocument(doc: any) {
     // this.editArea.nativeElement.value == '';
     this.selectedDoc.set(doc);
-    (window as any).$('#docModal').modal('show');
+    this.zone.run(() => {
+      (window as any).$('#docModal').modal('show');
+    });
   }
 
   editDocument(document: any) {
@@ -75,7 +78,9 @@ export class AdminComponent {
         db_name = this.selectedDB();
       }
       this.mainService.updateData(db_name as any, newDocument._id, newDocument).then((res: any) => {
-        (window as any).$('#docModal').modal('hide');
+        this.zone.run(() => {
+          (window as any).$('#docModal').modal('hide');
+        });
         console.log('Döküman Güncellendi');
         if (this.editArea()) {
           this.editArea()!.nativeElement.value = '';
@@ -98,7 +103,9 @@ export class AdminComponent {
       const newDocument = JSON.parse(document);
       this.mainService.addData(this.selectedDB() as any, newDocument).then((res: any) => {
         if (res.ok) {
-          (window as any).$('#docModal').modal('hide');
+          this.zone.run(() => {
+            (window as any).$('#docModal').modal('hide');
+          });
           console.log('Döküman Oluşturuldu');
           if (this.editArea()) {
             this.editArea()!.nativeElement.value = '';
@@ -135,7 +142,9 @@ export class AdminComponent {
 
   removeDocument(id: string) {
     this.mainService.removeData(this.selectedDB() as any, id).then((res: any) => {
-      (window as any).$('#docModal').modal('hide');
+      this.zone.run(() => {
+        (window as any).$('#docModal').modal('hide');
+      });
       console.log('Döküman Silindi');
       this.selectedDoc.set(undefined);
       this.showDatabase(this.selectedDB());

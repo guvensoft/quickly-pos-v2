@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -24,6 +24,7 @@ export class ApplicationSettingsComponent implements OnInit {
   private readonly electronService = inject(ElectronService);
   private readonly message = inject(MessageService);
   private readonly validatorService = inject(SignalValidatorService);
+  private readonly zone = inject(NgZone);
 
   readonly restInfo = signal<any>(undefined);
   readonly restMap = signal<string | null>(null);
@@ -247,7 +248,9 @@ export class ApplicationSettingsComponent implements OnInit {
         const printersData = currentPrinters.filter(obj => obj.name == form.name);
         if (printersData.length == 0) {
           this.settings.addPrinter(printer);
-          (window as any).$('#printerModal').modal('hide');
+          this.zone.run(() => {
+            (window as any).$('#printerModal').modal('hide');
+          });
           this.message.sendMessage('Yazıcı Oluşturuldu.');
           this.fillData();
         } else {
@@ -255,7 +258,9 @@ export class ApplicationSettingsComponent implements OnInit {
         }
       } else {
         this.settings.addPrinter(printer);
-        (window as any).$('#printerModal').modal('hide');
+        this.zone.run(() => {
+          (window as any).$('#printerModal').modal('hide');
+        });
         this.message.sendMessage('Yazıcı Oluşturuldu.');
         this.fillData();
       }
@@ -326,7 +331,9 @@ export class ApplicationSettingsComponent implements OnInit {
     } else {
       alert('Yanlış Şifre');
     }
-    (window as any).$('#adminModal').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#adminModal').modal('hide');
+    });
   }
 
   setDefault() {

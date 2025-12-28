@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, viewChild, effect } from '@angular/core';
+import { Component, inject, signal, computed, viewChild, effect, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -28,6 +28,7 @@ export class StoreReportsComponent {
   private readonly settingsService = inject(SettingsService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly zone = inject(NgZone);
 
   readonly AllChecks = signal<ClosedCheck[]>([]);
   readonly FastChecks = signal<ClosedCheck[]>([]);
@@ -95,7 +96,9 @@ export class StoreReportsComponent {
 
   getDetail(check: any) {
     this.checkDetail.set(check);
-    (window as any).$('#reportDetail').modal('show');
+    this.zone.run(() => {
+      (window as any).$('#reportDetail').modal('show');
+    });
   }
 
   filterTables(value: string) {
@@ -177,7 +180,9 @@ export class StoreReportsComponent {
     this.mainService.addData('checks', checkWillReOpen).then(res => {
       this.mainService.removeData('closed_checks', (check as any)._id).then(res => {
         this.fillData();
-        (window as any).$('#checkDetail').modal('hide');
+        this.zone.run(() => {
+          (window as any).$('#checkDetail').modal('hide');
+        });
         this.messageService.sendAlert('Başarılı !', 'Hesap Geri Açıldı', 'success');
       });
     });
@@ -234,7 +239,9 @@ export class StoreReportsComponent {
       this.mainService.updateData('closed_checks', detail._id, { total_price: Form.total_price, payment_method: Form.payment_method }).then(res => {
         this.messageService.sendMessage('Hesap Düzenlendi!');
         this.fillData();
-        (window as any).$('#editCheck').modal('hide');
+        this.zone.run(() => {
+          (window as any).$('#editCheck').modal('hide');
+        });
       });
     } else {
       if (detail.total_price !== Form.total_price) {
@@ -251,7 +258,9 @@ export class StoreReportsComponent {
         this.mainService.updateData('closed_checks', detail._id, { total_price: Form.total_price }).then(res => {
           this.messageService.sendMessage('Hesap Düzenlendi!');
           this.fillData();
-          (window as any).$('#editCheck').modal('hide');
+          this.zone.run(() => {
+            (window as any).$('#editCheck').modal('hide');
+          });
         });
       } else {
         return false;
@@ -267,18 +276,24 @@ export class StoreReportsComponent {
         this.mainService.updateData('closed_checks', id, { description: note, type: 3 }).then(res => {
           this.logService.createLog(logType.CHECK_CANCELED, id, `${detail.total_price} TL tutarındaki kapatılan hesap iptal edildi. Açıklama:'${note}'`)
           this.fillData();
-          (window as any).$('#cancelDetail').modal('hide');
+          this.zone.run(() => {
+            (window as any).$('#cancelDetail').modal('hide');
+          });
         });
       }
     });
   }
 
   editPayment(i: number) {
-    (window as any).$('#editCheck').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#editCheck').modal('hide');
+    });
     const detail = this.checkDetail();
     this.selectedPayment.set(detail.payment_flow[i]);
     this.selectedPaymentIndex.set(i);
-    (window as any).$('#paymentDetail').modal('show');
+    this.zone.run(() => {
+      (window as any).$('#paymentDetail').modal('show');
+    });
   }
 
   changePayment(paymentDetail: NgForm) {
@@ -316,8 +331,10 @@ export class StoreReportsComponent {
           this.mainService.updateData('closed_checks', detail._id, { total_price: detail.total_price, payment_flow: detail.payment_flow }).then(res => {
             this.messageService.sendMessage('Hesap Düzenlendi!');
             this.fillData();
-            (window as any).$('#editCheck').modal('show');
-            (window as any).$('#paymentDetail').modal('hide');
+            this.zone.run(() => {
+              (window as any).$('#editCheck').modal('show');
+              (window as any).$('#paymentDetail').modal('hide');
+            });
           });
         });
       });
@@ -339,8 +356,10 @@ export class StoreReportsComponent {
           this.mainService.updateData('closed_checks', detail._id, { total_price: detail.total_price, payment_flow: detail.payment_flow }).then(res => {
             this.messageService.sendMessage('Hesap Düzenlendi!');
             this.fillData();
-            (window as any).$('#editCheck').modal('show');
-            (window as any).$('#paymentDetail').modal('hide');
+            this.zone.run(() => {
+              (window as any).$('#editCheck').modal('show');
+              (window as any).$('#paymentDetail').modal('hide');
+            });
           });
         });
 

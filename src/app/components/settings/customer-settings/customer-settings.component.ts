@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MainService } from '../../../core/services/main.service';
@@ -30,6 +30,7 @@ export class CustomerSettingsComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
   private readonly validatorService = inject(SignalValidatorService);
+  private readonly zone = inject(NgZone);
 
   readonly customers = signal<Array<Customer>>([]);
   readonly selectedCustomer = signal<string | undefined>(undefined);
@@ -207,7 +208,9 @@ export class CustomerSettingsComponent implements OnInit {
             this.messageService.sendMessage('Müşteri Oluşturuldu!');
             this.fillData();
             customerForm.reset();
-            (window as any).$('#customerModal').modal('hide');
+            this.zone.run(() => {
+              (window as any).$('#customerModal').modal('hide');
+            });
           });
         }
       });
@@ -221,7 +224,9 @@ export class CustomerSettingsComponent implements OnInit {
             this.messageService.sendMessage('Bilgiler Güncellendi!');
             this.fillData();
             customerForm.reset();
-            (window as any).$('#customerModal').modal('hide');
+            this.zone.run(() => {
+              (window as any).$('#customerModal').modal('hide');
+            });
           });
         }
       });
@@ -242,7 +247,9 @@ export class CustomerSettingsComponent implements OnInit {
       if (this.customerForm()) {
         this.customerForm()!.form.patchValue(result);
       }
-      (window as any).$('#customerModal').modal('show');
+      this.zone.run(() => {
+        (window as any).$('#customerModal').modal('show');
+      });
     });
   }
 
@@ -259,7 +266,9 @@ export class CustomerSettingsComponent implements OnInit {
         });
         this.messageService.sendMessage('Müşteri Silindi!');
         this.fillData();
-        (window as any).$('#customerModal').modal('hide');
+        this.zone.run(() => {
+          (window as any).$('#customerModal').modal('hide');
+        });
       });
     }
   }
@@ -278,7 +287,9 @@ export class CustomerSettingsComponent implements OnInit {
     this.mainService.addData('checks', checkWillReOpen).then(() => {
       this.mainService.removeData('credits', check._id!).then(() => {
         this.fillData();
-        (window as any).$('#checkDetail').modal('hide');
+        this.zone.run(() => {
+          (window as any).$('#checkDetail').modal('hide');
+        });
         this.messageService.sendAlert('Başarılı !', 'Hesap Geri Açıldı', 'success');
       });
     });
@@ -309,7 +320,9 @@ export class CustomerSettingsComponent implements OnInit {
 
   getDetail(check: Check) {
     this.checkDetail.set(check);
-    (window as any).$('#reportDetail').modal('show');
+    this.zone.run(() => {
+      (window as any).$('#reportDetail').modal('show');
+    });
   }
 
   cancelCheck(id: string, note: string) {
@@ -320,7 +333,9 @@ export class CustomerSettingsComponent implements OnInit {
           const price = detail ? detail.total_price : 0;
           this.logService.createLog(logType.CHECK_CANCELED, id, `${price} TL tutarındaki kapatılan hesap iptal edildi. Açıklama:'${note}'`)
           this.fillData();
-          (window as any).$('#cancelDetail').modal('hide');
+          this.zone.run(() => {
+            (window as any).$('#cancelDetail').modal('hide');
+          });
         });
       }
     });

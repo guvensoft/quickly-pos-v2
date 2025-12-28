@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal, viewChild, computed, effect, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -23,6 +23,7 @@ export class MenuSettingsComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
   private readonly validatorService = inject(SignalValidatorService);
+  private readonly zone = inject(NgZone);
 
   readonly categories = signal<Array<Category>>([]);
   readonly sub_categories = signal<Array<SubCategory>>([]);
@@ -225,7 +226,9 @@ export class MenuSettingsComponent implements OnInit {
       this.messageService.sendMessage('Kategori Oluşturuldu');
     })
     categoryForm.reset();
-    (window as any).$('#categoryModal').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#categoryModal').modal('hide');
+    });
     return true;
   }
 
@@ -291,7 +294,9 @@ export class MenuSettingsComponent implements OnInit {
     this.selectedSubCat.set(undefined);
     this.onUpdate.set(false);
     subCatForm.reset();
-    (window as any).$('#subCatModal').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#subCatModal').modal('hide');
+    });
     return true;
   }
 
@@ -301,7 +306,9 @@ export class MenuSettingsComponent implements OnInit {
     if (this.subCatForm()) {
       this.subCatForm()!.form.patchValue(subCat);
     }
-    (window as any).$('#subCatModal').modal('show');
+    this.zone.run(() => {
+      (window as any).$('#subCatModal').modal('show');
+    });
   }
 
   removeSubCategory(id: string) {
@@ -311,7 +318,9 @@ export class MenuSettingsComponent implements OnInit {
       this.onUpdate.set(false);
     });
     if (this.subCatForm()) this.subCatForm()!.reset();
-    (window as any).$('#subCatModal').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#subCatModal').modal('hide');
+    });
   }
 
   addProduct(productForm: NgForm) {
@@ -369,7 +378,9 @@ export class MenuSettingsComponent implements OnInit {
     }
     if (this.recipesForm()) this.recipesForm()!.reset();
     if (this.productForm()) this.productForm()!.reset();
-    (window as any).$('#productModal').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#productModal').modal('hide');
+    });
     return true;
   }
 
@@ -402,7 +413,9 @@ export class MenuSettingsComponent implements OnInit {
       if (this.productForm()) {
         this.productForm()!.form.patchValue(result);
       }
-      (window as any).$('#productModal').modal('show');
+      this.zone.run(() => {
+        (window as any).$('#productModal').modal('show');
+      });
     });
 
     this.mainService.getAllBy('recipes', { product_id: id }).then((result: any) => {

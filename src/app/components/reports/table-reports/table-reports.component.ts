@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Log, logType } from '../../../core/models/log.model';
 import { Report } from '../../../core/models/report.model';
@@ -19,6 +19,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 })
 export class TableReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
+  private readonly zone = inject(NgZone);
 
   readonly tablesList = signal<Report[]>([]);
   readonly generalList = signal<Report[]>([]);
@@ -130,7 +131,9 @@ export class TableReportsComponent implements OnInit {
       res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
       this.DetailData.set([{ data: res.weekly, label: 'Hesap Tutarı' }]);
       this.DetailLoaded.set(true);
-      (window as any).$('#reportDetail').modal('show');
+      this.zone.run(() => {
+        (window as any).$('#reportDetail').modal('show');
+      });
     });
   }
 
