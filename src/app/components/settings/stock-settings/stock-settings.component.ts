@@ -106,7 +106,7 @@ export class StockSettingsComponent implements OnInit {
     // Validate stock name
     effect(() => {
       const name = this.stockName();
-      if (!name || !name.trim()) {
+      if (!name || (typeof name === 'string' && !name.trim())) {
         this.nameError.set('Stok Adı Belirtmelisiniz');
       } else {
         this.nameError.set(null);

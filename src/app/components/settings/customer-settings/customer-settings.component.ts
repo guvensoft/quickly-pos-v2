@@ -117,9 +117,9 @@ export class CustomerSettingsComponent implements OnInit {
     // Validate name field
     effect(() => {
       const name = this.customerName();
-      if (!name || !name.trim()) {
+      if (!name || (typeof name === 'string' && !name.trim())) {
         this.nameError.set('Müşteri Adı Belirtmelisiniz');
-      } else if (name.length < 2) {
+      } else if (typeof name === 'string' && name.length < 2) {
         this.nameError.set('Müşteri Adı en az 2 karakter olmalıdır');
       } else {
         this.nameError.set(null);
@@ -129,9 +129,9 @@ export class CustomerSettingsComponent implements OnInit {
     // Validate phone field
     effect(() => {
       const phone = this.customerPhone();
-      if (!phone || !phone.trim()) {
+      if (!phone || (typeof phone === 'string' && !phone.trim())) {
         this.phoneError.set('Telefon Numarası Belirtmelisiniz');
-      } else {
+      } else if (typeof phone === 'string') {
         const digitsOnly = phone.replace(/\D/g, '');
         if (digitsOnly.length < 10) {
           this.phoneError.set('Telefon Numarası en az 10 rakam olmalıdır');
@@ -144,7 +144,7 @@ export class CustomerSettingsComponent implements OnInit {
     // Validate address field
     effect(() => {
       const address = this.customerAddress();
-      if (!address || !address.trim()) {
+      if (!address || (typeof address === 'string' && !address.trim())) {
         this.addressError.set('Adres Belirtmelisiniz');
       } else {
         this.addressError.set(null);

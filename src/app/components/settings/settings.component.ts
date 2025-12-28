@@ -38,7 +38,10 @@ export class SettingsComponent {
 
   constructor() {
     // Initialize logo path after DI is ready
-    this.logo.set(this.electron.appRealPath + '/data/customer.png');
+    const basePath = this.electron.appRealPath.endsWith('/')
+      ? this.electron.appRealPath
+      : this.electron.appRealPath + '/';
+    this.logo.set(basePath + 'data/customer.png');
 
     // Subscribe to RestaurantInfo outside of effect to avoid subscription issues
     this.settingsService.RestaurantInfo.subscribe(res => {

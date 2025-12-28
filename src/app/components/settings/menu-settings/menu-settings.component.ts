@@ -127,7 +127,7 @@ export class MenuSettingsComponent implements OnInit {
     // Validate product name
     effect(() => {
       const name = this.productName();
-      if (!name || !name.trim()) {
+      if (!name || (typeof name === 'string' && !name.trim())) {
         this.productNameError.set('Ürün Adı Belirtmelisiniz');
       } else {
         this.productNameError.set(null);
