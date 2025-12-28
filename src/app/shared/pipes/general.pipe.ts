@@ -1,15 +1,15 @@
 /* eslint-disable @angular-eslint/prefer-inject, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars */
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, ChangeDetectorRef, inject } from '@angular/core';
 import { MainService } from '../../core/services/main.service';
-import { from, of, catchError, map } from 'rxjs';
+import { from, of, catchError, map, tap } from 'rxjs';
 
 @Pipe({
     name: 'general',
     standalone: true
 })
 export class GeneralPipe implements PipeTransform {
-
-    constructor(private mainService: MainService) { }
+    private mainService = inject(MainService);
+    private cdr = inject(ChangeDetectorRef);
 
     transform(value: any, args: string, property?: string) {
         return from(this.mainService.getData(args as any, value)).pipe(
@@ -19,6 +19,10 @@ export class GeneralPipe implements PipeTransform {
                 } else {
                     return result.name;
                 }
+            }),
+            tap(() => {
+                // Mark component for check on successful data load
+                this.cdr.markForCheck();
             }),
             catchError((err: any) => {
                 return of(value);
