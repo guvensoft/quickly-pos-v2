@@ -10,6 +10,42 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
+function shorten(text, maxLen = 500) {
+    const s = typeof text === 'string' ? text : String(text);
+    if (s.length <= maxLen)
+        return s;
+    return `${s.slice(0, maxLen)}…`;
+}
+function sendRendererLog(level, message, meta) {
+    var _a;
+    try {
+        electron_1.ipcRenderer.send('app:renderer-log', {
+            level,
+            message: shorten(message),
+            meta: Object.assign({ url: (_a = window.location) === null || _a === void 0 ? void 0 : _a.href }, (meta !== null && meta !== void 0 ? meta : {}))
+        });
+    }
+    catch (_b) {
+        // ignore
+    }
+}
+window.addEventListener('error', (event) => {
+    var _a;
+    sendRendererLog('error', event.message || 'window.error', {
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        stack: shorten((_a = event.error) === null || _a === void 0 ? void 0 : _a.stack, 1200)
+    });
+});
+window.addEventListener('unhandledrejection', (event) => {
+    var _a;
+    const reason = event.reason;
+    sendRendererLog('error', 'unhandledrejection', {
+        reason: shorten(typeof reason === 'string' ? reason : ((_a = reason === null || reason === void 0 ? void 0 : reason.message) !== null && _a !== void 0 ? _a : String(reason))),
+        stack: shorten(reason === null || reason === void 0 ? void 0 : reason.stack, 1200)
+    });
+});
 electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     platform: process.platform,
     writeFile: (path, data) => __awaiter(void 0, void 0, void 0, function* () {

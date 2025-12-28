@@ -1,10 +1,87 @@
-import { app, BrowserWindow, screen, session } from 'electron';
+import { app, BrowserWindow, screen, session, ipcMain } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 
 let win: BrowserWindow | null = null;
 const args = process.argv.slice(1),
   serve = args.some(val => val === '--serve');
+
+type LogLevel = 'log' | 'warn' | 'error';
+
+let logFilePath: string | null = null;
+function getLogFilePath(): string {
+  if (logFilePath) return logFilePath;
+
+  const fileName = 'quickly-pos.log';
+  const preferred = path.join(process.cwd(), fileName);
+  try {
+    fs.appendFileSync(preferred, '');
+    logFilePath = preferred;
+    return logFilePath;
+  } catch {
+    if (app.isReady()) {
+      logFilePath = path.join(app.getPath('userData'), fileName);
+      return logFilePath;
+    }
+    // app hazır değilken userData erişimi güvenli olmayabilir; bir sonraki log denemesinde tekrar denenecek.
+    return preferred;
+  }
+}
+
+function shorten(text: unknown, maxLen = 800): string {
+  const s = typeof text === 'string' ? text : String(text);
+  if (s.length <= maxLen) return s;
+  return `${s.slice(0, maxLen)}…`;
+}
+
+function sanitizeMeta(meta: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+  if (!meta) return undefined;
+  const cloned: Record<string, unknown> = { ...meta };
+
+  if (typeof cloned.stack === 'string') cloned.stack = shorten(cloned.stack, 1200);
+  if (typeof cloned.reason === 'string') cloned.reason = shorten(cloned.reason, 800);
+  if (typeof cloned.url === 'string') cloned.url = shorten(cloned.url, 300);
+
+  return cloned;
+}
+
+function appendLog(level: LogLevel, message: string, meta?: Record<string, unknown>) {
+  const filePath = getLogFilePath();
+  const ts = new Date().toISOString();
+  const safeMeta = sanitizeMeta(meta);
+  const metaText = safeMeta ? ` ${JSON.stringify(safeMeta)}` : '';
+  try {
+    fs.appendFileSync(filePath, `[${ts}] [${level}] ${shorten(message)}${metaText}\n`, { encoding: 'utf8' });
+  } catch {
+    // ignore (avoid recursive logging)
+  }
+}
+
+function hookProcessLogging() {
+  const original = {
+    log: console.log.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+  };
+
+  console.log = (...args: any[]) => {
+    original.log(...args);
+  };
+  console.warn = (...args: any[]) => {
+    original.warn(...args);
+  };
+  console.error = (...args: any[]) => {
+    appendLog('error', args.map(String).join(' '));
+    original.error(...args);
+  };
+
+  process.on('uncaughtException', (err) => {
+    appendLog('error', 'uncaughtException', { message: err?.message, stack: err?.stack });
+  });
+  process.on('unhandledRejection', (reason: any) => {
+    appendLog('error', 'unhandledRejection', { reason: String(reason) });
+  });
+}
 
 function createWindow(): BrowserWindow {
 
@@ -75,9 +152,26 @@ function createWindow(): BrowserWindow {
     win.loadURL(url);
   }
 
-  // Open DevTools automatically on startup
+  win.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+    if (typeof sourceId === 'string' && sourceId.startsWith('devtools://')) return;
+    if (typeof message === 'string' &&
+      message.includes('Request Autofill.') &&
+      message.includes("wasn't found")) return;
+    const url = win?.webContents.getURL();
+    const mapped: LogLevel = level === 2 ? 'warn' : level === 3 ? 'error' : 'log';
+    if (mapped === 'error') {
+      appendLog('error', message, { source: 'renderer', url, line, sourceId });
+    }
+  });
+
+  win.webContents.on('render-process-gone', (_event, details) => {
+    const url = win?.webContents.getURL();
+    appendLog('error', '[render-process-gone]', { ...details, url });
+  });
+
+  // Open DevTools automatically on startup (dev only)
   win.webContents.on('did-finish-load', () => {
-    win?.webContents.openDevTools();
+    if (serve) win?.webContents.openDevTools();
   });
 
   // Emitted when the window is closed.
@@ -92,6 +186,14 @@ function createWindow(): BrowserWindow {
 }
 
 try {
+  hookProcessLogging();
+
+  ipcMain.on('app:renderer-log', (_event, payload: { level: LogLevel; message: string; meta?: any }) => {
+    if (!payload || typeof payload.message !== 'string') return;
+    if ((payload.level ?? 'log') !== 'error') return;
+    appendLog('error', payload.message, { source: 'renderer', ...(payload.meta ?? {}) });
+  });
+
   // Ignore certificate errors for development
   app.commandLine.appendSwitch('ignore-certificate-errors');
 
