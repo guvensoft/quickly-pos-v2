@@ -244,7 +244,7 @@ export class DayDetailComponent {
     this.pieColors.set([{ backgroundColor: ['#5cb85c', '#f0ad4e', '#5bc0de', '#d9534f'] }]);
     const newLabels = ['Nakit', 'Kart', 'Kupon', 'İkram'];
     this.pieLabels.set(newLabels);
-    this.pieData.set([data.cash_total, data.card_total, data.coupon_total, data.free_total]);
+    this.pieData.set([{ data: [data.cash_total, data.card_total, data.coupon_total, data.free_total], label: 'Ödeme Yöntemleri' }]);
     this.detailDay.set(new Date(data.timestamp).getDay());
     this.electronService.readBackupData(data.data_file).then((result: Array<BackupData>) => {
       if (result && Array.isArray(result) && result.length >= 4) {

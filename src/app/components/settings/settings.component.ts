@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ElectronService } from '../../core/services/electron/electron.service';
 import { SettingsService } from '../../core/services/settings.service';
@@ -40,11 +40,9 @@ export class SettingsComponent {
     // Initialize logo path after DI is ready
     this.logo.set(this.electron.appRealPath + '/data/customer.png');
 
-    // Set up reactive effect for RestaurantInfo changes
-    effect(() => {
-      this.settingsService.RestaurantInfo.subscribe(res => {
-        this.storeInfo.set(res.value);
-      });
-    }, { allowSignalWrites: true });
+    // Subscribe to RestaurantInfo outside of effect to avoid subscription issues
+    this.settingsService.RestaurantInfo.subscribe(res => {
+      this.storeInfo.set(res.value);
+    });
   }
 }

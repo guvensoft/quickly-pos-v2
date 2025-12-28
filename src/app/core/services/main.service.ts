@@ -316,7 +316,9 @@ export class MainService {
       this.lastSyncError.set(err);
       // Suppress logging for 404 (not_found) errors - these are expected when GeneralPipe
       // tries to fetch display strings like 'Hızlı Satış' as document IDs
-      if (err.status !== 404 && err.name !== 'not_found') {
+      // PouchDB 404 errors have status: 404, name: 'not_found', or error: 'not_found'
+      const is404 = err.status === 404 || err.name === 'not_found' || err.error === 'not_found';
+      if (!is404) {
         console.error(`MainService: Error fetching document ${id} from ${db}:`, err);
       }
       throw err;
