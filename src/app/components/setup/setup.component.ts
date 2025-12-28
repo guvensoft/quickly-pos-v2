@@ -35,7 +35,7 @@ export class SetupComponent implements OnInit {
   readonly showMessage = signal(false);
   readonly setupStep = signal(0);
 
-  headers = new HttpHeaders({ 'Content-Type': 'application/json', 'charset': 'UTF-8' });
+  headers = new HttpHeaders({ 'Content-Type': 'application/json' });
   options = { headers: this.headers };
   baseUrl = 'https://hq.quickly.com.tr';
 
