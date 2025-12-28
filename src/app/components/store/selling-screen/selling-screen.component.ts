@@ -1464,7 +1464,13 @@ export class SellingScreenComponent implements OnDestroy {
     currentCheck.discountPercent = value;
     this.check.set(currentCheck);
 
-    (window as any).$('#checkDiscount').modal('hide');
+    this.zone.run(() => {
+      const $ = (window as any).$;
+      $('#checkDiscount').modal('hide');
+      // Backdrop'ı ve scroll kilidini manuel olarak kaldır
+      $('.modal-backdrop').remove();
+      $('body').removeClass('modal-open');
+    });
     if (currentCheck.type == CheckType.NORMAL) {
       if (currentCheck.status !== CheckStatus.PASSIVE) {
         this.mainService.changeData('checks', currentCheck._id, (doc: any) => {
