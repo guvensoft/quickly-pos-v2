@@ -1,1 +1,0 @@
-[2025-12-28T18:16:16.416Z] [error] ERROR TypeError: e.trim is not a function {"source":"renderer","url":"http://localhost:4200/settings","line":57,"sourceId":"http://localhost:4200/main.js"}
