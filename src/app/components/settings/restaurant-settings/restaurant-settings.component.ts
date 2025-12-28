@@ -28,6 +28,9 @@ export class RestaurantSettingsComponent implements OnInit {
   readonly selectedTable = signal<string | undefined>(undefined);
   readonly selectedFloor = signal<string | undefined>(undefined);
 
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
+
   areaForm = viewChild<NgForm>('areaForm');
   areaDetailForm = viewChild<NgForm>('areaDetailForm');
   tableForm = viewChild<NgForm>('tableForm');

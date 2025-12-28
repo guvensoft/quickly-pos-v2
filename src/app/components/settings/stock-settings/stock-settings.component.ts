@@ -30,6 +30,9 @@ export class StockSettingsComponent implements OnInit {
   readonly onUpdate = signal<boolean>(false);
   readonly units = signal<Array<string>>(['Gram', 'Mililitre', 'Adet']);
 
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
+
   // Stock validation signals
   readonly stockName = signal<string>('');
   readonly stockQuantity = signal<number>(0);

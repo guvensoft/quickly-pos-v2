@@ -96,22 +96,22 @@
         <app-menu-settings [key]="selected()"></app-menu-settings>
         }
         @if (selected() === 3) {
-        <app-restaurant-settings></app-restaurant-settings>
+        <app-restaurant-settings [key]="selected()"></app-restaurant-settings>
         }
         @if (selected() === 4) {
-        <app-stock-settings></app-stock-settings>
+        <app-stock-settings [key]="selected()"></app-stock-settings>
         }
         @if (selected() === 5) {
-        <app-recipe-settings></app-recipe-settings>
+        <app-recipe-settings [key]="selected()"></app-recipe-settings>
         }
         @if (selected() === 6) {
-        <app-customer-settings></app-customer-settings>
+        <app-customer-settings [key]="selected()"></app-customer-settings>
         }
         @if (selected() === 7) {
-        <app-printer-settings></app-printer-settings>
+        <app-printer-settings [key]="selected()"></app-printer-settings>
         }
         @if (selected() === 9) {
-        <app-application-settings></app-application-settings>
+        <app-application-settings [key]="selected()"></app-application-settings>
         }
       </div>
     </div>

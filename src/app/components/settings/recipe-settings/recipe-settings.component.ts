@@ -16,6 +16,9 @@ export class RecipeSettingsComponent implements OnInit {
 
   readonly recipes = signal<Array<Recipe>>([]);
 
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
+
   ngOnInit() {
     this.fillData();
   }

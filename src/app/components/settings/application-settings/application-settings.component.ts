@@ -37,6 +37,9 @@ export class ApplicationSettingsComponent implements OnInit {
   readonly choosenPrinter = signal<any>(undefined);
   readonly currentSection = signal<string>('AppSettings');
 
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
+
   // Server settings validation signals
   readonly serverUrl = signal<string>('');
   readonly serverPort = signal<number>(3000);

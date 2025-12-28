@@ -10,6 +10,9 @@ import { CommonModule } from '@angular/common';
 })
 export class PrinterSettingsComponent implements OnInit {
 
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
+
   constructor() { }
 
   ngOnInit() {

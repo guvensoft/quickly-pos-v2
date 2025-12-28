@@ -36,6 +36,9 @@ export class CustomerSettingsComponent implements OnInit {
   readonly selectedCustomer = signal<string | undefined>(undefined);
   readonly onUpdate = signal<boolean>(false);
 
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
+
   // Form field signals for validation
   readonly customerName = signal<string>('');
   readonly customerPhone = signal<string>('');
