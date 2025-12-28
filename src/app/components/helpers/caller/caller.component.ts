@@ -1,4 +1,4 @@
-import { Component, viewChild, inject, signal, effect } from '@angular/core';
+import { Component, viewChild, inject, signal, effect, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CallerIDService } from '../../../core/services/caller-id.service';
@@ -23,6 +23,7 @@ export class CallerComponent {
   private readonly callerService = inject(CallerIDService);
   private readonly mainService = inject(MainService);
   private readonly settingsService = inject(SettingsService);
+  private readonly zone = inject(NgZone);
 
   readonly call = signal<Call>({} as Call);
   readonly customer = signal<Customer | null>(null);
@@ -46,7 +47,9 @@ export class CallerComponent {
           } else {
             this.customer.set(null);
           }
-          (window as any).$('#callerModal').modal('show');
+          this.zone.run(() => {
+            (window as any).$('#callerModal').modal('show');
+          });
         });
       });
     }, { allowSignalWrites: true });
@@ -58,8 +61,10 @@ export class CallerComponent {
     if (currentCustomer) {
       const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner(), `${currentCustomer.name} | ${currentCustomer.phone_number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
       this.mainService.addData('checks', checkWillOpen).then(res => {
-        (window as any).$('#callerModal').modal('hide');
-        this.router.navigate(['/selling-screen', 'Order', res.id]);
+        this.zone.run(() => {
+          (window as any).$('#callerModal').modal('hide');
+          this.router.navigate(['/selling-screen', 'Order', res.id]);
+        });
       });
     }
   }
@@ -71,8 +76,10 @@ export class CallerComponent {
     this.mainService.addData('customers', customerWillCreate as any).then(res => {
       const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner(), `${unknownCustomer.name} | ${currentCall.number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
       this.mainService.addData('checks', checkWillOpen).then(res => {
-        (window as any).$('#callerModal').modal('hide');
-        this.router.navigate(['/selling-screen', 'Order', res.id]);
+        this.zone.run(() => {
+          (window as any).$('#callerModal').modal('hide');
+          this.router.navigate(['/selling-screen', 'Order', res.id]);
+        });
       });
     });
   }
