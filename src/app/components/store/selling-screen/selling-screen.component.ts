@@ -218,6 +218,21 @@ export class SellingScreenComponent implements OnDestroy {
       });
     }, { allowSignalWrites: true });
 
+    // Set up occupationModal hidden event listener to clear focus
+    this.zone.run(() => {
+      const $ = (window as any).$;
+      $('#occupationModal').on('hidden.bs.modal', () => {
+        // Clear focus from active element
+        const activeElement = document.activeElement as HTMLElement;
+        if (activeElement && activeElement.blur) {
+          activeElement.blur();
+        }
+        // Clean up backdrop and modal-open class
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open');
+      });
+    });
+
     // DateSettings subscription wrapped in effect
     effect(() => {
       this.settingsService.DateSettings.subscribe((res: any) => {
