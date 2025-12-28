@@ -100,17 +100,6 @@ export class MenuSettingsComponent implements OnInit {
 
   constructor() {
     this.fillData();
-  }
-
-  ngOnInit() {
-    this.stockUnit.set('Birim');
-    this.productRecipe.set([]);
-    this.productSpecs.set([]);
-    this.recipesTable.set([]);
-    this.oldRecipes.set([]);
-    this.recipe.set([]);
-    this.onUpdate.set(false);
-    this.hasRecipe.set(false);
 
     // Reset recipe when product type changes to 2 (manual mode)
     effect(() => {
@@ -171,6 +160,17 @@ export class MenuSettingsComponent implements OnInit {
         this.productTaxError.set(null);
       }
     });
+  }
+
+  ngOnInit() {
+    this.stockUnit.set('Birim');
+    this.productRecipe.set([]);
+    this.productSpecs.set([]);
+    this.recipesTable.set([]);
+    this.oldRecipes.set([]);
+    this.recipe.set([]);
+    this.onUpdate.set(false);
+    this.hasRecipe.set(false);
   }
 
   getCategory(category: any) {

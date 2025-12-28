@@ -53,11 +53,7 @@ export class UserSettingsComponent implements OnInit {
     return this.users().find(u => u._id === userId);
   });
 
-  constructor() { }
-
-  ngOnInit() {
-    this.onUpdate.set(false);
-
+  constructor() {
     // Load group details when selected
     effect(() => {
       const groupId = this.selectedGroup();
@@ -71,7 +67,10 @@ export class UserSettingsComponent implements OnInit {
       const groupId = this.selectedGroup();
       this.getUsersByGroup(groupId);
     });
+  }
 
+  ngOnInit() {
+    this.onUpdate.set(false);
     this.fillData();
   }
 
