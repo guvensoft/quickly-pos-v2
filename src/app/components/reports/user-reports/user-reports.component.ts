@@ -24,16 +24,18 @@ export class UserReportsComponent implements OnInit {
 
   ChartOptions: any = {
     responsive: false,
-    legend: {
-      labels: {
-        fontColor: 'rgb(255, 255, 255)',
-        fontStyle: 'bolder'
-      }
-    },
-    tooltips: {
-      callbacks: {
-        label: function (value: any) {
-          return ' ' + Number(value.yLabel).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+    plugins: {
+      legend: {
+        labels: {
+          color: 'rgb(255, 255, 255)',
+          font: { weight: 'bold' }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context: any) {
+            return ' ' + Number(context.parsed.y).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+          }
         }
       }
     },
@@ -43,29 +45,29 @@ export class UserReportsComponent implements OnInit {
       }
     },
     scales: {
-      xAxes: [{
+      x: {
         ticks: {
           beginAtZero: true,
-          fontColor: 'rgba(255,255,255)'
+          color: 'rgba(255,255,255)'
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }],
-      yAxes: [{
+      },
+      y: {
         ticks: {
-          fontColor: 'rgba(255,255,255)',
+          color: 'rgba(255,255,255)',
           callback: function (value: any, index: any, values: any) {
             return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
           }
 
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }]
+      }
     },
   };
   readonly ChartData = signal<any[]>([]);

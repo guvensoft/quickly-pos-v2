@@ -65,27 +65,29 @@ export class DayDetailComponent {
         tension: 0.5,
       }
     },
-    legend: { labels: { fontColor: 'rgb(255, 255, 255)' } },
+    plugins: {
+      legend: { labels: { fontColor: 'rgb(255, 255, 255)' } }
+    },
     scales: {
-      xAxes: [{
+      x: {
         ticks: {
           beginAtZero: true,
-          fontColor: 'rgba(255,255,255)'
+          color: 'rgba(255,255,255)'
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }],
-      yAxes: [{
+      },
+      y: {
         ticks: {
-          fontColor: 'rgba(255,255,255)'
+          color: 'rgba(255,255,255)'
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }]
+      }
     },
   });
 

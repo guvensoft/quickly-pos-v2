@@ -67,16 +67,18 @@ export class ReportsComponent implements OnInit {
 
     this.ChartOptions = {
       responsive: false,
-      legend: {
-        labels: {
-          fontColor: 'rgb(255, 255, 255)',
-          fontStyle: 'bolder'
-        }
-      },
-      tooltips: {
-        callbacks: {
-          label: (value: any) => {
-            return ' ' + Number(value.yLabel).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+      plugins: {
+        legend: {
+          labels: {
+            color: 'rgb(255, 255, 255)',
+            font: { weight: 'bold' }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: any) => {
+              return ' ' + Number(context.parsed.y).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+            }
           }
         }
       },
@@ -86,28 +88,28 @@ export class ReportsComponent implements OnInit {
         }
       },
       scales: {
-        xAxes: [{
+        x: {
           ticks: {
             beginAtZero: true,
-            fontColor: 'rgba(255,255,255)'
+            color: 'rgba(255,255,255)'
           },
-          gridLines: {
+          grid: {
             color: 'rgba(255,255,255)',
             lineWidth: 0.4
           }
-        }],
-        yAxes: [{
+        },
+        y: {
           ticks: {
-            fontColor: 'rgba(255,255,255)',
+            color: 'rgba(255,255,255)',
             callback: (value: any) => {
               return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
             }
           },
-          gridLines: {
+          grid: {
             color: 'rgba(255,255,255)',
             lineWidth: 0.4
           }
-        }]
+        }
       },
     };
     this.ChartColors = [
@@ -120,15 +122,18 @@ export class ReportsComponent implements OnInit {
     ];
     this.pieColors = [{ backgroundColor: ['#5cb85c', '#f0ad4e', '#5bc0de', '#d9534f'] }];
     this.pieOptions = {
-      legend: {
-        labels: { fontColor: 'rgb(255, 255, 255)', fontStyle: 'bolder' }
-      },
-      tooltips: {
-        callbacks: {
-          label: (tooltipItem: any, data: any) => {
-            const dataLabel = data.labels[tooltipItem.index];
-            const value = ': ' + Number(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
-            return dataLabel + value;
+      responsive: false,
+      plugins: {
+        legend: {
+          labels: { color: 'rgb(255, 255, 255)', font: { weight: 'bold' } }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: any) => {
+              const dataLabel = context.label;
+              const value = ': ' + Number(context.parsed).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+              return dataLabel + value;
+            }
           }
         }
       },
