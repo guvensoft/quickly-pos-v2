@@ -3,6 +3,8 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import * as jQuery from 'jquery';
 const $ = (jQuery as any).default || jQuery;
 (window as any).$ = (window as any).jQuery = $;
+// Import Bootstrap to ensure modal plugin is available
+import 'bootstrap';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
