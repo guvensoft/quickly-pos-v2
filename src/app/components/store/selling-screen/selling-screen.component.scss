@@ -209,3 +209,17 @@
   align-items: center;
   justify-content: center;
 }
+
+// Buton column layout düzeltme
+// inside-height 79vh yüksekliğinde olduğu için, buton col'u flex ile
+// en üste hizalanmalı ve stretch etmemeli
+.col-xl-1.align-self-start {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: fit-content;
+
+  .sendButton {
+    margin-bottom: 0;
+  }
+}
