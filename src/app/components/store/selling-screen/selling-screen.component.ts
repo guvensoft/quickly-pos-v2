@@ -675,7 +675,11 @@ export class SellingScreenComponent implements OnDestroy {
       }
     }
     this.zone.run(() => {
-      (window as any).$('#closeCheck').modal('hide');
+      const $ = (window as any).$;
+      $('#closeCheck').modal('hide');
+      // Backdrop'ı ve scroll kilidini manuel olarak kaldır
+      $('.modal-backdrop').remove();
+      $('body').removeClass('modal-open');
     });
     const checkWillClose = new ClosedCheck(currentCheck.table_id, (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount, total_discounts, this.owner(), currentCheck.note, CheckStatus.OCCUPIED, currentCheck.products, currentCheck.timestamp, currentCheck.type, method, currentCheck.payment_flow, undefined, currentCheck.occupation);
     if (currentCheck.type == CheckType.ORDER) {
