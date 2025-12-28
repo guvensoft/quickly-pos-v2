@@ -314,7 +314,11 @@ export class MainService {
       return doc as DatabaseModelMap[K];
     }).catch(err => {
       this.lastSyncError.set(err);
-      console.error(`MainService: Error fetching document ${id} from ${db}:`, err);
+      // Suppress logging for 404 (not_found) errors - these are expected when GeneralPipe
+      // tries to fetch display strings like 'Hızlı Satış' as document IDs
+      if (err.status !== 404 && err.name !== 'not_found') {
+        console.error(`MainService: Error fetching document ${id} from ${db}:`, err);
+      }
       throw err;
     });
   }
