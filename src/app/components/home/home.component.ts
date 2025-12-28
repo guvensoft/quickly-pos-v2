@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
+import { ElectronService } from '../../core/services/electron/electron.service';
 
 @Component({
   standalone: true,
@@ -13,6 +14,7 @@ import { Router } from '@angular/router';
 
 export class HomeComponent {
   private readonly router = inject(Router);
+  private readonly electronService = inject(ElectronService);
 
   readonly menus = signal<Array<any>>([
     { name: 'Satış', color: 'danger', icon: 'fa-glass', link: 'store' },
@@ -26,6 +28,10 @@ export class HomeComponent {
     localStorage.removeItem('userType');
     localStorage.removeItem('userName');
     localStorage.removeItem('userAuth');
-    this.router.navigate(['/']);
+    localStorage.removeItem('AccessToken');
+    localStorage.removeItem('userPermissions');
+
+    // Electron app'ta uygulamayı kapat
+    this.electronService.exitProgram();
   }
 }
