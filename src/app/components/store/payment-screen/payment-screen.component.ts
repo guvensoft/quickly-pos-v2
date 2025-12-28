@@ -256,13 +256,17 @@ export class PaymentScreenComponent implements OnDestroy {
         if (this.changePrice() >= 0) {
           this.setPayment();
           this.messageService.sendMessage(`Ürünler ${method} olarak ödendi`);
+          // Tüm hesap ödendiyse (changePrice >= 0), hesabı kapat
+          this.mainService.updateData('checks', c._id!, checkToUpdate).then(() => {
+            this.closeCheck(method);
+          });
         } else {
           this.messageService.sendMessage(`Ürünlerin ${newPayment.amount} TL'si ${method} olarak ödendi`);
           this.discount.set(undefined);
           this.discountAmount.set(0);
+          this.mainService.updateData('checks', c._id!, checkToUpdate);
         }
 
-        this.mainService.updateData('checks', c._id!, checkToUpdate);
         this.logService.createLog(logType.CHECK_PAYED, c._id!, `${this.table()} Hesabından ${newPayment.amount} TL tutarında ${method} ödeme alındı.`);
         this.payedPrice.set(0);
         this.isFirstTime.set(true);
