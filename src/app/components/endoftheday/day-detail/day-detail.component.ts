@@ -262,7 +262,12 @@ export class DayDetailComponent {
     }).catch(err => {
       // Suppress logging for missing backup files (ENOENT) - expected for old end-of-day records
       // where backup files may have been archived or deleted
-      if (err.code !== 'ENOENT') {
+      const isFileNotFound =
+        err?.code === 'ENOENT' ||
+        err?.message?.includes('ENOENT') ||
+        err?.message?.includes('no such file or directory');
+
+      if (!isFileNotFound) {
         console.error('Error reading backup data:', err);
       }
       this.oldBackupData.set([]);
