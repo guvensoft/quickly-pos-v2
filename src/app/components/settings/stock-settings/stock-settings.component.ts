@@ -81,10 +81,6 @@ export class StockSettingsComponent implements OnInit {
 
   constructor() {
     this.fillData();
-  }
-
-  ngOnInit() {
-    this.onUpdate.set(false);
 
     // Load stock details when selected
     effect(() => {
@@ -144,6 +140,10 @@ export class StockSettingsComponent implements OnInit {
         this.priceError.set(null);
       }
     });
+  }
+
+  ngOnInit() {
+    this.onUpdate.set(false);
   }
 
   setDefault() {

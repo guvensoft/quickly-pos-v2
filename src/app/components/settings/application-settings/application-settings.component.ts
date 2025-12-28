@@ -87,10 +87,6 @@ export class ApplicationSettingsComponent implements OnInit {
 
   constructor() {
     this.fillData();
-  }
-
-  ngOnInit() {
-    this.currentSection.set('AppSettings');
 
     // Set up reactive effect for AppSettings changes
     effect(() => {
@@ -160,6 +156,10 @@ export class ApplicationSettingsComponent implements OnInit {
         this.portError.set(null);
       }
     });
+  }
+
+  ngOnInit() {
+    this.currentSection.set('AppSettings');
   }
 
   private isValidUrl(url: string): boolean {

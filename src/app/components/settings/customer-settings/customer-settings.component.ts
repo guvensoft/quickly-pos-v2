@@ -88,9 +88,7 @@ export class CustomerSettingsComponent implements OnInit {
     return !this.nameError() && !this.phoneError() && !this.addressError() && !this.typeError();
   });
 
-  ngOnInit() {
-    this.onUpdate.set(false);
-
+  constructor() {
     // Set up reactive effect for DateSettings changes
     effect(() => {
       this.settingsService.DateSettings.subscribe((res: any) => {
@@ -159,7 +157,10 @@ export class CustomerSettingsComponent implements OnInit {
         this.typeError.set(null);
       }
     });
+  }
 
+  ngOnInit() {
+    this.onUpdate.set(false);
     this.fillData();
   }
 
