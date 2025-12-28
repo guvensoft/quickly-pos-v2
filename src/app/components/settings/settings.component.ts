@@ -33,7 +33,7 @@ export class SettingsComponent {
   private readonly settingsService = inject(SettingsService);
 
   readonly storeInfo = signal<any>(undefined);
-  readonly selected = signal<number>(0);
+  readonly selected = signal<number | undefined>(undefined);
   readonly logo = signal<string>('');
 
   constructor() {
