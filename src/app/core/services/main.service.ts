@@ -63,6 +63,7 @@ export class MainService {
   private dataLoaded = signal(false);
   private syncInProgress = signal(false);
   private lastSyncError = signal<Error | null>(null);
+  readonly remoteDBReady = signal(false);
 
   // Computed signals for derived state
   readonly isDataReady = computed(() => this.dataLoaded() && !this.syncInProgress());
@@ -107,7 +108,7 @@ export class MainService {
     };
 
     // Auth bilgilerini yükle
-    this.getAllBy('settings', { key: 'AuthInfo' }).then(res => {
+    const authPromise = this.getAllBy('settings', { key: 'AuthInfo' }).then(res => {
       if (res && res.docs && res.docs.length > 0) {
         this.authInfo = res.docs[0].value;
         this.hostname = 'http://' + this.authInfo.app_remote + ':' + this.authInfo.app_port;
@@ -134,7 +135,7 @@ export class MainService {
     });
 
     // Server bilgilerini yükle
-    this.getAllBy('settings', { key: 'ServerSettings' }).then(res => {
+    const serverPromise = this.getAllBy('settings', { key: 'ServerSettings' }).then(res => {
       if (res && res.docs && res.docs.length > 0) {
         const appType = localStorage.getItem('AppType');
         switch (appType) {
@@ -157,6 +158,16 @@ export class MainService {
       }
     }).catch(err => {
       console.error('MainService: Error loading server settings:', err);
+    });
+
+    // Wait for both auth and server settings to load before marking RemoteDB as ready
+    Promise.all([authPromise, serverPromise]).then(() => {
+      if (this.RemoteDB) {
+        this.remoteDBReady.set(true);
+        console.log('MainService: RemoteDB initialized and ready for sync');
+      }
+    }).catch(err => {
+      console.error('MainService: Failed to initialize RemoteDB:', err);
     });
   }
 
@@ -794,8 +805,23 @@ export class MainService {
     }
 
     if (!this.RemoteDB) {
-      console.warn('MainService: RemoteDB not initialized yet. Skipping syncToRemote.');
+      console.warn('MainService: RemoteDB not initialized yet. Waiting for initialization...');
       this.syncInProgress.set(false);
+
+      // Wait for RemoteDB to be ready, then start sync
+      const checkAndSync = () => {
+        if (this.remoteDBReady()) {
+          console.log('MainService: RemoteDB is now ready, starting sync...');
+          return this.syncToRemote();
+        } else {
+          // Retry after a short delay
+          setTimeout(checkAndSync, 500);
+        }
+      };
+
+      checkAndSync();
+
+      // Return a dummy object for now
       const dummy = {
         on: (event: string, fn: (...args: any[]) => void) => { return dummy; },
         cancel: () => { }
