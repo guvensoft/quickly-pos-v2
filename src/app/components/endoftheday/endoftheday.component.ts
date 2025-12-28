@@ -139,10 +139,12 @@ export class EndofthedayComponent {
       this.settingsService.setAppSettings('DateSettings', dateData).then((res) => {
         if (res.ok) {
           this.isStarted.set(true);
-          this.messageService.sendAlert('Gün Başlatıldı!', 'Program 5 sn içinde yeniden başlatılacak.', 'success');
+          this.messageService.sendAlert('Gün Başlatıldı!', 'Program 3 saniye içinde yeniden başlatılacak.', 'success');
+          // Program reload işlemi
           setTimeout(() => {
-            this.electronService.reloadProgram();
-          }, 5000)
+            // Reload işlemini yap
+            window.location.reload();
+          }, 3000);
         }
       })
 

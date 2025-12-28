@@ -246,33 +246,32 @@ export class DayDetailComponent {
     this.pieLabels.set(newLabels);
     this.pieData.set([{ data: [data.cash_total, data.card_total, data.coupon_total, data.free_total], label: 'Ödeme Yöntemleri' }]);
     this.detailDay.set(new Date(data.timestamp).getDay());
-    this.electronService.readBackupData(data.data_file).then((result: Array<BackupData>) => {
-      if (result && Array.isArray(result) && result.length >= 4) {
-        this.oldBackupData.set(result);
-        this.oldChecks.set(this.oldBackupData()[0]);
-        this.oldCashbox.set(this.oldBackupData()[1]);
-        this.oldReports.set(this.oldBackupData()[2]);
-        this.oldLogs.set(this.oldBackupData()[3]);
-        this.syncStatus.set(true);
-      } else {
-        console.warn('Invalid backup data structure');
+
+    // Silent fail for missing backup files
+    try {
+      this.electronService.readBackupData(data.data_file).then((result: Array<BackupData>) => {
+        if (result && Array.isArray(result) && result.length >= 4) {
+          this.oldBackupData.set(result);
+          this.oldChecks.set(this.oldBackupData()[0]);
+          this.oldCashbox.set(this.oldBackupData()[1]);
+          this.oldReports.set(this.oldBackupData()[2]);
+          this.oldLogs.set(this.oldBackupData()[3]);
+          this.syncStatus.set(true);
+        } else {
+          this.oldBackupData.set([]);
+          this.syncStatus.set(false);
+        }
+      }).catch(() => {
+        // Silently fail for missing backup files - ENOENT errors are expected
+        // for archived or deleted backups from old end-of-day records
         this.oldBackupData.set([]);
         this.syncStatus.set(false);
-      }
-    }).catch(err => {
-      // Suppress logging for missing backup files (ENOENT) - expected for old end-of-day records
-      // where backup files may have been archived or deleted
-      const isFileNotFound =
-        err?.code === 'ENOENT' ||
-        err?.message?.includes('ENOENT') ||
-        err?.message?.includes('no such file or directory');
-
-      if (!isFileNotFound) {
-        console.error('Error reading backup data:', err);
-      }
+      });
+    } catch (err) {
+      // Fallback for synchronous errors
       this.oldBackupData.set([]);
       this.syncStatus.set(false);
-    });
+    }
   }
 
   chartClicked(e: any): void {
