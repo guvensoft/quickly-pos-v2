@@ -5,6 +5,7 @@ import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Printer } from '../../../core/models/settings.model';
 import { ElectronService } from '../../../core/services/electron/electron.service';
+import { MainService } from '../../../core/services/main.service';
 import { MessageService } from '../../../core/services/message.service';
 import { PrinterService } from '../../../core/services/printer.service';
 import { SettingsService } from '../../../core/services/settings.service';
@@ -25,6 +26,7 @@ export class ApplicationSettingsComponent implements OnInit {
   private readonly message = inject(MessageService);
   private readonly validatorService = inject(SignalValidatorService);
   private readonly zone = inject(NgZone);
+  private readonly mainService = inject(MainService);
 
   readonly restInfo = signal<any>(undefined);
   readonly restMap = signal<string | null>(null);
@@ -182,7 +184,7 @@ export class ApplicationSettingsComponent implements OnInit {
     this.settings.setAppSettings('AppSettings', Form.value);
     this.message.sendMessage('Ayarlar Kaydediliyor.. Program Yeniden Başlatılıyor.');
     setTimeout(() => {
-      this.electronService.reloadProgram();
+      window.location.reload();
     }, 1500)
   }
 
@@ -190,7 +192,7 @@ export class ApplicationSettingsComponent implements OnInit {
     this.settings.setAppSettings('RestaurantInfo', Form.value);
     this.message.sendMessage('Ayarlar Kaydediliyor.. Program Yeniden Başlatılıyor.');
     setTimeout(() => {
-      this.electronService.reloadProgram();
+      window.location.reload();
     }, 1500)
   }
 
@@ -209,7 +211,7 @@ export class ApplicationSettingsComponent implements OnInit {
     this.message.sendMessage('Sunucu Ayarları Kaydediliyor.. Makina Yeniden Başlatılıyor.');
     setTimeout(() => {
       this.electronService.ipcRenderer.send('closeServer');
-      this.electronService.relaunchProgram();
+      window.location.reload();
     }, 1500)
   }
 
@@ -352,6 +354,47 @@ export class ApplicationSettingsComponent implements OnInit {
   }
 
   fillData() {
-    // Printers are now loaded via effect() in ngOnInit()
+    // Reload all settings from database and emit through SettingsService subjects
+    this.mainService.getAllBy('settings', {}).then((res) => {
+      if (!res || !res.docs) {
+        return;
+      }
+
+      const settings = res.docs;
+
+      // Find and emit AppSettings
+      const appSettings = settings.find((setting: any) => setting.key === 'AppSettings');
+      if (appSettings) {
+        this.settings.AppSettings.next(appSettings);
+      }
+
+      // Find and emit RestaurantInfo
+      const restaurantInfo = settings.find((setting: any) => setting.key === 'RestaurantInfo');
+      if (restaurantInfo) {
+        this.settings.RestaurantInfo.next(restaurantInfo);
+      }
+
+      // Find and emit ServerSettings based on AppType
+      const appType = localStorage.getItem('AppType');
+      if (appType === 'Primary') {
+        const serverSettings = settings.find((setting: any) => setting.key === 'ServerSettings' && setting.value.type === 0);
+        if (serverSettings) {
+          this.settings.ServerSettings.next(serverSettings);
+        }
+      } else if (appType === 'Secondary') {
+        const serverSettings = settings.find((setting: any) => setting.key === 'ServerSettings' && setting.value.type === 1);
+        if (serverSettings) {
+          this.settings.ServerSettings.next(serverSettings);
+        }
+      }
+
+      // Find and emit Printers
+      const printers = settings.find((setting: any) => setting.key === 'Printers');
+      if (printers) {
+        this.settings.Printers.next(printers);
+      }
+    }).catch(err => {
+      console.error('ApplicationSettingsComponent: Error loading settings:', err);
+    });
   }
 }
