@@ -90,10 +90,10 @@
         </div>
         }
         @if (selected() === 1) {
-        <app-user-settings></app-user-settings>
+        <app-user-settings [key]="selected()"></app-user-settings>
         }
         @if (selected() === 2) {
-        <app-menu-settings></app-menu-settings>
+        <app-menu-settings [key]="selected()"></app-menu-settings>
         }
         @if (selected() === 3) {
         <app-restaurant-settings></app-restaurant-settings>

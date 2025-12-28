@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, NgZone } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, NgZone, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, signal, viewChild, computed, effect, NgZone } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal, viewChild, computed, effect, NgZone, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -38,6 +38,9 @@ export class MenuSettingsComponent implements OnInit {
   readonly stockName = signal<string>('');
   readonly productType = signal<number>(1);
   readonly productRecipe = signal<Array<Ingredient>>([]);
+
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
   readonly recipesTable = signal<Array<any>>([]);
   readonly oldRecipes = signal<Array<any>>([]);
   readonly selectedProduct = signal<Product | undefined>(undefined);

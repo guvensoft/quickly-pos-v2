@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -27,6 +27,9 @@ export class UserSettingsComponent implements OnInit {
   readonly selectedGroup = signal<string | undefined>(undefined);
   readonly selectedUser = signal<string | undefined>(undefined);
   readonly onUpdate = signal<boolean>(false);
+
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
 
   userForm = viewChild<NgForm>('userForm');
   groupForm = viewChild<NgForm>('groupForm');
