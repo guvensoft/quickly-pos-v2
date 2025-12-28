@@ -676,6 +676,11 @@ export class SellingScreenComponent implements OnDestroy {
     }
     this.zone.run(() => {
       const $ = (window as any).$;
+      // Active element'e blur() uygula (aria-hidden uyarısını engelle)
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && activeElement.blur) {
+        activeElement.blur();
+      }
       $('#closeCheck').modal('hide');
       // Backdrop'ı ve scroll kilidini manuel olarak kaldır
       $('.modal-backdrop').remove();
@@ -1466,6 +1471,11 @@ export class SellingScreenComponent implements OnDestroy {
 
     this.zone.run(() => {
       const $ = (window as any).$;
+      // Active element'e blur() uygula (aria-hidden uyarısını engelle)
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && activeElement.blur) {
+        activeElement.blur();
+      }
       $('#checkDiscount').modal('hide');
       // Backdrop'ı ve scroll kilidini manuel olarak kaldır
       $('.modal-backdrop').remove();
