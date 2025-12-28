@@ -16,10 +16,8 @@ export class HttpService {
 
   constructor() {
     // Modern HttpClient kullanıyor, Headers artık HttpHeaders
-    this.headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'charset': 'UTF-8'
-    });
+  this.headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
 
     // İş mantığı AYNEN korundu
     this.baseUrl = 'http:/ / hq.quickly.com.tr';
