@@ -184,7 +184,9 @@ export class SellingScreenComponent implements OnDestroy {
             this.check.set(new Check(currentId!, 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.NORMAL, CheckNo()));
             this.getCheck({ table_id: currentId }).finally(() => {
               if (this.check().status == CheckStatus.PASSIVE) {
-                (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                this.zone.run(() => {
+                  (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                });
               }
             });
             break;
@@ -195,7 +197,9 @@ export class SellingScreenComponent implements OnDestroy {
               this.check.set(new Check('Hızlı Satış', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.FAST, CheckNo()));
               this.getCheck({ _id: currentId }).finally(() => {
                 if (this.check().status == CheckStatus.PASSIVE) {
-                  (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                  this.zone.run(() => {
+                    (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                  });
                 }
               });
             }
@@ -204,7 +208,9 @@ export class SellingScreenComponent implements OnDestroy {
             this.check.set(new Check('Paket Servis', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo()));
             this.getCheck({ _id: currentId }).finally(() => {
               if (this.check().status == CheckStatus.PASSIVE) {
-                (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                this.zone.run(() => {
+                  (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                });
               }
             });
             break;
@@ -668,7 +674,9 @@ export class SellingScreenComponent implements OnDestroy {
         total_discounts += general_discount;
       }
     }
-    (window as any).$('#closeCheck').modal('hide');
+    this.zone.run(() => {
+      (window as any).$('#closeCheck').modal('hide');
+    });
     const checkWillClose = new ClosedCheck(currentCheck.table_id, (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount, total_discounts, this.owner(), currentCheck.note, CheckStatus.OCCUPIED, currentCheck.products, currentCheck.timestamp, currentCheck.type, method, currentCheck.payment_flow, undefined, currentCheck.occupation);
     if (currentCheck.type == CheckType.ORDER) {
       checkWillClose.products.map((obj: any) => obj.status = 2);
