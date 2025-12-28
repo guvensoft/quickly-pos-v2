@@ -79,7 +79,16 @@ export class CashboxComponent {
     }
     this.cashboxForm()?.reset();
     this.zone.run(() => {
-      (window as any).$('#cashboxModal').modal('hide');
+      const $ = (window as any).$;
+      // Active element'e blur() uygula
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && activeElement.blur) {
+        activeElement.blur();
+      }
+      $('#cashboxModal').modal('hide');
+      // Backdrop ve scroll kilidini kaldır
+      $('.modal-backdrop').remove();
+      $('body').removeClass('modal-open');
     });
     return true;
   }
@@ -95,7 +104,10 @@ export class CashboxComponent {
       }
       this.fillData();
       this.zone.run(() => {
-        (window as any).$('#cashboxModal').modal('show');
+        const $ = (window as any).$;
+        // Eski backdrop'ı temizle
+        $('.modal-backdrop').remove();
+        $('#cashboxModal').modal('show');
       });
     })
   }
@@ -108,7 +120,16 @@ export class CashboxComponent {
       this.fillData();
     });
     this.zone.run(() => {
-      (window as any).$('#cashboxModal').modal('hide');
+      const $ = (window as any).$;
+      // Active element'e blur() uygula
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && activeElement.blur) {
+        activeElement.blur();
+      }
+      $('#cashboxModal').modal('hide');
+      // Backdrop ve scroll kilidini kaldır
+      $('.modal-backdrop').remove();
+      $('body').removeClass('modal-open');
     });
   }
 
