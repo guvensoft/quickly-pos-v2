@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, viewChild, effect, NgZone } from '@angular/core';
+import { Component, inject, signal, computed, viewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -28,7 +28,7 @@ export class StoreReportsComponent {
   private readonly settingsService = inject(SettingsService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
-  private readonly zone = inject(NgZone);
+
 
   readonly AllChecks = signal<ClosedCheck[]>([]);
   readonly FastChecks = signal<ClosedCheck[]>([]);
@@ -96,9 +96,7 @@ export class StoreReportsComponent {
 
   getDetail(check: any) {
     this.checkDetail.set(check);
-    this.zone.run(() => {
-      (window as any).$('#reportDetail').modal('show');
-    });
+    (window as any).$('#reportDetail').modal('show');
   }
 
   filterTables(value: string) {
@@ -107,14 +105,12 @@ export class StoreReportsComponent {
     } else {
       const regexp = new RegExp(value, 'i');
       this.mainService.getAllBy('tables', { name: { $regex: regexp } }).then(data => {
-        this.zone.run(() => {
-          if (data.docs.length > 0) {
-            const results = this.AllChecks().filter((obj: any) => obj.table_id == data.docs[0]._id);
-            if (results.length > 0) {
-              this.NormalChecks.set(results);
-            }
+        if (data.docs.length > 0) {
+          const results = this.AllChecks().filter((obj: any) => obj.table_id == data.docs[0]._id);
+          if (results.length > 0) {
+            this.NormalChecks.set(results);
           }
-        });
+        }
       });
     }
   }
@@ -145,30 +141,26 @@ export class StoreReportsComponent {
 
   rePrintCheck(check: any) {
     this.mainService.getData('tables', check.table_id).then(res => {
-      this.zone.run(() => {
-        const printers = this.printers();
-        if (!printers || printers.length === 0) return;
+      const printers = this.printers();
+      if (!printers || printers.length === 0) return;
 
-        if (check.products && check.products.length > 0) {
-          this.printerService.printCheck(printers[0], res.name, check);
+      if (check.products && check.products.length > 0) {
+        this.printerService.printCheck(printers[0], res.name, check);
+      } else {
+        if (check.payment_flow && Array.isArray(check.payment_flow)) {
+          check.products = check.payment_flow.reduce((a: any, b: any) => {
+            return a.concat(b.payed_products || []);
+          }, []);
         } else {
-          if (check.payment_flow && Array.isArray(check.payment_flow)) {
-            check.products = check.payment_flow.reduce((a: any, b: any) => {
-              return a.concat(b.payed_products || []);
-            }, []);
-          } else {
-            check.products = [];
-          }
-          this.printerService.printCheck(printers[0], res.name, check);
+          check.products = [];
         }
-      });
+        this.printerService.printCheck(printers[0], res.name, check);
+      }
     }).catch(err => {
-      this.zone.run(() => {
-        const printers = this.printers();
-        if (printers && printers.length > 0) {
-          this.printerService.printCheck(printers[0], check.table_id, check);
-        }
-      });
+      const printers = this.printers();
+      if (printers && printers.length > 0) {
+        this.printerService.printCheck(printers[0], check.table_id, check);
+      }
     });
   }
 
@@ -184,14 +176,10 @@ export class StoreReportsComponent {
       checkWillReOpen = new Check('Hızlı Satış', check.total_price, check.discount, check.owner, 'Geri Açılan', check.status, check.products, Date.now(), CheckType.FAST, CheckNo(), check.payment_flow);
     }
     this.mainService.addData('checks', checkWillReOpen).then(res => {
-      this.zone.run(() => {
-        this.mainService.removeData('closed_checks', (check as any)._id).then(res => {
-          this.fillData();
-          this.zone.run(() => {
-            (window as any).$('#checkDetail').modal('hide');
-          });
-          this.messageService.sendAlert('Başarılı !', 'Hesap Geri Açıldı', 'success');
-        });
+      this.mainService.removeData('closed_checks', (check as any)._id).then(res => {
+        this.fillData();
+        (window as any).$('#checkDetail').modal('hide');
+        this.messageService.sendAlert('Başarılı !', 'Hesap Geri Açıldı', 'success');
       });
     });
     const currentDay = this.day();
@@ -245,13 +233,9 @@ export class StoreReportsComponent {
         }
       });
       this.mainService.updateData('closed_checks', detail._id, { total_price: Form.total_price, payment_method: Form.payment_method }).then(res => {
-        this.zone.run(() => {
-          this.messageService.sendMessage('Hesap Düzenlendi!');
-          this.fillData();
-          this.zone.run(() => {
-            (window as any).$('#editCheck').modal('hide');
-          });
-        });
+        this.messageService.sendMessage('Hesap Düzenlendi!');
+        this.fillData();
+        (window as any).$('#editCheck').modal('hide');
       });
     } else {
       if (detail.total_price !== Form.total_price) {
@@ -266,13 +250,9 @@ export class StoreReportsComponent {
           }
         });
         this.mainService.updateData('closed_checks', detail._id, { total_price: Form.total_price }).then(res => {
-          this.zone.run(() => {
-            this.messageService.sendMessage('Hesap Düzenlendi!');
-            this.fillData();
-            this.zone.run(() => {
-              (window as any).$('#editCheck').modal('hide');
-            });
-          });
+          this.messageService.sendMessage('Hesap Düzenlendi!');
+          this.fillData();
+          (window as any).$('#editCheck').modal('hide');
         });
       } else {
         return false;
@@ -286,28 +266,20 @@ export class StoreReportsComponent {
     this.messageService.sendConfirm('Kapanmış Hesap İptal Edilecek! Bu işlem geri alınamaz!').then(isOK => {
       if (isOK) {
         this.mainService.updateData('closed_checks', id, { description: note, type: 3 }).then(res => {
-          this.zone.run(() => {
-            this.logService.createLog(logType.CHECK_CANCELED, id, `${detail.total_price} TL tutarındaki kapatılan hesap iptal edildi. Açıklama:'${note}'`);
-            this.fillData();
-            this.zone.run(() => {
-              (window as any).$('#cancelDetail').modal('hide');
-            });
-          });
+          this.logService.createLog(logType.CHECK_CANCELED, id, `${detail.total_price} TL tutarındaki kapatılan hesap iptal edildi. Açıklama:'${note}'`);
+          this.fillData();
+          (window as any).$('#cancelDetail').modal('hide');
         });
       }
     });
   }
 
   editPayment(i: number) {
-    this.zone.run(() => {
-      (window as any).$('#editCheck').modal('hide');
-    });
+    (window as any).$('#editCheck').modal('hide');
     const detail = this.checkDetail();
     this.selectedPayment.set(detail.payment_flow[i]);
     this.selectedPaymentIndex.set(i);
-    this.zone.run(() => {
-      (window as any).$('#paymentDetail').modal('show');
-    });
+    (window as any).$('#paymentDetail').modal('show');
   }
 
   changePayment(paymentDetail: NgForm) {
@@ -345,10 +317,8 @@ export class StoreReportsComponent {
           this.mainService.updateData('closed_checks', detail._id, { total_price: detail.total_price, payment_flow: detail.payment_flow }).then(res => {
             this.messageService.sendMessage('Hesap Düzenlendi!');
             this.fillData();
-            this.zone.run(() => {
-              (window as any).$('#editCheck').modal('show');
-              (window as any).$('#paymentDetail').modal('hide');
-            });
+            (window as any).$('#editCheck').modal('show');
+            (window as any).$('#paymentDetail').modal('hide');
           });
         });
       });
@@ -370,10 +340,8 @@ export class StoreReportsComponent {
           this.mainService.updateData('closed_checks', detail._id, { total_price: detail.total_price, payment_flow: detail.payment_flow }).then(res => {
             this.messageService.sendMessage('Hesap Düzenlendi!');
             this.fillData();
-            this.zone.run(() => {
-              (window as any).$('#editCheck').modal('show');
-              (window as any).$('#paymentDetail').modal('hide');
-            });
+            (window as any).$('#editCheck').modal('show');
+            (window as any).$('#paymentDetail').modal('hide');
           });
         });
 
@@ -385,26 +353,22 @@ export class StoreReportsComponent {
 
   getLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.zone.run(() => {
-        const logs = (res.docs.filter((obj: any) => (obj.type >= logType.CHECK_CREATED && obj.type <= logType.ORDER_MOVED) || obj.type == logType.DISCOUNT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[];
-        this.sellingLogs.set(logs);
-      });
+      const logs = (res.docs.filter((obj: any) => (obj.type >= logType.CHECK_CREATED && obj.type <= logType.ORDER_MOVED) || obj.type == logType.DISCOUNT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[];
+      this.sellingLogs.set(logs);
     });
   }
 
   fillData() {
     this.mainService.getAllBy('closed_checks', {}).then(res => {
-      this.zone.run(() => {
-        if (res.docs.length > 0) {
-          const all = res.docs as ClosedCheck[];
-          all.sort((a: any, b: any) => b.timestamp - a.timestamp);
-          this.AllChecks.set(all);
-          this.NotPayedChecks.set(all.filter((obj: any) => obj.type == CheckType.CANCELED));
-          this.FastChecks.set(all.filter((obj: any) => obj.type == CheckType.FAST));
-          this.NormalChecks.set(all.filter((obj: any) => obj.type == CheckType.NORMAL));
-          this.DeliveryChecks.set(all.filter((obj: any) => obj.type == CheckType.ORDER));
-        }
-      });
+      if (res.docs.length > 0) {
+        const all = res.docs as ClosedCheck[];
+        all.sort((a: any, b: any) => b.timestamp - a.timestamp);
+        this.AllChecks.set(all);
+        this.NotPayedChecks.set(all.filter((obj: any) => obj.type == CheckType.CANCELED));
+        this.FastChecks.set(all.filter((obj: any) => obj.type == CheckType.FAST));
+        this.NormalChecks.set(all.filter((obj: any) => obj.type == CheckType.NORMAL));
+        this.DeliveryChecks.set(all.filter((obj: any) => obj.type == CheckType.ORDER));
+      }
     });
   }
 }

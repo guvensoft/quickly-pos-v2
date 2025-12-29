@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone, input } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -26,7 +26,6 @@ export class ApplicationSettingsComponent implements OnInit {
   private readonly electronService = inject(ElectronService);
   private readonly message = inject(MessageService);
   private readonly validatorService = inject(SignalValidatorService);
-  private readonly zone = inject(NgZone);
   private readonly mainService = inject(MainService);
   private readonly dialogFacade = inject(DialogFacade);
 

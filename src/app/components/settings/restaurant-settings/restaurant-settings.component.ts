@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, NgZone, input } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -21,7 +21,6 @@ export class RestaurantSettingsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
-  private readonly zone = inject(NgZone);
   private readonly dialogFacade = inject(DialogFacade);
 
   readonly floors = signal<Array<Floor>>([]);
@@ -96,25 +95,21 @@ export class RestaurantSettingsComponent implements OnInit {
   getTablesByFloor(id: string | null | undefined) {
     if (id) {
       this.mainService.getAllBy('tables', { floor_id: id }).then(result => {
-        this.zone.run(() => {
-          if (result && result.docs) {
-            const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
-            this.tables.set(sorted);
-          } else {
-            this.tables.set([]);
-          }
-        });
+        if (result && result.docs) {
+          const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
+          this.tables.set(sorted);
+        } else {
+          this.tables.set([]);
+        }
       });
     } else {
       this.mainService.getAllBy('tables', {}).then(result => {
-        this.zone.run(() => {
-          if (result && result.docs) {
-            const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
-            this.tables.set(sorted);
-          } else {
-            this.tables.set([]);
-          }
-        });
+        if (result && result.docs) {
+          const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
+          this.tables.set(sorted);
+        } else {
+          this.tables.set([]);
+        }
       });
     }
   }
@@ -276,37 +271,31 @@ export class RestaurantSettingsComponent implements OnInit {
   filterTables(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('tables', { name: { $regex: regexp } }).then(res => {
-      this.zone.run(() => {
-        if (res && res.docs) {
-          const sorted = (res.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
-          this.tables.set(sorted);
-        } else {
-          this.tables.set([]);
-        }
-      });
+      if (res && res.docs) {
+        const sorted = (res.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
+        this.tables.set(sorted);
+      } else {
+        this.tables.set([]);
+      }
     });
   }
 
   fillData() {
     this.mainService.getAllBy('floors', {}).then((result) => {
-      this.zone.run(() => {
-        if (result && result.docs) {
-          const sorted = (result.docs as any).sort((a: any, b: any) => a.timestamp - b.timestamp);
-          this.floors.set(sorted);
-        } else {
-          this.floors.set([]);
-        }
-      });
+      if (result && result.docs) {
+        const sorted = (result.docs as any).sort((a: any, b: any) => a.timestamp - b.timestamp);
+        this.floors.set(sorted);
+      } else {
+        this.floors.set([]);
+      }
     });
     this.mainService.getAllBy('tables', {}).then((result) => {
-      this.zone.run(() => {
-        if (result && result.docs) {
-          const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
-          this.tables.set(sorted);
-        } else {
-          this.tables.set([]);
-        }
-      });
+      if (result && result.docs) {
+        const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
+        this.tables.set(sorted);
+      } else {
+        this.tables.set([]);
+      }
     });
   }
 }

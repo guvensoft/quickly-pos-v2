@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone, input } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -22,7 +22,6 @@ export class StockSettingsComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
   private readonly validatorService = inject(SignalValidatorService);
-  private readonly zone = inject(NgZone);
   private readonly dialogFacade = inject(DialogFacade);
 
   readonly categories = signal<Array<StockCategory>>([]);
@@ -175,13 +174,11 @@ export class StockSettingsComponent implements OnInit {
 
   getStocks(id: string | undefined) {
     this.mainService.getAllBy('stocks', { sub_category: id }).then((result) => {
-      this.zone.run(() => {
-        if (result && result.docs) {
-          this.stocks.set(result.docs as any);
-        } else {
-          this.stocks.set([]);
-        }
-      });
+      if (result && result.docs) {
+        this.stocks.set(result.docs as any);
+      } else {
+        this.stocks.set([]);
+      }
     });
   }
 
@@ -358,36 +355,30 @@ export class StockSettingsComponent implements OnInit {
   filterStocks(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('stocks', { name: { $regex: regexp } }).then(res => {
-      this.zone.run(() => {
-        if (res && res.docs) {
-          const sorted = (res.docs as any).sort((a: any, b: any) => a.left_total - b.left_total);
-          this.stocks.set(sorted);
-        } else {
-          this.stocks.set([]);
-        }
-      });
+      if (res && res.docs) {
+        const sorted = (res.docs as any).sort((a: any, b: any) => a.left_total - b.left_total);
+        this.stocks.set(sorted);
+      } else {
+        this.stocks.set([]);
+      }
     });
   }
 
   fillData() {
     this.mainService.getAllBy('stocks_cat', {}).then(result => {
-      this.zone.run(() => {
-        if (result && result.docs) {
-          this.categories.set(result.docs as any);
-        } else {
-          this.categories.set([]);
-        }
-      });
+      if (result && result.docs) {
+        this.categories.set(result.docs as any);
+      } else {
+        this.categories.set([]);
+      }
     });
     this.mainService.getAllBy('stocks', {}).then(result => {
-      this.zone.run(() => {
-        if (result && result.docs) {
-          const sorted = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp);
-          this.stocks.set(sorted);
-        } else {
-          this.stocks.set([]);
-        }
-      });
+      if (result && result.docs) {
+        const sorted = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp);
+        this.stocks.set(sorted);
+      } else {
+        this.stocks.set([]);
+      }
     })
   }
 }

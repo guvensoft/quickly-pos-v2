@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, input, NgZone } from '@angular/core';
+import { Component, OnInit, inject, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Recipe } from '../../../core/models/product.model';
 import { MainService } from '../../../core/services/main.service';
@@ -13,7 +13,6 @@ import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 })
 export class RecipeSettingsComponent implements OnInit {
   private readonly mainService = inject(MainService);
-  private readonly zone = inject(NgZone);
 
   readonly recipes = signal<Array<Recipe>>([]);
 
@@ -26,13 +25,11 @@ export class RecipeSettingsComponent implements OnInit {
 
   fillData() {
     this.mainService.getAllBy('recipes', {}).then(res => {
-      this.zone.run(() => {
-        if (res && res.docs) {
-          this.recipes.set(res.docs);
-        } else {
-          this.recipes.set([]);
-        }
-      });
+      if (res && res.docs) {
+        this.recipes.set(res.docs);
+      } else {
+        this.recipes.set([]);
+      }
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, OnDestroy, inject, signal, computed, effect, viewChild, NgZone } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, inject, signal, computed, effect, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -29,7 +29,6 @@ export class PaymentScreenComponent implements OnDestroy {
   private readonly printerService = inject(PrinterService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
-  private readonly zone = inject(NgZone);
 
   readonly id = signal<string | undefined>(undefined);
   readonly check_type = signal<'Normal' | 'Fast' | 'Order'>('Normal');
@@ -360,9 +359,7 @@ export class PaymentScreenComponent implements OnDestroy {
         }
         this.mainService.removeData('checks', c._id!).then((result: any) => {
           if (result.ok) {
-            this.zone.run(() => {
-              (window as any).$ ? (window as any).$('#otherOptions').modal('hide') : null;
-            });
+            (window as any).$ ? (window as any).$('#otherOptions').modal('hide') : null;
             this.router.navigate(['/store']);
           }
         })
@@ -384,18 +381,14 @@ export class PaymentScreenComponent implements OnDestroy {
     if (this.discountInput()) {
       this.discountInput()!.nativeElement.value = 0;
     }
-    this.zone.run(() => {
-      (window as any).$ ? (window as any).$('#discount').modal('hide') : null;
-    });
+    (window as any).$ ? (window as any).$('#discount').modal('hide') : null;
   }
 
   divideWillPay(division: number) {
     if (division <= 0) return;
     this.payedPrice.set(this.priceWillPay() / division);
     this.numpad.set(this.payedPrice().toFixed(2).toString());
-    this.zone.run(() => {
-      (window as any).$ ? (window as any).$('#calculator').modal('hide') : null;
-    });
+    (window as any).$ ? (window as any).$('#calculator').modal('hide') : null;
   }
 
   togglePayed() {

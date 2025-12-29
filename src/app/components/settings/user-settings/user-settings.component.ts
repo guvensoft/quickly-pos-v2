@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone, input } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -21,7 +21,6 @@ export class UserSettingsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
-  private readonly zone = inject(NgZone);
   private readonly dialogFacade = inject(DialogFacade);
 
   readonly users = signal<Array<User>>([]);
@@ -109,23 +108,19 @@ export class UserSettingsComponent implements OnInit {
   getUsersByGroup(id: string | null | undefined) {
     if (id) {
       this.mainService.getAllBy('users', { role_id: id }).then(res => {
-        this.zone.run(() => {
-          if (res && res.docs) {
-            this.users.set(res.docs as any);
-          } else {
-            this.users.set([]);
-          }
-        });
+        if (res && res.docs) {
+          this.users.set(res.docs as any);
+        } else {
+          this.users.set([]);
+        }
       });
     } else {
       this.mainService.getAllBy('users', {}).then(res => {
-        this.zone.run(() => {
-          if (res && res.docs) {
-            this.users.set(res.docs as any);
-          } else {
-            this.users.set([]);
-          }
-        });
+        if (res && res.docs) {
+          this.users.set(res.docs as any);
+        } else {
+          this.users.set([]);
+        }
       });
     }
   }
@@ -385,34 +380,28 @@ export class UserSettingsComponent implements OnInit {
   filterUsers(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('users', { name: { $regex: regexp } }).then(res => {
-      this.zone.run(() => {
-        if (res && res.docs) {
-          this.users.set(res.docs as any);
-        } else {
-          this.users.set([]);
-        }
-      });
+      if (res && res.docs) {
+        this.users.set(res.docs as any);
+      } else {
+        this.users.set([]);
+      }
     });
   }
 
   fillData() {
     this.mainService.getAllBy('users', {}).then(result => {
-      this.zone.run(() => {
-        if (result && result.docs) {
-          this.users.set(result.docs as any);
-        } else {
-          this.users.set([]);
-        }
-      });
+      if (result && result.docs) {
+        this.users.set(result.docs as any);
+      } else {
+        this.users.set([]);
+      }
     });
     this.mainService.getAllBy('users_group', {}).then(result => {
-      this.zone.run(() => {
-        if (result && result.docs) {
-          this.groups.set(result.docs as any);
-        } else {
-          this.groups.set([]);
-        }
-      });
+      if (result && result.docs) {
+        this.groups.set(result.docs as any);
+      } else {
+        this.groups.set([]);
+      }
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, NgZone } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Log, logType } from '../../../core/models/log.model';
 import { Report } from '../../../core/models/report.model';
@@ -23,7 +23,6 @@ export class ProductReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly settingsService = inject(SettingsService);
   private readonly printerService = inject(PrinterService);
-  private readonly zone = inject(NgZone);
 
   readonly categoriesList = signal<Category[]>([]);
   readonly selectedCat = signal<string | undefined>(undefined);
@@ -139,15 +138,11 @@ export class ProductReportsComponent implements OnInit {
     this.DetailLoaded.set(false);
     this.ItemReport.set(report);
     this.mainService.getData('reports', report._id!).then(res => {
-      this.zone.run(() => {
-        res.weekly = this.normalWeekOrder(res.weekly || []);
-        res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
-        this.DetailData.set([{ data: res.weekly, label: 'Satış Tutarı' }]);
-        this.DetailLoaded.set(true);
-        this.zone.run(() => {
-          (window as any).$('#reportDetail').modal('show');
-        });
-      });
+      res.weekly = this.normalWeekOrder(res.weekly || []);
+      res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
+      this.DetailData.set([{ data: res.weekly, label: 'Satış Tutarı' }]);
+      this.DetailLoaded.set(true);
+      (window as any).$('#reportDetail').modal('show');
     });
   }
 
@@ -180,10 +175,8 @@ export class ProductReportsComponent implements OnInit {
     const selected = this.selectedCat();
     if (selected) {
       this.mainService.getAllBy('products', { cat_id: selected }).then(res => {
-        this.zone.run(() => {
-          const products_ids = res.docs.map((obj: any) => obj._id);
-          this.productList.set(this.productList().filter(obj => products_ids.includes(obj.connection_id)));
-        });
+        const products_ids = res.docs.map((obj: any) => obj._id);
+        this.productList.set(this.productList().filter(obj => products_ids.includes(obj.connection_id)));
       });
     }
   }
@@ -191,10 +184,8 @@ export class ProductReportsComponent implements OnInit {
   getReportsByCategory(cat_id: string) {
     this.selectedCat.set(cat_id);
     this.mainService.getAllBy('products', { cat_id: cat_id }).then(res => {
-      this.zone.run(() => {
-        const products_ids = res.docs.map((obj: any) => obj._id);
-        this.productList.set(this.generalList().filter((obj: any) => products_ids.includes(obj.connection_id)));
-      });
+      const products_ids = res.docs.map((obj: any) => obj._id);
+      this.productList.set(this.generalList().filter((obj: any) => products_ids.includes(obj.connection_id)));
     });
   }
 
@@ -229,43 +220,35 @@ export class ProductReportsComponent implements OnInit {
     this.ChartData.set([]);
     this.ChartLoaded.set(false);
     this.mainService.getAllBy('reports', { type: 'Product' }).then(res => {
-      this.zone.run(() => {
-        const general = (res.docs.sort((a: any, b: any) => b.count - a.count)) as Report[];
-        this.generalList.set(general);
-        const productL = JSON.parse(JSON.stringify(general)) as Report[];
-        this.productList.set(productL);
-        const chartL = productL.slice(0, 5);
-        this.chartList.set(chartL);
+      const general = (res.docs.sort((a: any, b: any) => b.count - a.count)) as Report[];
+      this.generalList.set(general);
+      const productL = JSON.parse(JSON.stringify(general)) as Report[];
+      this.productList.set(productL);
+      const chartL = productL.slice(0, 5);
+      this.chartList.set(chartL);
 
-        chartL.forEach((obj, index) => {
-          this.mainService.getData('products', obj.connection_id).then(res => {
-            this.zone.run(() => {
-              obj.weekly = this.normalWeekOrder(obj.weekly);
-              if (daily) {
-                obj.weekly = this.normalWeekOrder(obj.weekly_count);
-              }
-              const schema: any = { data: obj.weekly, label: res.name };
-              this.ChartData.update(data => [...data, schema]);
-              if (chartL.length - 1 == index) {
-                this.ChartLoaded.set(true);
-              }
-            });
-          });
+      chartL.forEach((obj, index) => {
+        this.mainService.getData('products', obj.connection_id).then(res => {
+          obj.weekly = this.normalWeekOrder(obj.weekly);
+          if (daily) {
+            obj.weekly = this.normalWeekOrder(obj.weekly_count);
+          }
+          const schema: any = { data: obj.weekly, label: res.name };
+          this.ChartData.update(data => [...data, schema]);
+          if (chartL.length - 1 == index) {
+            this.ChartLoaded.set(true);
+          }
         });
       });
     });
     this.mainService.getAllBy('categories', {}).then(res => {
-      this.zone.run(() => {
-        const categories = res.docs as Category[];
-        categories.sort((a: any, b: any) => b.order - a.order);
-        this.categoriesList.set(categories);
-      });
+      const categories = res.docs as Category[];
+      categories.sort((a: any, b: any) => b.order - a.order);
+      this.categoriesList.set(categories);
     });
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.zone.run(() => {
-        const logs = (res.docs.filter((obj: any) => obj.type >= logType.PRODUCT_CREATED && obj.type <= logType.PRODUCT_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[];
-        this.productLogs.set(logs);
-      });
+      const logs = (res.docs.filter((obj: any) => obj.type >= logType.PRODUCT_CREATED && obj.type <= logType.PRODUCT_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[];
+      this.productLogs.set(logs);
     });
   }
 }

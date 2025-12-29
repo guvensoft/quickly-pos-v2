@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect, NgZone, input } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MainService } from '../../../core/services/main.service';
@@ -31,7 +31,6 @@ export class CustomerSettingsComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
   private readonly validatorService = inject(SignalValidatorService);
-  private readonly zone = inject(NgZone);
   private readonly dialogFacade = inject(DialogFacade);
 
   readonly customers = signal<Array<Customer>>([]);
@@ -330,23 +329,17 @@ export class CustomerSettingsComponent implements OnInit {
   filterCustomers(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('customers', { name: { $regex: regexp } }).then((res: any) => {
-      this.zone.run(() => {
-        this.customers.set(res.docs);
-      });
+      this.customers.set(res.docs);
     });
   }
 
   fillData() {
     this.mainService.getAllBy('customers', {}).then((result: any) => {
-      this.zone.run(() => {
-        this.customers.set(result.docs);
-      });
+      this.customers.set(result.docs);
     });
     this.mainService.getAllBy('credits', {}).then((res: any) => {
-      this.zone.run(() => {
-        this.credits.set(res.docs);
-        this.creditsView.set([...res.docs].sort((a: any, b: any) => a.timestamp - b.timestamp));
-      });
+      this.credits.set(res.docs);
+      this.creditsView.set([...res.docs].sort((a: any, b: any) => a.timestamp - b.timestamp));
     })
   }
 }

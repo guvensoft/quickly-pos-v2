@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, NgZone, ChangeDetectorRef, inject, OnDestroy, signal, computed, effect, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ChangeDetectorRef, inject, OnDestroy, signal, computed, effect, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonDirective } from '../../../shared/directives/button.directive';
 import { RouterModule } from '@angular/router';
@@ -44,7 +44,7 @@ export class SellingScreenComponent implements OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly scalerService = inject(ScalerService);
   private readonly logService = inject(LogService);
-  private readonly zone = inject(NgZone);
+
 
   readonly id = signal<string | undefined>(undefined);
   readonly type = signal<string | undefined>(undefined);
@@ -184,9 +184,7 @@ export class SellingScreenComponent implements OnDestroy {
             this.check.set(new Check(currentId!, 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.NORMAL, CheckNo()));
             this.getCheck({ table_id: currentId }).finally(() => {
               if (this.check().status == CheckStatus.PASSIVE) {
-                this.zone.run(() => {
-                  (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
-                });
+                (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
               }
             });
             break;
@@ -197,9 +195,7 @@ export class SellingScreenComponent implements OnDestroy {
               this.check.set(new Check('Hızlı Satış', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.FAST, CheckNo()));
               this.getCheck({ _id: currentId }).finally(() => {
                 if (this.check().status == CheckStatus.PASSIVE) {
-                  this.zone.run(() => {
-                    (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
-                  });
+                  (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
                 }
               });
             }
@@ -208,9 +204,7 @@ export class SellingScreenComponent implements OnDestroy {
             this.check.set(new Check('Paket Servis', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo()));
             this.getCheck({ _id: currentId }).finally(() => {
               if (this.check().status == CheckStatus.PASSIVE) {
-                this.zone.run(() => {
-                  (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
-                });
+                (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
               }
             });
             break;
@@ -219,18 +213,16 @@ export class SellingScreenComponent implements OnDestroy {
     }, { allowSignalWrites: true });
 
     // Set up occupationModal hidden event listener to clear focus
-    this.zone.run(() => {
-      const $ = (window as any).$;
-      $('#occupationModal').on('hidden.bs.modal', () => {
-        // Clear focus from active element
-        const activeElement = document.activeElement as HTMLElement;
-        if (activeElement && activeElement.blur) {
-          activeElement.blur();
-        }
-        // Clean up backdrop and modal-open class
-        $('.modal-backdrop').remove();
-        $('body').removeClass('modal-open');
-      });
+    const $ = (window as any).$;
+    $('#occupationModal').on('hidden.bs.modal', () => {
+      // Clear focus from active element
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && activeElement.blur) {
+        activeElement.blur();
+      }
+      // Clean up backdrop and modal-open class
+      $('.modal-backdrop').remove();
+      $('body').removeClass('modal-open');
     });
 
     // DateSettings subscription wrapped in effect
@@ -277,13 +269,11 @@ export class SellingScreenComponent implements OnDestroy {
         if (change.id == this.check_id()) {
           if (!change.deleted) {
             this.mainService.getData('checks', change.id).then((res: any) => {
-              this.zone.run(() => {
-                this.check.set(res);
-                this.id.set(res.table_id);
-                if (res.status == CheckStatus.PROCESSING) {
-                  this.router.navigate(['/store']);
-                }
-              });
+              this.check.set(res);
+              this.id.set(res.table_id);
+              if (res.status == CheckStatus.PROCESSING) {
+                this.router.navigate(['/store']);
+              }
             })
           } else {
             this.router.navigate(['/store']);
@@ -292,26 +282,24 @@ export class SellingScreenComponent implements OnDestroy {
       });
       this.changes.set(ch);
 
-      this.zone.runOutsideAngular(() => {
-        const $ = (window as any).$;
-        if ($ && typeof $ === 'function') {
-          const productSpecsModal = $('#productSpecs');
-          if (productSpecsModal.length) {
-            productSpecsModal.on('hide.bs.modal', () => {
-              if (this.scalerListener && typeof this.scalerListener.unsubscribe === 'function') {
-                this.scalerListener.unsubscribe();
-              }
-            });
-          }
-
-          const specsModal = $('#specsModal');
-          if (specsModal.length) {
-            specsModal.on('hide.bs.modal', () => {
-              this.selectedQuantity.set(1);
-            });
-          }
+      const $ = (window as any).$;
+      if ($ && typeof $ === 'function') {
+        const productSpecsModal = $('#productSpecs');
+        if (productSpecsModal.length) {
+          productSpecsModal.on('hide.bs.modal', () => {
+            if (this.scalerListener && typeof this.scalerListener.unsubscribe === 'function') {
+              this.scalerListener.unsubscribe();
+            }
+          });
         }
-      });
+
+        const specsModal = $('#specsModal');
+        if (specsModal.length) {
+          specsModal.on('hide.bs.modal', () => {
+            this.selectedQuantity.set(1);
+          });
+        }
+      }
       this.cdr.detectChanges();
     }, { allowSignalWrites: true });
   }
@@ -358,11 +346,9 @@ export class SellingScreenComponent implements OnDestroy {
         currentCheck.products.map((obj: any) => obj.status = 2);
         currentCheck.status = CheckStatus.OCCUPIED;
         this.mainService.addData('checks', currentCheck).then((res: any) => {
-          this.zone.run(() => {
-            if (res.ok) {
-              this.router.navigate(['/payment', res.id]);
-            }
-          });
+          if (res.ok) {
+            this.router.navigate(['/payment', res.id]);
+          }
         });
       } else {
         this.router.navigate(['/payment', this.check_id()]);
@@ -374,12 +360,10 @@ export class SellingScreenComponent implements OnDestroy {
 
   getCheck(filter: object) {
     return this.mainService.getAllBy('checks', filter).then((result: any) => {
-      this.zone.run(() => {
-        if (result.docs.length > 0) {
-          this.check.set(result.docs[0]);
-          this.check_id.set(result.docs[0]._id);
-        }
-      });
+      if (result.docs.length > 0) {
+        this.check.set(result.docs[0]);
+        this.check_id.set(result.docs[0]._id);
+      }
     }).catch((err: any) => {
       console.error('getCheck error:', err);
     });
@@ -395,19 +379,17 @@ export class SellingScreenComponent implements OnDestroy {
       this.isFirstTime.set(true);
       this.productWithSpecs.set(product);
       this.mainService.getAllBy('recipes', { product_id: product._id! }).then((res: any) => {
-        this.zone.run(() => {
-          const ps = res.docs[0].recipe[0];
-          this.productStock.set(ps);
-          this.numpad.set(ps.amount);
-          this.scalerListener = this.scalerService.listenScalerEvent().subscribe((weight: number) => {
-            if (weight && weight !== 0) {
-              let val = weight * ps.amount;
-              if (this.tareNumber() !== 0) {
-                val = val - this.tareNumber();
-              }
-              this.numpad.set(val);
+        const ps = res.docs[0].recipe[0];
+        this.productStock.set(ps);
+        this.numpad.set(ps.amount);
+        this.scalerListener = this.scalerService.listenScalerEvent().subscribe((weight: number) => {
+          if (weight && weight !== 0) {
+            let val = weight * ps.amount;
+            if (this.tareNumber() !== 0) {
+              val = val - this.tareNumber();
             }
-          });
+            this.numpad.set(val);
+          }
         });
       });
       (window as any).$('#productSpecs').modal('show');
@@ -519,32 +501,30 @@ export class SellingScreenComponent implements OnDestroy {
         this.mainService.updateData('tables', this.id() as string, { status: 2 });
       }
       this.mainService.updateData('checks', this.check_id(), currentCheck).then((res: any) => {
-        this.zone.run(() => {
-          if (res.ok) {
-            const newOrder = new Order(currentCheck._id, { id: this.ownerId(), name: this.owner() + ' ( Personel )' }, [], OrderStatus.APPROVED, OrderType.EMPLOOYEE, timestamp);
-            this.newOrders().forEach(order => {
-              const orderItem: OrderItem = {
-                name: order.name,
-                price: order.price,
-                note: order.note,
-                product_id: order.id
-              }
-              newOrder.items.push(orderItem);
-            });
-            this.mainService.addData('orders', newOrder).then((res: any) => {
-              const pricesTotal = this.newOrders().length > 0
-                ? this.newOrders().map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
-                : 0;
-              if (currentCheck.type == CheckType.NORMAL) {
-                this.logService.createLog(logType.CHECK_UPDATED, currentCheck._id, `${this.table().name} hesabına ${pricesTotal} TL tutarında sipariş eklendi.`);
-              } else {
-                this.logService.createLog(logType.CHECK_UPDATED, currentCheck._id, `${currentCheck.note} hesabına ${pricesTotal} TL tutarında sipariş eklendi.`);
-              }
-            }).catch((err: any) => {
-              console.error(err);
-            });
-          }
-        });
+        if (res.ok) {
+          const newOrder = new Order(currentCheck._id, { id: this.ownerId(), name: this.owner() + ' ( Personel )' }, [], OrderStatus.APPROVED, OrderType.EMPLOOYEE, timestamp);
+          this.newOrders().forEach(order => {
+            const orderItem: OrderItem = {
+              name: order.name,
+              price: order.price,
+              note: order.note,
+              product_id: order.id
+            }
+            newOrder.items.push(orderItem);
+          });
+          this.mainService.addData('orders', newOrder).then((res: any) => {
+            const pricesTotal = this.newOrders().length > 0
+              ? this.newOrders().map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+              : 0;
+            if (currentCheck.type == CheckType.NORMAL) {
+              this.logService.createLog(logType.CHECK_UPDATED, currentCheck._id, `${this.table().name} hesabına ${pricesTotal} TL tutarında sipariş eklendi.`);
+            } else {
+              this.logService.createLog(logType.CHECK_UPDATED, currentCheck._id, `${currentCheck.note} hesabına ${pricesTotal} TL tutarında sipariş eklendi.`);
+            }
+          }).catch((err: any) => {
+            console.error(err);
+          });
+        }
       });
     } else {
       currentCheck.status = CheckStatus.READY;
@@ -552,29 +532,27 @@ export class SellingScreenComponent implements OnDestroy {
         this.mainService.updateData('tables', this.id() as string, { status: 2, timestamp: Date.now() });
       }
       this.mainService.addData('checks', currentCheck).then((res: any) => {
-        this.zone.run(() => {
-          if (res.ok) {
-            const newOrder = new Order(res.id, { id: this.ownerId(), name: this.owner() + ' ( Personel )' }, [], OrderStatus.APPROVED, OrderType.EMPLOOYEE, timestamp);
-            this.newOrders().forEach((order: any) => {
-              const orderItem: OrderItem = {
-                name: order.name,
-                price: order.price,
-                note: order.note,
-                product_id: order.id
-              }
-              newOrder.items.push(orderItem);
-            });
-            this.mainService.addData('orders', newOrder).then((res: any) => {
-              if (currentCheck.type == CheckType.NORMAL) {
-                this.logService.createLog(logType.CHECK_CREATED, res.id, `${this.table().name} Masasına '${this.owner()}' tarafından hesap açıldı`);
-              } else {
-                this.logService.createLog(logType.CHECK_CREATED, res.id, `${currentCheck.note} Notlu Hızlı Hesap '${this.owner()}' tarafından açıldı`);
-              }
-            }).catch((err: any) => {
-              console.error(err);
-            });
-          }
-        });
+        if (res.ok) {
+          const newOrder = new Order(res.id, { id: this.ownerId(), name: this.owner() + ' ( Personel )' }, [], OrderStatus.APPROVED, OrderType.EMPLOOYEE, timestamp);
+          this.newOrders().forEach((order: any) => {
+            const orderItem: OrderItem = {
+              name: order.name,
+              price: order.price,
+              note: order.note,
+              product_id: order.id
+            }
+            newOrder.items.push(orderItem);
+          });
+          this.mainService.addData('orders', newOrder).then((res: any) => {
+            if (currentCheck.type == CheckType.NORMAL) {
+              this.logService.createLog(logType.CHECK_CREATED, res.id, `${this.table().name} Masasına '${this.owner()}' tarafından hesap açıldı`);
+            } else {
+              this.logService.createLog(logType.CHECK_CREATED, res.id, `${currentCheck.note} Notlu Hızlı Hesap '${this.owner()}' tarafından açıldı`);
+            }
+          }).catch((err: any) => {
+            console.error(err);
+          });
+        }
       });
     }
     this.updateUserReport();
@@ -587,14 +565,12 @@ export class SellingScreenComponent implements OnDestroy {
       case CheckType.NORMAL:
         if (this.askForPrint()) {
           this.message.sendConfirm('Fiş Yazdırılsın mı ?').then((isOk: any) => {
-            this.zone.run(() => {
-              if (isOk) {
-                this.printOrder();
-                this.confirmCheck();
-              } else {
-                this.confirmCheck();
-              }
-            });
+            if (isOk) {
+              this.printOrder();
+              this.confirmCheck();
+            } else {
+              this.confirmCheck();
+            }
           });
         } else {
           this.printOrder();
@@ -604,26 +580,22 @@ export class SellingScreenComponent implements OnDestroy {
       case CheckType.FAST:
         if (currentCheck.note == '' || currentCheck.note == undefined) {
           this.message.sendConfirm('Hızlı Hesap oluşturmanız için hesaba not eklemek zorundasınız.').then((isOk: any) => {
-            this.zone.run(() => {
-              if (isOk) {
-                (window as any).$('#checkNote').modal('show');
-                return false;
-              } else {
-                return false;
-              }
-            });
+            if (isOk) {
+              (window as any).$('#checkNote').modal('show');
+              return false;
+            } else {
+              return false;
+            }
           });
         } else {
           if (this.askForPrint()) {
             this.message.sendConfirm('Fiş Yazdırılsın mı ?').then((isOk: any) => {
-              this.zone.run(() => {
-                if (isOk) {
-                  this.printOrder();
-                  this.confirmCheck();
-                } else {
-                  this.confirmCheck();
-                }
-              });
+              if (isOk) {
+                this.printOrder();
+                this.confirmCheck();
+              } else {
+                this.confirmCheck();
+              }
             });
           } else {
             this.printOrder();
@@ -640,22 +612,18 @@ export class SellingScreenComponent implements OnDestroy {
         if (currentCheck.status == CheckStatus.PASSIVE) {
           currentCheck.status = CheckStatus.READY;
           this.mainService.updateData('checks', currentCheck._id, currentCheck).then((res: any) => {
-            this.zone.run(() => {
-              if (res.ok) {
-                const pricesTotal = this.newOrders().length > 0
-                  ? this.newOrders().map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
-                  : 0;
-                this.logService.createLog(logType.CHECK_UPDATED, currentCheck._id, `${currentCheck.note} hesabına ${pricesTotal} TL tutarında sipariş eklendi.`);
-              }
-            });
+            if (res.ok) {
+              const pricesTotal = this.newOrders().length > 0
+                ? this.newOrders().map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+                : 0;
+              this.logService.createLog(logType.CHECK_UPDATED, currentCheck._id, `${currentCheck.note} hesabına ${pricesTotal} TL tutarında sipariş eklendi.`);
+            }
           });
         } else {
           this.mainService.updateData('closed_checks', this.check_id(), currentCheck).then((res: any) => {
-            this.zone.run(() => {
-              if (res.ok) {
-                this.logService.createLog(logType.CHECK_UPDATED, currentCheck._id, `${currentCheck.note} hesabı ${this.owner()} tarafından güncellendi.`);
-              }
-            });
+            if (res.ok) {
+              this.logService.createLog(logType.CHECK_UPDATED, currentCheck._id, `${currentCheck.note} hesabı ${this.owner()} tarafından güncellendi.`);
+            }
           });
         }
         this.router.navigate(['/store']);
@@ -671,9 +639,7 @@ export class SellingScreenComponent implements OnDestroy {
         const currentCheck = this.check();
         const checkWillClose = new ClosedCheck(currentCheck.table_id, (currentCheck.total_price + currentCheck.discount) - 0, 0, currentCheck.owner, currentCheck.note, CheckStatus.OCCUPIED, currentCheck.products, currentCheck.timestamp, currentCheck.type, 'Parçalı', currentCheck.payment_flow, undefined, currentCheck.occupation);
         this.mainService.addData('closed_checks', checkWillClose).then((res: any) => {
-          this.zone.run(() => {
-            this.updateSellingReport('Parçalı');
-          });
+          this.updateSellingReport('Parçalı');
         });
         if (currentCheck._id !== undefined) {
           this.mainService.removeData('checks', currentCheck._id);
@@ -713,27 +679,23 @@ export class SellingScreenComponent implements OnDestroy {
         total_discounts += general_discount;
       }
     }
-    this.zone.run(() => {
-      const $ = (window as any).$;
-      // Active element'e blur() uygula (aria-hidden uyarısını engelle)
-      const activeElement = document.activeElement as HTMLElement;
-      if (activeElement && activeElement.blur) {
-        activeElement.blur();
-      }
-      $('#closeCheck').modal('hide');
-      // Backdrop'ı ve scroll kilidini manuel olarak kaldır
-      $('.modal-backdrop').remove();
-      $('body').removeClass('modal-open');
-    });
+    const $ = (window as any).$;
+    // Active element'e blur() uygula (aria-hidden uyarısını engelle)
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement && activeElement.blur) {
+      activeElement.blur();
+    }
+    $('#closeCheck').modal('hide');
+    // Backdrop'ı ve scroll kilidini manuel olarak kaldır
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
     const checkWillClose = new ClosedCheck(currentCheck.table_id, (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount, total_discounts, this.owner(), currentCheck.note, CheckStatus.OCCUPIED, currentCheck.products, currentCheck.timestamp, currentCheck.type, method, currentCheck.payment_flow, undefined, currentCheck.occupation);
     if (currentCheck.type == CheckType.ORDER) {
       checkWillClose.products.map((obj: any) => obj.status = 2);
       checkWillClose.status = 2;
     }
     this.mainService.addData('closed_checks', checkWillClose).then((res: any) => {
-      this.zone.run(() => {
-        this.updateSellingReport(method);
-      });
+      this.updateSellingReport(method);
     });
     if (currentCheck._id !== undefined) {
       this.mainService.removeData('checks', currentCheck._id);
@@ -765,15 +727,13 @@ export class SellingScreenComponent implements OnDestroy {
 
     if (this.askForCheckPrint()) {
       this.message.sendConfirm('Fiş Yazdırılsın mı ?').then((isOK: any) => {
-        this.zone.run(() => {
-          if (isOK) {
-            if (currentCheck.type == CheckType.NORMAL) {
-              this.printerService.printCheck(this.printers()[0], this.table().name, checkWillClose);
-            } else {
-              this.printerService.printCheck(this.printers()[0], currentCheck.table_id, checkWillClose);
-            }
+        if (isOK) {
+          if (currentCheck.type == CheckType.NORMAL) {
+            this.printerService.printCheck(this.printers()[0], this.table().name, checkWillClose);
+          } else {
+            this.printerService.printCheck(this.printers()[0], currentCheck.table_id, checkWillClose);
           }
-        });
+        }
       });
     }
     this.message.sendMessage(`Hesap ${currentCheck.total_price} TL tutarında ödeme alınarak kapatıldı`);
@@ -789,43 +749,39 @@ export class SellingScreenComponent implements OnDestroy {
 
     if (method !== 'Parçalı') {
       this.mainService.getAllBy('reports', { connection_id: method }).then((res: any) => {
-        this.zone.run(() => {
-          if (res.docs.length > 0) {
-            const doc = res.docs[0];
-            doc.count++;
-            doc.amount += (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount;
-            doc.weekly[currentDay] += (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount;
-            doc.weekly_count[currentDay]++;
-            doc.monthly[new Date().getMonth()] += (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount;
-            doc.monthly_count[new Date().getMonth()]++;
-            doc.timestamp = Date.now();
-            this.mainService.updateData('reports', doc._id, doc);
-          }
-        });
+        if (res.docs.length > 0) {
+          const doc = res.docs[0];
+          doc.count++;
+          doc.amount += (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount;
+          doc.weekly[currentDay] += (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount;
+          doc.weekly_count[currentDay]++;
+          doc.monthly[new Date().getMonth()] += (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount;
+          doc.monthly_count[new Date().getMonth()]++;
+          doc.timestamp = Date.now();
+          this.mainService.updateData('reports', doc._id, doc);
+        }
       });
     } else {
       this.mainService.getAllBy('reports', { type: "Store" }).then((res: any) => {
-        this.zone.run(() => {
-          const sellingReports = res.docs;
-          currentCheck.payment_flow?.forEach((obj: any, index: number) => {
-            const reportWillChange = sellingReports.find((report: any) => report.connection_id == obj.method);
-            if (reportWillChange) {
-              reportWillChange.count++;
-              reportWillChange.amount += obj.amount;
-              reportWillChange.weekly[currentDay] += obj.amount;
-              reportWillChange.weekly_count[currentDay]++;
-              reportWillChange.monthly[new Date().getMonth()] += obj.amount;
-              reportWillChange.monthly_count[new Date().getMonth()]++;
-              reportWillChange.timestamp = Date.now();
-            }
-            if (currentCheck.payment_flow?.length == index + 1) {
-              sellingReports.forEach((report: any) => {
-                if (currentCheck.payment_flow?.some((payFlow: any) => payFlow.method == report.connection_id)) {
-                  this.mainService.updateData('reports', report._id, report);
-                }
-              });
-            }
-          });
+        const sellingReports = res.docs;
+        currentCheck.payment_flow?.forEach((obj: any, index: number) => {
+          const reportWillChange = sellingReports.find((report: any) => report.connection_id == obj.method);
+          if (reportWillChange) {
+            reportWillChange.count++;
+            reportWillChange.amount += obj.amount;
+            reportWillChange.weekly[currentDay] += obj.amount;
+            reportWillChange.weekly_count[currentDay]++;
+            reportWillChange.monthly[new Date().getMonth()] += obj.amount;
+            reportWillChange.monthly_count[new Date().getMonth()]++;
+            reportWillChange.timestamp = Date.now();
+          }
+          if (currentCheck.payment_flow?.length == index + 1) {
+            sellingReports.forEach((report: any) => {
+              if (currentCheck.payment_flow?.some((payFlow: any) => payFlow.method == report.connection_id)) {
+                this.mainService.updateData('reports', report._id, report);
+              }
+            });
+          }
         });
       });
     }
@@ -833,20 +789,18 @@ export class SellingScreenComponent implements OnDestroy {
 
   updateTableReport(check: Check) {
     this.mainService.getAllBy('reports', { connection_id: check.table_id }).then((res: any) => {
-      this.zone.run(() => {
-        if (res.docs.length > 0) {
-          const report = res.docs[0];
-          const currentDay = this.day();
-          report.count++;
-          report.amount += check.total_price + (check.discount || 0);
-          report.timestamp = Date.now();
-          report.weekly[currentDay] += check.total_price + (check.discount || 0);
-          report.weekly_count[currentDay]++;
-          report.monthly[new Date().getMonth()] += check.total_price + (check.discount || 0);
-          report.monthly_count[new Date().getMonth()]++;
-          this.mainService.updateData('reports', report._id, report);
-        }
-      });
+      if (res.docs.length > 0) {
+        const report = res.docs[0];
+        const currentDay = this.day();
+        report.count++;
+        report.amount += check.total_price + (check.discount || 0);
+        report.timestamp = Date.now();
+        report.weekly[currentDay] += check.total_price + (check.discount || 0);
+        report.weekly_count[currentDay]++;
+        report.monthly[new Date().getMonth()] += check.total_price + (check.discount || 0);
+        report.monthly_count[new Date().getMonth()]++;
+        this.mainService.updateData('reports', report._id, report);
+      }
     });
   }
 
@@ -957,10 +911,8 @@ export class SellingScreenComponent implements OnDestroy {
       currentCheck.note = note;
       if (currentCheck.status !== CheckStatus.PASSIVE) {
         this.mainService.updateData('checks', this.check_id(), { note: note }).then((res: any) => {
-          this.zone.run(() => {
-            currentCheck._rev = res.rev;
-            this.check.set(currentCheck);
-          });
+          currentCheck._rev = res.rev;
+          this.check.set(currentCheck);
         });
       } else {
         this.check.set(currentCheck);
@@ -988,31 +940,29 @@ export class SellingScreenComponent implements OnDestroy {
 
       if (analyzeCheck) {
         this.mainService.updateData(currentCheck.type == CheckType.ORDER ? 'closed_checks' : 'checks', this.check_id(), currentCheck).then((res: any) => {
-          this.zone.run(() => {
-            if (res.ok) {
-              if (currentCheck.type == CheckType.NORMAL) {
-                const pCat = this.categories().find((obj: any) => obj._id == currentCheck.products[idx].cat_id);
-                if (pCat) {
-                  const device = this.printers().find((obj: any) => obj.name == pCat.printer);
-                  if (device) {
-                    this.printerService.printCancel(device, currentCheck.products[idx], reason, this.table().name, ownerName);
-                  }
+          if (res.ok) {
+            if (currentCheck.type == CheckType.NORMAL) {
+              const pCat = this.categories().find((obj: any) => obj._id == currentCheck.products[idx].cat_id);
+              if (pCat) {
+                const device = this.printers().find((obj: any) => obj.name == pCat.printer);
+                if (device) {
+                  this.printerService.printCancel(device, currentCheck.products[idx], reason, this.table().name, ownerName);
                 }
-                this.logService.createLog(logType.ORDER_CANCELED, currentCheck._id, `${this.table().name} Masasından ${this.selectedProduct()!.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
-              } else {
-                this.logService.createLog(logType.ORDER_CANCELED, currentCheck._id, `${currentCheck.note} Hesabından ${this.selectedProduct()!.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
               }
-              this.check.set(currentCheck);
-              this.message.sendMessage('Ürün İptal Edildi');
-              this.selectedProduct.set(undefined);
-              this.selectedIndex.set(undefined);
-              (window as any).$('#cancelProduct').modal('hide');
-              productAfterCancel.forEach((element: any) => {
-                currentCheck.products.push(element);
-              });
-              this.check.set(currentCheck);
+              this.logService.createLog(logType.ORDER_CANCELED, currentCheck._id, `${this.table().name} Masasından ${this.selectedProduct()!.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
+            } else {
+              this.logService.createLog(logType.ORDER_CANCELED, currentCheck._id, `${currentCheck.note} Hesabından ${this.selectedProduct()!.name} adlı ürün iptal edildi Açıklama:'${reason}'`);
             }
-          });
+            this.check.set(currentCheck);
+            this.message.sendMessage('Ürün İptal Edildi');
+            this.selectedProduct.set(undefined);
+            this.selectedIndex.set(undefined);
+            (window as any).$('#cancelProduct').modal('hide');
+            productAfterCancel.forEach((element: any) => {
+              currentCheck.products.push(element);
+            });
+            this.check.set(currentCheck);
+          }
         });
       } else {
         (window as any).$('#cancelProduct').modal('hide');
@@ -1022,10 +972,8 @@ export class SellingScreenComponent implements OnDestroy {
         const checkToCancel = new ClosedCheck(currentCheck.table_id, canceledTotalPrice, 0, ownerName, currentCheck.note, 3, currentCheck.products, Date.now(), 3, 'İkram', [], undefined, currentCheck.occupation);
         checkToCancel.description = 'Bütün Ürünler İptal Edildi';
         this.mainService.addData('closed_checks', checkToCancel).then((res: any) => {
-          this.zone.run(() => {
-            this.message.sendMessage('Hesap İptal Edildi');
-            this.logService.createLog(logType.CHECK_CANCELED, currentCheck._id, `${this.table().name}'de kalan bütün ürünler iptal edildi. Hesap Kapatıldı.`);
-          });
+          this.message.sendMessage('Hesap İptal Edildi');
+          this.logService.createLog(logType.CHECK_CANCELED, currentCheck._id, `${this.table().name}'de kalan bütün ürünler iptal edildi. Hesap Kapatıldı.`);
         });
         this.mainService.removeData('checks', currentCheck._id);
         if (currentCheck.type == CheckType.NORMAL) {
@@ -1134,23 +1082,21 @@ export class SellingScreenComponent implements OnDestroy {
         this.logService.createLog(logType.ORDER_CREATED, currentCheck._id, `'${ownerName}' Hızlı Satış - ${currentCheck.note} hesabına ${pricesTotal} TL tutarında sipariş girdi.`);
       }
       this.mainService.getAllBy('reports', { connection_id: this.ownerId() }).then((res: any) => {
-        this.zone.run(() => {
-          if (res.docs.length > 0) {
-            const doc = res.docs[0];
-            const currentDay = this.day();
-            doc.amount += pricesTotal;
-            doc.count++;
-            doc.weekly[currentDay] += pricesTotal;
-            doc.weekly_count[currentDay]++;
-            doc.monthly[new Date().getMonth()] += pricesTotal;
-            doc.monthly_count[new Date().getMonth()]++;
-            if (doc.weekly_count[currentDay] == 100) {
-              this.logService.createLog(logType.USER_CHECKPOINT, this.ownerId(), `'${ownerName}' günün 100. siparişini girdi.`);
-            }
-            doc.timestamp = Date.now();
-            this.mainService.updateData('reports', doc._id, doc).then();
+        if (res.docs.length > 0) {
+          const doc = res.docs[0];
+          const currentDay = this.day();
+          doc.amount += pricesTotal;
+          doc.count++;
+          doc.weekly[currentDay] += pricesTotal;
+          doc.weekly_count[currentDay]++;
+          doc.monthly[new Date().getMonth()] += pricesTotal;
+          doc.monthly_count[new Date().getMonth()]++;
+          if (doc.weekly_count[currentDay] == 100) {
+            this.logService.createLog(logType.USER_CHECKPOINT, this.ownerId(), `'${ownerName}' günün 100. siparişini girdi.`);
           }
-        });
+          doc.timestamp = Date.now();
+          this.mainService.updateData('reports', doc._id, doc).then();
+        }
       });
     }
   }
@@ -1159,21 +1105,19 @@ export class SellingScreenComponent implements OnDestroy {
     const currentDay = this.day();
     data.forEach((obj: any, index: number) => {
       this.mainService.getAllBy('reports', { connection_id: obj.product }).then((res: any) => {
-        this.zone.run(() => {
-          if (res.docs.length > 0) {
-            const report = res.docs[0];
-            this.mainService.changeData('reports', report._id, (doc: any) => {
-              doc.count += obj.count;
-              doc.amount += obj.total;
-              doc.timestamp = Date.now();
-              doc.weekly[currentDay] += obj.total;
-              doc.weekly_count[currentDay] += obj.count;
-              doc.monthly[new Date().getMonth()] += obj.total;
-              doc.monthly_count[new Date().getMonth()]++;
-              return doc;
-            });
-          }
-        });
+        if (res.docs.length > 0) {
+          const report = res.docs[0];
+          this.mainService.changeData('reports', report._id, (doc: any) => {
+            doc.count += obj.count;
+            doc.amount += obj.total;
+            doc.timestamp = Date.now();
+            doc.weekly[currentDay] += obj.total;
+            doc.weekly_count[currentDay] += obj.count;
+            doc.monthly[new Date().getMonth()] += obj.total;
+            doc.monthly_count[new Date().getMonth()]++;
+            return doc;
+          });
+        }
       });
       this.mainService.getAllBy('recipes', { product_id: obj.product }).then((result: any) => {
         if (result.docs.length > 0) {
@@ -1218,24 +1162,20 @@ export class SellingScreenComponent implements OnDestroy {
       if (currentCheck.products.some((obj: any) => obj.status == 1)) {
         currentCheck.products = currentCheck.products.filter((obj: any) => obj.status !== 1);
         this.mainService.addData('checks', currentCheck).then((res: any) => {
-          this.zone.run(() => {
-            this.mainService.updateData('tables', this.table()._id, { status: 2, timestamp: Date.now() }).then(() => {
-              setTimeout(() => {
-                const qrdata = `https://quickly.cafe/${slug}/${res.id}`;
-                this.printerService.printQRCode(printer, qrdata, this.table().name, ownerName);
-              }, 100);
-            });
+          this.mainService.updateData('tables', this.table()._id, { status: 2, timestamp: Date.now() }).then(() => {
+            setTimeout(() => {
+              const qrdata = `https://quickly.cafe/${slug}/${res.id}`;
+              this.printerService.printQRCode(printer, qrdata, this.table().name, ownerName);
+            }, 100);
           });
         });
       } else {
         this.mainService.addData('checks', currentCheck).then((res: any) => {
-          this.zone.run(() => {
-            this.mainService.updateData('tables', this.table()._id, { status: 2, timestamp: Date.now() }).then(() => {
-              setTimeout(() => {
-                const qrdata = `https://quickly.cafe//${slug}/${res.id}`;
-                this.printerService.printQRCode(printer, qrdata, this.table().name, ownerName);
-              }, 100);
-            });
+          this.mainService.updateData('tables', this.table()._id, { status: 2, timestamp: Date.now() }).then(() => {
+            setTimeout(() => {
+              const qrdata = `https://quickly.cafe//${slug}/${res.id}`;
+              this.printerService.printQRCode(printer, qrdata, this.table().name, ownerName);
+            }, 100);
           });
         });
       }
@@ -1296,20 +1236,16 @@ export class SellingScreenComponent implements OnDestroy {
         if (currentCheck.status !== CheckStatus.PASSIVE) {
           if (currentCheck.type == CheckType.NORMAL) {
             this.mainService.updateData('tables', this.id()!, { status: 3 }).then((res: any) => {
-              this.zone.run(() => {
-                this.router.navigate(['store']);
-              });
+              this.router.navigate(['store']);
             });
             this.message.sendMessage('Hesap Yazdırıldı..');
           }
         }
       } else {
         this.message.sendConfirm('Adisyon Tekrar Yazdırılsın mı?').then((isOk: any) => {
-          this.zone.run(() => {
-            if (isOk) {
-              this.printerService.printCheck(selectedPrinter, currentTable.name, currentCheck);
-            }
-          });
+          if (isOk) {
+            this.printerService.printCheck(selectedPrinter, currentTable.name, currentCheck);
+          }
         });
       }
     } else if (currentCheck.type == CheckType.FAST) {
@@ -1343,124 +1279,120 @@ export class SellingScreenComponent implements OnDestroy {
 
     if (selectedTab.status == TableStatus.ACTIVE) {
       this.message.sendConfirm(`${selectedProd.name}, ${selectedTab.name} Masasına Aktarılacak ve Yeni Hesap Açılacak.`).then(isOk => {
-        this.zone.run(() => {
-          if (isOk) {
-            const newCheck = new Check(selectedTab._id, selectedProd.price, 0, ownerName, '', 1, [selectedProd], Date.now(), CheckType.NORMAL, CheckNo());
-            this.mainService.addData('checks', newCheck).then(res => {
-              if (res.ok) {
-                const idx = this.selectedIndex()!;
-                currentCheck.products.splice(idx, 1);
-                currentCheck.total_price -= selectedProd.price;
-                this.mainService.updateData('tables', selectedTab._id, { status: 2, timestamp: Date.now() }).then((res: any) => {
-                  if (res.ok) {
-                    if (currentCheck.products.length == 0) {
-                      if (currentCheck.payment_flow) {
-                        let payedDiscounts = 0;
-                        currentCheck.payment_flow.forEach((obj: any, index: number) => {
-                          payedDiscounts += obj.discount;
-                          this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r: any) => {
-                            const currentDay = this.day();
-                            this.mainService.changeData('reports', (r.docs[0])._id, (doc: any) => {
-                              doc.count++;
-                              doc.weekly_count[currentDay]++;
-                              doc.amount += obj.amount;
-                              doc.weekly[currentDay] += obj.amount;
-                              doc.monthly[new Date().getMonth()] += obj.amount;
-                              doc.monthly_count[new Date().getMonth()]++;
-                              doc.timestamp = Date.now();
-                              return doc;
-                            });
+        if (isOk) {
+          const newCheck = new Check(selectedTab._id, selectedProd.price, 0, ownerName, '', 1, [selectedProd], Date.now(), CheckType.NORMAL, CheckNo());
+          this.mainService.addData('checks', newCheck).then(res => {
+            if (res.ok) {
+              const idx = this.selectedIndex()!;
+              currentCheck.products.splice(idx, 1);
+              currentCheck.total_price -= selectedProd.price;
+              this.mainService.updateData('tables', selectedTab._id, { status: 2, timestamp: Date.now() }).then((res: any) => {
+                if (res.ok) {
+                  if (currentCheck.products.length == 0) {
+                    if (currentCheck.payment_flow) {
+                      let payedDiscounts = 0;
+                      currentCheck.payment_flow.forEach((obj: any, index: number) => {
+                        payedDiscounts += obj.discount;
+                        this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r: any) => {
+                          const currentDay = this.day();
+                          this.mainService.changeData('reports', (r.docs[0])._id, (doc: any) => {
+                            doc.count++;
+                            doc.weekly_count[currentDay]++;
+                            doc.amount += obj.amount;
+                            doc.weekly[currentDay] += obj.amount;
+                            doc.monthly[new Date().getMonth()] += obj.amount;
+                            doc.monthly_count[new Date().getMonth()]++;
+                            doc.timestamp = Date.now();
+                            return doc;
                           });
                         });
-                        const checksForPayed = new ClosedCheck(currentCheck.table_id, currentCheck.discount, payedDiscounts, ownerName, currentCheck.note, currentCheck.status, [], Date.now(), currentCheck.type, 'Parçalı', currentCheck.payment_flow, undefined, currentCheck.occupation);
-                        this.mainService.addData('closed_checks', checksForPayed);
-                      }
-                      this.mainService.removeData('checks', currentCheck._id).then((res: any) => {
-                        if (res.ok) {
-                          (window as any).$('#splitTable').modal('hide');
-                          this.mainService.updateData('tables', currentCheck.table_id, { status: 1 }).then((res: any) => {
-                            this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
-                          });
-                          this.router.navigate(['/store']);
-                        }
                       });
-                    } else {
-                      this.mainService.updateData('checks', currentCheck._id, currentCheck).then((res: any) => {
-                        if (res.ok) {
-                          this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
-                          currentCheck._rev = res.rev;
-                          this.check.set(currentCheck);
-                          this.setDefault();
-                          (window as any).$('#splitTable').modal('hide');
-                        }
-                      });
+                      const checksForPayed = new ClosedCheck(currentCheck.table_id, currentCheck.discount, payedDiscounts, ownerName, currentCheck.note, currentCheck.status, [], Date.now(), currentCheck.type, 'Parçalı', currentCheck.payment_flow, undefined, currentCheck.occupation);
+                      this.mainService.addData('closed_checks', checksForPayed);
                     }
+                    this.mainService.removeData('checks', currentCheck._id).then((res: any) => {
+                      if (res.ok) {
+                        (window as any).$('#splitTable').modal('hide');
+                        this.mainService.updateData('tables', currentCheck.table_id, { status: 1 }).then((res: any) => {
+                          this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
+                        });
+                        this.router.navigate(['/store']);
+                      }
+                    });
+                  } else {
+                    this.mainService.updateData('checks', currentCheck._id, currentCheck).then((res: any) => {
+                      if (res.ok) {
+                        this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
+                        currentCheck._rev = res.rev;
+                        this.check.set(currentCheck);
+                        this.setDefault();
+                        (window as any).$('#splitTable').modal('hide');
+                      }
+                    });
                   }
-                });
-              }
-            });
-          }
-        });
+                }
+              });
+            }
+          });
+        }
       });
     } else {
       this.mainService.getAllBy('checks', { table_id: selectedTab._id! }).then((res: any) => {
-        this.zone.run(() => {
-          if (res.docs.length > 0) {
-            const otherCheck: Check = res.docs[0];
-            const idx = this.selectedIndex()!;
-            otherCheck.products.push(selectedProd);
-            otherCheck.total_price += selectedProd.price;
-            currentCheck.total_price -= selectedProd.price;
-            currentCheck.products.splice(idx, 1);
-            this.mainService.updateData('checks', otherCheck._id!, otherCheck).then((res: any) => {
-              if (res.ok) {
-                if (currentCheck.products.length == 0) {
-                  if (currentCheck.payment_flow) {
-                    let payedDiscounts = 0;
-                    currentCheck.payment_flow.forEach((obj: any, index: number) => {
-                      payedDiscounts += obj.discount;
-                      this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r: any) => {
-                        const currentDay = this.day();
-                        this.mainService.changeData('reports', (r.docs[0])._id, (doc: any) => {
-                          doc.count++;
-                          doc.weekly_count[currentDay]++;
-                          doc.amount += obj.amount;
-                          doc.weekly[currentDay] += obj.amount;
-                          doc.monthly[new Date().getMonth()] += obj.amount;
-                          doc.monthly_count[new Date().getMonth()]++;
-                          doc.timestamp = Date.now();
-                          return doc;
-                        });
+        if (res.docs.length > 0) {
+          const otherCheck: Check = res.docs[0];
+          const idx = this.selectedIndex()!;
+          otherCheck.products.push(selectedProd);
+          otherCheck.total_price += selectedProd.price;
+          currentCheck.total_price -= selectedProd.price;
+          currentCheck.products.splice(idx, 1);
+          this.mainService.updateData('checks', otherCheck._id!, otherCheck).then((res: any) => {
+            if (res.ok) {
+              if (currentCheck.products.length == 0) {
+                if (currentCheck.payment_flow) {
+                  let payedDiscounts = 0;
+                  currentCheck.payment_flow.forEach((obj: any, index: number) => {
+                    payedDiscounts += obj.discount;
+                    this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r: any) => {
+                      const currentDay = this.day();
+                      this.mainService.changeData('reports', (r.docs[0])._id, (doc: any) => {
+                        doc.count++;
+                        doc.weekly_count[currentDay]++;
+                        doc.amount += obj.amount;
+                        doc.weekly[currentDay] += obj.amount;
+                        doc.monthly[new Date().getMonth()] += obj.amount;
+                        doc.monthly_count[new Date().getMonth()]++;
+                        doc.timestamp = Date.now();
+                        return doc;
                       });
                     });
-                    const checksForPayed = new ClosedCheck(currentCheck.table_id, currentCheck.discount, payedDiscounts, ownerName, currentCheck.note, currentCheck.status, [], Date.now(), currentCheck.type, 'Parçalı', currentCheck.payment_flow, undefined, currentCheck.occupation);
-                    this.mainService.addData('closed_checks', checksForPayed);
-                  }
-                  this.mainService.removeData('checks', currentCheck._id).then((r: any) => {
-                    if (r.ok) {
-                      (window as any).$('#splitTable').modal('hide');
-                      this.mainService.updateData('tables', currentCheck.table_id, { status: 1 }).then((res: any) => {
-                        this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
-                      });
-                      this.router.navigate(['/store']);
-                    }
                   });
-                } else {
-                  this.mainService.updateData('checks', currentCheck._id, currentCheck).then((r: any) => {
-                    if (r.ok) {
-                      this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
-                      currentCheck._rev = r.rev;
-                      this.check.set(currentCheck);
-                      this.setDefault();
-                      (window as any).$('#splitTable').modal('hide');
-                    }
-                  });
+                  const checksForPayed = new ClosedCheck(currentCheck.table_id, currentCheck.discount, payedDiscounts, ownerName, currentCheck.note, currentCheck.status, [], Date.now(), currentCheck.type, 'Parçalı', currentCheck.payment_flow, undefined, currentCheck.occupation);
+                  this.mainService.addData('closed_checks', checksForPayed);
                 }
+                this.mainService.removeData('checks', currentCheck._id).then((r: any) => {
+                  if (r.ok) {
+                    (window as any).$('#splitTable').modal('hide');
+                    this.mainService.updateData('tables', currentCheck.table_id, { status: 1 }).then((res: any) => {
+                      this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
+                    });
+                    this.router.navigate(['/store']);
+                  }
+                });
+              } else {
+                this.mainService.updateData('checks', currentCheck._id, currentCheck).then((r: any) => {
+                  if (r.ok) {
+                    this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
+                    currentCheck._rev = r.rev;
+                    this.check.set(currentCheck);
+                    this.setDefault();
+                    (window as any).$('#splitTable').modal('hide');
+                  }
+                });
               }
-              this.logService.createLog(logType.ORDER_MOVED, selectedProd.id, `${selectedProd.name} siparişi ${this.table().name} masasından ${selectedTab.name} masasına aktarıldı`);
-            });
-          }
-        });
+            }
+            this.logService.createLog(logType.ORDER_MOVED, selectedProd.id, `${selectedProd.name} siparişi ${this.table().name} masasından ${selectedTab.name} masasına aktarıldı`);
+          });
+        }
       });
     }
   }
@@ -1479,60 +1411,56 @@ export class SellingScreenComponent implements OnDestroy {
         }
         this.mainService.updateData('tables', selectedTab._id, { status: 2, timestamp: Date.now() });
         this.mainService.updateData('checks', this.check_id(), { table_id: selectedTab._id!, type: 1 }).then((res: any) => {
-          this.zone.run(() => {
-            if (res.ok) {
-              this.message.sendMessage(`Hesap ${selectedTab.name} Masasına Aktarıldı.`);
-              if (currentCheck.type == CheckType.NORMAL) {
-                this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentTable.name} Hesabı ${selectedTab.name} masasına taşındı.`);
-              } else {
-                this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentCheck.note} Hesabı ${selectedTab.name} masasına taşındı.`);
-              }
-              (window as any).$('#splitTable').modal('hide');
-              this.router.navigate(['/store']);
+          if (res.ok) {
+            this.message.sendMessage(`Hesap ${selectedTab.name} Masasına Aktarıldı.`);
+            if (currentCheck.type == CheckType.NORMAL) {
+              this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentTable.name} Hesabı ${selectedTab.name} masasına taşındı.`);
+            } else {
+              this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentCheck.note} Hesabı ${selectedTab.name} masasına taşındı.`);
             }
-          });
+            (window as any).$('#splitTable').modal('hide');
+            this.router.navigate(['/store']);
+          }
         });
       }
     } else {
       this.message.sendConfirm(`Bütün Ürünler, ${selectedTab.name} Masasına Aktarılacak.`).then(isOk => {
         if (isOk) {
           this.mainService.getAllBy('checks', { table_id: selectedTab._id }).then(res => {
-            this.zone.run(() => {
-              if (res.docs.length > 0) {
-                const otherCheck: Check = res.docs[0];
-                otherCheck.products = otherCheck.products.concat(currentCheck.products);
-                otherCheck.total_price += currentCheck.total_price;
-                if (currentCheck.type == CheckType.NORMAL) {
-                  this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentTable.name} Masası ${selectedTab.name} ile Birleştirildi.`);
-                } else {
-                  otherCheck.note = `${currentCheck.note} Hesabı İle Birleştirildi`;
-                  this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentCheck.note} Hesabı ${selectedTab.name} Masasına Aktarıldı.`);
-                }
-                if (currentCheck.payment_flow) {
-                  if (otherCheck.payment_flow) {
-                    otherCheck.payment_flow = otherCheck.payment_flow.concat(currentCheck.payment_flow);
-                  } else {
-                    otherCheck.payment_flow = currentCheck.payment_flow;
-                  }
-                  otherCheck.discount += (currentCheck.discount || 0);
-                  otherCheck.timestamp = Date.now();
-                }
-                this.mainService.updateData('checks', otherCheck._id!, otherCheck).then((res: any) => {
-                  if (res.ok) {
-                    if (currentCheck.type == CheckType.NORMAL) {
-                      this.mainService.updateData('tables', currentCheck.table_id, { status: 1 });
-                    }
-                    this.mainService.removeData('checks', currentCheck._id).then((r: any) => {
-                      if (r.ok) {
-                        this.message.sendMessage(`Hesap ${selectedTab.name} Masası ile Birleştirildi.`);
-                        (window as any).$('#splitTable').modal('hide');
-                        this.router.navigate(['/store']);
-                      }
-                    });
-                  }
-                });
+            if (res.docs.length > 0) {
+              const otherCheck: Check = res.docs[0];
+              otherCheck.products = otherCheck.products.concat(currentCheck.products);
+              otherCheck.total_price += currentCheck.total_price;
+              if (currentCheck.type == CheckType.NORMAL) {
+                this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentTable.name} Masası ${selectedTab.name} ile Birleştirildi.`);
+              } else {
+                otherCheck.note = `${currentCheck.note} Hesabı İle Birleştirildi`;
+                this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentCheck.note} Hesabı ${selectedTab.name} Masasına Aktarıldı.`);
               }
-            });
+              if (currentCheck.payment_flow) {
+                if (otherCheck.payment_flow) {
+                  otherCheck.payment_flow = otherCheck.payment_flow.concat(currentCheck.payment_flow);
+                } else {
+                  otherCheck.payment_flow = currentCheck.payment_flow;
+                }
+                otherCheck.discount += (currentCheck.discount || 0);
+                otherCheck.timestamp = Date.now();
+              }
+              this.mainService.updateData('checks', otherCheck._id!, otherCheck).then((res: any) => {
+                if (res.ok) {
+                  if (currentCheck.type == CheckType.NORMAL) {
+                    this.mainService.updateData('tables', currentCheck.table_id, { status: 1 });
+                  }
+                  this.mainService.removeData('checks', currentCheck._id).then((r: any) => {
+                    if (r.ok) {
+                      this.message.sendMessage(`Hesap ${selectedTab.name} Masası ile Birleştirildi.`);
+                      (window as any).$('#splitTable').modal('hide');
+                      this.router.navigate(['/store']);
+                    }
+                  });
+                }
+              });
+            }
           });
         }
       });
@@ -1544,18 +1472,16 @@ export class SellingScreenComponent implements OnDestroy {
     currentCheck.discountPercent = value;
     this.check.set(currentCheck);
 
-    this.zone.run(() => {
-      const $ = (window as any).$;
-      // Active element'e blur() uygula (aria-hidden uyarısını engelle)
-      const activeElement = document.activeElement as HTMLElement;
-      if (activeElement && activeElement.blur) {
-        activeElement.blur();
-      }
-      $('#checkDiscount').modal('hide');
-      // Backdrop'ı ve scroll kilidini manuel olarak kaldır
-      $('.modal-backdrop').remove();
-      $('body').removeClass('modal-open');
-    });
+    const $ = (window as any).$;
+    // Active element'e blur() uygula (aria-hidden uyarısını engelle)
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement && activeElement.blur) {
+      activeElement.blur();
+    }
+    $('#checkDiscount').modal('hide');
+    // Backdrop'ı ve scroll kilidini manuel olarak kaldır
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
     if (currentCheck.type == CheckType.NORMAL) {
       if (currentCheck.status !== CheckStatus.PASSIVE) {
         this.mainService.changeData('checks', currentCheck._id, (doc: any) => {

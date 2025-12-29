@@ -1,4 +1,4 @@
-import { Component, signal, effect, inject, NgZone } from '@angular/core';
+import { Component, signal, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -22,7 +22,6 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly settingsService = inject(SettingsService);
-  private readonly zone = inject(NgZone);
 
   readonly buttons = signal<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]);
   readonly pinInput = signal<string>('');
@@ -46,27 +45,25 @@ export class LoginComponent {
   logIn() {
     this.message.set("İşleniyor");
     this.mainService.getAllBy('users', { pincode: { $eq: Number(this.pinInput()) } }).then((result) => {
-      this.zone.run(() => {
-        if (result.docs && result.docs.length > 0) {
-          const loggedInUser = result.docs[0];
-          this.user.set(loggedInUser);
-          if (loggedInUser) {
-            this.authService.login(loggedInUser);
-            this.authService.setPermissions().then(() => {
-              this.messageService.sendMessage("Hoşgeldiniz " + loggedInUser.name);
-              if (this.fastSelling()) {
-                this.router.navigate(['/selling-screen', 'Fast', 'New']);
-              } else {
-                this.router.navigate(['/store']);
-              }
-              this.clearDigits();
-            });
-          }
-        } else {
-          this.message.set("Hatalı giriş yaptınız.");
-          this.clearDigits();
+      if (result.docs && result.docs.length > 0) {
+        const loggedInUser = result.docs[0];
+        this.user.set(loggedInUser);
+        if (loggedInUser) {
+          this.authService.login(loggedInUser);
+          this.authService.setPermissions().then(() => {
+            this.messageService.sendMessage("Hoşgeldiniz " + loggedInUser.name);
+            if (this.fastSelling()) {
+              this.router.navigate(['/selling-screen', 'Fast', 'New']);
+            } else {
+              this.router.navigate(['/store']);
+            }
+            this.clearDigits();
+          });
         }
-      });
+      } else {
+        this.message.set("Hatalı giriş yaptınız.");
+        this.clearDigits();
+      }
     });
   }
 

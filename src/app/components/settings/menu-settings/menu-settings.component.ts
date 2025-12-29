@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, signal, viewChild, computed, effect, NgZone, input } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal, viewChild, computed, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -24,7 +24,6 @@ export class MenuSettingsComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
   private readonly validatorService = inject(SignalValidatorService);
-  private readonly zone = inject(NgZone);
   private readonly dialogFacade = inject(DialogFacade);
 
   readonly categories = signal<Array<Category>>([]);
@@ -100,7 +99,7 @@ export class MenuSettingsComponent implements OnInit {
   // Product form validation computed property
   readonly isProductFormValid = computed(() => {
     return !this.productNameError() && !this.productCategoryError() &&
-           !this.productPriceError() && !this.productTaxError();
+      !this.productPriceError() && !this.productTaxError();
   });
 
   constructor() {
@@ -184,50 +183,38 @@ export class MenuSettingsComponent implements OnInit {
       this.catDetails()!.form.patchValue(category);
     }
     this.mainService.getAllBy('sub_categories', { cat_id: category._id }).then((res: any) => {
-      this.zone.run(() => {
-        this.subCats.set(res.docs);
-      });
+      this.subCats.set(res.docs);
     });
   }
 
   getSubCategories(id: string) {
     this.mainService.getAllBy('sub_categories', { cat_id: id }).then((res: any) => {
-      this.zone.run(() => {
-        this.subCats.set(res.docs);
-      });
+      this.subCats.set(res.docs);
     });
   }
 
   getProductsByCategory(id: string | null) {
     if (!id) {
       this.mainService.getAllBy('products', {}).then((res: any) => {
-        this.zone.run(() => {
-          this.setDefault();
-          const sorted = [...res.docs].sort((a: any, b: any) => a.price - b.price);
-          this.products.set(sorted);
-        });
+        this.setDefault();
+        const sorted = [...res.docs].sort((a: any, b: any) => a.price - b.price);
+        this.products.set(sorted);
       });
     } else {
       this.mainService.getAllBy('sub_categories', { cat_id: id }).then((res: any) => {
-        this.zone.run(() => {
-          this.sub_categories.set(res.docs);
-        });
+        this.sub_categories.set(res.docs);
       });
       this.mainService.getAllBy('products', { cat_id: id }).then((result: any) => {
-        this.zone.run(() => {
-          const sorted = [...result.docs].sort((a: any, b: any) => a.price - b.price);
-          this.products.set(sorted);
-        });
+        const sorted = [...result.docs].sort((a: any, b: any) => a.price - b.price);
+        this.products.set(sorted);
       });
     }
   }
 
   getProductsBySubCat(id: string) {
     this.mainService.getAllBy('products', { subcat_id: id }).then((result: any) => {
-      this.zone.run(() => {
-        const sorted = [...result.docs].sort((a: any, b: any) => a.price - b.price);
-        this.products.set(sorted);
-      });
+      const sorted = [...result.docs].sort((a: any, b: any) => a.price - b.price);
+      this.products.set(sorted);
     });
   }
 
@@ -431,9 +418,7 @@ export class MenuSettingsComponent implements OnInit {
         this.recipe.set(recipes);
         for (const item of recipes) {
           this.mainService.getData('stocks', item.stock_id).then((res: any) => {
-            this.zone.run(() => {
-              this.oldRecipes.update(prev => [...prev, { id: item.stock_id, name: res.name, amount: item.amount, unit: res.unit }]);
-            });
+            this.oldRecipes.update(prev => [...prev, { id: item.stock_id, name: res.name, amount: item.amount, unit: res.unit }]);
           });
         }
       } else {
@@ -627,10 +612,8 @@ export class MenuSettingsComponent implements OnInit {
   filterProducts(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('products', { name: { $regex: regexp } }).then((res: any) => {
-      this.zone.run(() => {
-        const sorted = [...res.docs].sort((a: any, b: any) => a.price - b.price);
-        this.products.set(sorted);
-      });
+      const sorted = [...res.docs].sort((a: any, b: any) => a.price - b.price);
+      this.products.set(sorted);
     });
   }
 
@@ -666,25 +649,21 @@ export class MenuSettingsComponent implements OnInit {
 
   fillData() {
     this.mainService.getAllBy('categories', {}).then((result: any) => {
-      this.zone.run(() => this.categories.set(result.docs));
+      this.categories.set(result.docs);
     });
     this.mainService.getAllBy('products', {}).then((result: any) => {
-      this.zone.run(() => {
-        const sorted = [...result.docs].sort((a: any, b: any) => a.price - b.price);
-        this.products.set(sorted);
-      });
+      const sorted = [...result.docs].sort((a: any, b: any) => a.price - b.price);
+      this.products.set(sorted);
     });
     this.mainService.getAllBy('stocks', {}).then((result: any) => {
-      this.zone.run(() => this.stocks.set(result.docs));
+      this.stocks.set(result.docs);
     });
     this.mainService.getAllBy('settings', { key: 'Printers' }).then((res: any) => {
-      this.zone.run(() => {
-        if (res.docs && res.docs.length > 0) {
-          this.printers.set(res.docs[0].value);
-        } else {
-          this.printers.set([]);
-        }
-      });
+      if (res.docs && res.docs.length > 0) {
+        this.printers.set(res.docs[0].value);
+      } else {
+        this.printers.set([]);
+      }
     });
   }
 }

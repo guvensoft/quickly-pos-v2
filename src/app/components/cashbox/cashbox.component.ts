@@ -1,4 +1,4 @@
-import { Component, inject, signal, viewChild, effect, NgZone } from '@angular/core';
+import { Component, inject, signal, viewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Cashbox } from '../../core/models/cashbox.model';
@@ -20,7 +20,6 @@ export class CashboxComponent {
   private readonly settingsService = inject(SettingsService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
-  private readonly zone = inject(NgZone);
 
   readonly cashboxData = signal<Cashbox[]>([]);
   readonly selectedData = signal<Cashbox | undefined>(undefined);
@@ -78,18 +77,16 @@ export class CashboxComponent {
       });
     }
     this.cashboxForm()?.reset();
-    this.zone.run(() => {
-      const $ = (window as any).$;
-      // Active element'e blur() uygula
-      const activeElement = document.activeElement as HTMLElement;
-      if (activeElement && activeElement.blur) {
-        activeElement.blur();
-      }
-      $('#cashboxModal').modal('hide');
-      // Backdrop ve scroll kilidini kaldır
-      $('.modal-backdrop').remove();
-      $('body').removeClass('modal-open');
-    });
+    const $ = (window as any).$;
+    // Active element'e blur() uygula
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement && activeElement.blur) {
+      activeElement.blur();
+    }
+    $('#cashboxModal').modal('hide');
+    // Backdrop ve scroll kilidini kaldır
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
     return true;
   }
 
@@ -103,12 +100,10 @@ export class CashboxComponent {
         this.cashboxForm()!.setValue(res);
       }
       this.fillData();
-      this.zone.run(() => {
-        const $ = (window as any).$;
-        // Eski backdrop'ı temizle
-        $('.modal-backdrop').remove();
-        $('#cashboxModal').modal('show');
-      });
+      const $ = (window as any).$;
+      // Eski backdrop'ı temizle
+      $('.modal-backdrop').remove();
+      $('#cashboxModal').modal('show');
     })
   }
 
@@ -119,18 +114,16 @@ export class CashboxComponent {
       this.messageService.sendMessage('Kayıt Silindi');
       this.fillData();
     });
-    this.zone.run(() => {
-      const $ = (window as any).$;
-      // Active element'e blur() uygula
-      const activeElement = document.activeElement as HTMLElement;
-      if (activeElement && activeElement.blur) {
-        activeElement.blur();
-      }
-      $('#cashboxModal').modal('hide');
-      // Backdrop ve scroll kilidini kaldır
-      $('.modal-backdrop').remove();
-      $('body').removeClass('modal-open');
-    });
+    const $ = (window as any).$;
+    // Active element'e blur() uygula
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement && activeElement.blur) {
+      activeElement.blur();
+    }
+    $('#cashboxModal').modal('hide');
+    // Backdrop ve scroll kilidini kaldır
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
   }
 
   setDefault() {
@@ -143,41 +136,37 @@ export class CashboxComponent {
   fillData() {
     this.sellingIncomes.set(0);
     this.mainService.getAllBy('cashbox', {}).then(result => {
-      this.zone.run(() => {
-        const data = result.docs as unknown as Cashbox[];
-        data.sort((a, b) => b.timestamp - a.timestamp);
-        this.cashboxData.set(data);
+      const data = result.docs as unknown as Cashbox[];
+      data.sort((a, b) => b.timestamp - a.timestamp);
+      this.cashboxData.set(data);
 
-        try {
-          const inc = data.filter(obj => obj.type == 'Gelir').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
-          this.incomes.set(inc);
-        } catch (error) {
-          this.incomes.set(0);
-        }
+      try {
+        const inc = data.filter(obj => obj.type == 'Gelir').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
+        this.incomes.set(inc);
+      } catch (error) {
+        this.incomes.set(0);
+      }
 
-        try {
-          const out = data.filter(obj => obj.type == 'Gider').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
-          this.outcomes.set(out);
-        } catch (error) {
-          this.outcomes.set(0);
-        }
+      try {
+        const out = data.filter(obj => obj.type == 'Gider').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
+        this.outcomes.set(out);
+      } catch (error) {
+        this.outcomes.set(0);
+      }
 
-        const left = this.incomes() - this.outcomes();
-        this.mainService.getAllBy('reports', { type: 'Store' }).then(res => {
-          this.zone.run(() => {
-            let report = res.docs;
-            report = report.filter((obj: any) => obj.connection_id !== 'Genel').sort((a: any, b: any) => b.connection_id.localeCompare(a.connection_id));
-            let selling = 0;
-            report.forEach((element: any, index: number) => {
-              if (element.connection_id !== 'İkram') {
-                selling += element.weekly[this.day()];
-              }
-              if (report.length - 1 == index) {
-                this.sellingIncomes.set(selling);
-                this.leftTotal.set(Math.round(selling + left));
-              }
-            });
-          });
+      const left = this.incomes() - this.outcomes();
+      this.mainService.getAllBy('reports', { type: 'Store' }).then(res => {
+        let report = res.docs;
+        report = report.filter((obj: any) => obj.connection_id !== 'Genel').sort((a: any, b: any) => b.connection_id.localeCompare(a.connection_id));
+        let selling = 0;
+        report.forEach((element: any, index: number) => {
+          if (element.connection_id !== 'İkram') {
+            selling += element.weekly[this.day()];
+          }
+          if (report.length - 1 == index) {
+            this.sellingIncomes.set(selling);
+            this.leftTotal.set(Math.round(selling + left));
+          }
         });
       });
     });
