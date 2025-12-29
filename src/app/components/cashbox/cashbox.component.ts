@@ -143,37 +143,41 @@ export class CashboxComponent {
   fillData() {
     this.sellingIncomes.set(0);
     this.mainService.getAllBy('cashbox', {}).then(result => {
-      const data = result.docs as unknown as Cashbox[];
-      data.sort((a, b) => b.timestamp - a.timestamp);
-      this.cashboxData.set(data);
+      this.zone.run(() => {
+        const data = result.docs as unknown as Cashbox[];
+        data.sort((a, b) => b.timestamp - a.timestamp);
+        this.cashboxData.set(data);
 
-      try {
-        const inc = data.filter(obj => obj.type == 'Gelir').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
-        this.incomes.set(inc);
-      } catch (error) {
-        this.incomes.set(0);
-      }
+        try {
+          const inc = data.filter(obj => obj.type == 'Gelir').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
+          this.incomes.set(inc);
+        } catch (error) {
+          this.incomes.set(0);
+        }
 
-      try {
-        const out = data.filter(obj => obj.type == 'Gider').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
-        this.outcomes.set(out);
-      } catch (error) {
-        this.outcomes.set(0);
-      }
+        try {
+          const out = data.filter(obj => obj.type == 'Gider').map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
+          this.outcomes.set(out);
+        } catch (error) {
+          this.outcomes.set(0);
+        }
 
-      const left = this.incomes() - this.outcomes();
-      this.mainService.getAllBy('reports', { type: 'Store' }).then(res => {
-        let report = res.docs;
-        report = report.filter((obj: any) => obj.connection_id !== 'Genel').sort((a: any, b: any) => b.connection_id.localeCompare(a.connection_id));
-        let selling = 0;
-        report.forEach((element: any, index: number) => {
-          if (element.connection_id !== 'İkram') {
-            selling += element.weekly[this.day()];
-          }
-          if (report.length - 1 == index) {
-            this.sellingIncomes.set(selling);
-            this.leftTotal.set(Math.round(selling + left));
-          }
+        const left = this.incomes() - this.outcomes();
+        this.mainService.getAllBy('reports', { type: 'Store' }).then(res => {
+          this.zone.run(() => {
+            let report = res.docs;
+            report = report.filter((obj: any) => obj.connection_id !== 'Genel').sort((a: any, b: any) => b.connection_id.localeCompare(a.connection_id));
+            let selling = 0;
+            report.forEach((element: any, index: number) => {
+              if (element.connection_id !== 'İkram') {
+                selling += element.weekly[this.day()];
+              }
+              if (report.length - 1 == index) {
+                this.sellingIncomes.set(selling);
+                this.leftTotal.set(Math.round(selling + left));
+              }
+            });
+          });
         });
       });
     });
