@@ -1,4 +1,4 @@
-import { Component, signal, effect, inject, NgZone } from '@angular/core';
+import { Component, signal, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Cashbox } from '../../core/models/cashbox.model';
 import { CheckType, ClosedCheck } from '../../core/models/check.model';
@@ -52,7 +52,6 @@ export class EndofthedayComponent {
   private settingsService = inject(SettingsService);
   private httpService = inject(HttpService);
   private conflictService = inject(ConflictService);
-  private readonly zone = inject(NgZone);
 
   constructor() {
     this.owner.set(this.settingsService.getUser('id') || '');
@@ -155,9 +154,8 @@ export class EndofthedayComponent {
     if (this.isStarted()) {
       this.mainService.getAllBy('checks', {}).then((res) => {
         if (res.docs.length == 0) {
-          this.zone.run(() => {
-            (window as any).$('#endDayModal').modal({ backdrop: 'static', keyboard: false });
-          });
+          // jQuery modal removed - use CDK Dialog instead if needed
+          (window as any).$('#endDayModal').modal({ backdrop: 'static', keyboard: false });
           clearInterval(this.conflictService.conflictListener());
           setTimeout(() => {
             this.stepChecks();
@@ -224,35 +222,32 @@ export class EndofthedayComponent {
 
   stepChecks() {
     this.mainService.getAllBy('closed_checks', {}).then(res => {
-      this.zone.run(() => {
-        this.progress.set('Kapatılan Hesaplar Yedekleniyor...');
-        this.checks.set(res.docs as any);
-        const checksBackup = new BackupData('closed_checks', this.checks());
-        const newBackupData = [...this.backupData()];
-        newBackupData.push(checksBackup);
-        this.backupData.set(newBackupData);
+      // Signal updates automatically trigger change detection - no need for zone.run()
+      this.progress.set('Kapatılan Hesaplar Yedekleniyor...');
+      this.checks.set(res.docs as any);
+      const checksBackup = new BackupData('closed_checks', this.checks());
+      const newBackupData = [...this.backupData()];
+      newBackupData.push(checksBackup);
+      this.backupData.set(newBackupData);
 
-        const Sales = this.StoreSalesReport(this.checks());
+      const Sales = this.StoreSalesReport(this.checks());
 
-        const updatedReport = this.endDayReport();
-        updatedReport.card_total = Sales.card;
-        updatedReport.cash_total = Sales.cash;
-        updatedReport.coupon_total = Sales.coupon;
-        updatedReport.free_total = Sales.free;
-        updatedReport.discount_total = Sales.discount;
-        updatedReport.canceled_total = Sales.canceled;
-        updatedReport.total_income = Sales.cash + Sales.card + Sales.coupon;
-        updatedReport.check_count = this.checks().length;
-        updatedReport.customers.male = Sales.customers.male;
-        updatedReport.customers.female = Sales.customers.female;
-        this.endDayReport.set(updatedReport);
-      });
+      const updatedReport = this.endDayReport();
+      updatedReport.card_total = Sales.card;
+      updatedReport.cash_total = Sales.cash;
+      updatedReport.coupon_total = Sales.coupon;
+      updatedReport.free_total = Sales.free;
+      updatedReport.discount_total = Sales.discount;
+      updatedReport.canceled_total = Sales.canceled;
+      updatedReport.total_income = Sales.cash + Sales.card + Sales.coupon;
+      updatedReport.check_count = this.checks().length;
+      updatedReport.customers.male = Sales.customers.male;
+      updatedReport.customers.female = Sales.customers.female;
+      this.endDayReport.set(updatedReport);
 
       this.mainService.removeAll('closed_checks', {}).then(() => {
         this.mainService.removeAll('allData', { db_name: 'closed_checks' }).then(() => {
-          this.zone.run(() => {
-            this.progress.set('Kapatılan Hesaplar Temizlendi...');
-          });
+          this.progress.set('Kapatılan Hesaplar Temizlendi...');
           this.stepCashbox();
         });
       });
@@ -263,39 +258,36 @@ export class EndofthedayComponent {
     let incomes = 0;
     let outcomes = 0;
     this.mainService.getAllBy('cashbox', {}).then(res => {
-      this.zone.run(() => {
-        this.progress.set('Kasa Verileri Yedekleniyor...');
-        this.cashbox.set(res.docs as any);
-        const cashboxBackup = new BackupData('cashbox', this.cashbox());
-        const newBackupData = [...this.backupData()];
-        newBackupData.push(cashboxBackup);
-        this.backupData.set(newBackupData);
+      // Signal updates automatically trigger change detection - no need for zone.run()
+      this.progress.set('Kasa Verileri Yedekleniyor...');
+      this.cashbox.set(res.docs as any);
+      const cashboxBackup = new BackupData('cashbox', this.cashbox());
+      const newBackupData = [...this.backupData()];
+      newBackupData.push(cashboxBackup);
+      this.backupData.set(newBackupData);
 
-        const incomeItems = this.cashbox().filter(obj => obj.type == 'Gelir');
-        if (incomeItems.length > 0) {
-          incomes = incomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
-        } else {
-          console.log('Kasa Geliri Yok..');
-        }
+      const incomeItems = this.cashbox().filter(obj => obj.type == 'Gelir');
+      if (incomeItems.length > 0) {
+        incomes = incomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
+      } else {
+        console.log('Kasa Geliri Yok..');
+      }
 
-        const outcomeItems = this.cashbox().filter(obj => obj.type == 'Gider');
-        if (outcomeItems.length > 0) {
-          outcomes = outcomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
-        } else {
-          console.log('Kasa Gideri Yok..');
-        }
+      const outcomeItems = this.cashbox().filter(obj => obj.type == 'Gider');
+      if (outcomeItems.length > 0) {
+        outcomes = outcomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
+      } else {
+        console.log('Kasa Gideri Yok..');
+      }
 
-        const updatedReport = this.endDayReport();
-        updatedReport.incomes = incomes;
-        updatedReport.outcomes = outcomes;
-        this.endDayReport.set(updatedReport);
-      });
+      const updatedReport = this.endDayReport();
+      updatedReport.incomes = incomes;
+      updatedReport.outcomes = outcomes;
+      this.endDayReport.set(updatedReport);
 
       this.mainService.removeAll('cashbox', {}).then(res => {
         this.mainService.removeAll('allData', { db_name: 'cashbox' }).then(() => {
-          this.zone.run(() => {
-            this.progress.set('Kasa Verileri Temizlendi...');
-          });
+          this.progress.set('Kasa Verileri Temizlendi...');
           this.stepReports();
         });
       });
@@ -304,14 +296,14 @@ export class EndofthedayComponent {
 
   stepReports() {
     this.mainService.getAllBy('reports', {}).then(res => {
-      this.zone.run(() => {
-        this.progress.set('Raporlar Yedekleniyor...');
-        this.reports.set((res.docs.filter((obj: any) => obj.type !== 'Activity')) as any);
-        const reportsBackup = new BackupData('reports', res.docs);
-        const newBackupData = [...this.backupData()];
-        newBackupData.push(reportsBackup);
-        this.backupData.set(newBackupData);
-      });
+      // Signal updates automatically trigger change detection - no need for zone.run()
+      this.progress.set('Raporlar Yedekleniyor...');
+      this.reports.set((res.docs.filter((obj: any) => obj.type !== 'Activity')) as any);
+      const reportsBackup = new BackupData('reports', res.docs);
+      const newBackupData = [...this.backupData()];
+      newBackupData.push(reportsBackup);
+      this.backupData.set(newBackupData);
+
       const activities = res.docs.filter((obj: any) => obj.type == 'Activity');
 
       this.mainService.localSyncBeforeRemote('reports').on('complete', () => {
@@ -342,14 +334,14 @@ export class EndofthedayComponent {
 
   stepLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.zone.run(() => {
-        this.progress.set('Kayıtlar Yedekleniyor...');
-        this.logs.set(res.docs as any);
-        const logsBackup = new BackupData('logs', this.logs());
-        const newBackupData = [...this.backupData()];
-        newBackupData.push(logsBackup);
-        this.backupData.set(newBackupData);
-      });
+      // Signal updates automatically trigger change detection - no need for zone.run()
+      this.progress.set('Kayıtlar Yedekleniyor...');
+      this.logs.set(res.docs as any);
+      const logsBackup = new BackupData('logs', this.logs());
+      const newBackupData = [...this.backupData()];
+      newBackupData.push(logsBackup);
+      this.backupData.set(newBackupData);
+
       this.mainService.removeAll('prints', {}).then(() => {
         this.mainService.removeAll('logs', {}).then(() => {
           this.mainService.removeAll('allData', { db_name: 'logs' }).then(() => {
@@ -365,14 +357,14 @@ export class EndofthedayComponent {
 
   stepOrders() {
     this.mainService.getAllBy('orders', {}).then(res => {
-      this.zone.run(() => {
-        this.progress.set('Siparişler Yedekleniyor...');
-        this.logs.set(res.docs as any);
-        const logsBackup = new BackupData('orders', this.logs());
-        const newBackupData = [...this.backupData()];
-        newBackupData.push(logsBackup);
-        this.backupData.set(newBackupData);
-      });
+      // Signal updates automatically trigger change detection - no need for zone.run()
+      this.progress.set('Siparişler Yedekleniyor...');
+      this.logs.set(res.docs as any);
+      const logsBackup = new BackupData('orders', this.logs());
+      const newBackupData = [...this.backupData()];
+      newBackupData.push(logsBackup);
+      this.backupData.set(newBackupData);
+
       this.mainService.removeAll('orders', {}).then(() => {
         this.mainService.removeAll('allData', { db_name: 'orders' }).then(() => {
           this.progress.set('Siparişler Temizlendi...');
@@ -386,14 +378,14 @@ export class EndofthedayComponent {
 
   stepReceipts() {
     this.mainService.getAllBy('receipts', {}).then(res => {
-      this.zone.run(() => {
-        this.progress.set('Ödemeler Yedekleniyor...');
-        this.logs.set(res.docs as any);
-        const logsBackup = new BackupData('receipts', this.logs());
-        const newBackupData = [...this.backupData()];
-        newBackupData.push(logsBackup);
-        this.backupData.set(newBackupData);
-      });
+      // Signal updates automatically trigger change detection - no need for zone.run()
+      this.progress.set('Ödemeler Yedekleniyor...');
+      this.logs.set(res.docs as any);
+      const logsBackup = new BackupData('receipts', this.logs());
+      const newBackupData = [...this.backupData()];
+      newBackupData.push(logsBackup);
+      this.backupData.set(newBackupData);
+
       this.mainService.removeAll('receipts', {}).then(() => {
         this.mainService.removeAll('allData', { db_name: 'receipts' }).then(() => {
           this.progress.set('Ödemeler Temizlendi...');
@@ -480,9 +472,8 @@ export class EndofthedayComponent {
       }
     }, err => {
       console.log(err);
-      this.zone.run(() => {
-        (window as any).$('#endDayModal').modal('hide');
-      });
+      // jQuery modal hide does not need zone.run() wrapper
+      (window as any).$('#endDayModal').modal('hide');
       this.messageService.sendAlert('Hata!', 'Sunucudan İzin Alınamadı', 'error');
       setTimeout(() => {
         this.electronService.relaunchProgram();
@@ -507,9 +498,8 @@ export class EndofthedayComponent {
                     })
                     .on('complete', (info: any) => {
                       this.progress.set('Gün Sonu Tamamlanıyor..');
-                      this.zone.run(() => {
-                        (window as any).$('#endDayModal').modal('hide');
-                      });
+                      // jQuery modal hide does not need zone.run() wrapper
+                      (window as any).$('#endDayModal').modal('hide');
                       this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program Yeniden Başlatılacak', 'success');
                       setTimeout(() => {
                         this.electronService.relaunchProgram();
@@ -536,9 +526,8 @@ export class EndofthedayComponent {
         }
       }, err => {
         console.log(err);
-        this.zone.run(() => {
-          (window as any).$('#endDayModal').modal('hide');
-        });
+        // jQuery modal hide does not need zone.run() wrapper
+        (window as any).$('#endDayModal').modal('hide');
         this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program Yeniden Başlatılacak', 'success');
         setTimeout(() => {
           this.electronService.relaunchProgram();
@@ -570,10 +559,9 @@ export class EndofthedayComponent {
 
   fillData() {
     this.mainService.getAllBy('endday', {}).then((result) => {
-      this.zone.run(() => {
-        const sortedData = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp).filter((obj: any) => obj.total_income !== 0);
-        this.endDayData.set(sortedData);
-      });
+      // Signal updates automatically trigger change detection - no need for zone.run()
+      const sortedData = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp).filter((obj: any) => obj.total_income !== 0);
+      this.endDayData.set(sortedData);
     });
   }
 }
