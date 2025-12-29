@@ -166,8 +166,7 @@
             <h5 class="mt-2">Masa Ayarları</h5>
           </div>
           <div class="col-lg-4 pr-2 pl-0">
-            <button [disabled]="floors().length === 0" class="btn btn-danger btn-md btn-block" (click)="setDefault()"
-              data-toggle="modal" data-target="#tableModal">
+            <button [disabled]="floors().length === 0" class="btn btn-danger btn-md btn-block" (click)="setDefaultTable()">
               <i class="fa fa-plus"></i> Masa Ekle
             </button>
           </div>
@@ -356,66 +355,3 @@
   </div>
 </div>
 
-<div class="modal fade" id="tableModal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title" id="modelTitleId">Masa</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <form #tableForm="ngForm" (ngSubmit)="addTable(tableForm)">
-        @if (onUpdate()) {
-        <div>
-          <input type="hidden" name="_id" ngModel>
-          <input type="hidden" name="_rev" ngModel>
-          <input type="hidden" name="status" ngModel>
-          <input type="hidden" name="timestamp" ngModel>
-          <input type="hidden" name="position" ngModel>
-        </div>
-        }
-        <div class="modal-body">
-          <div class="form-group">
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <div class="input-group-text">Masa Adı</div>
-              </div>
-              <input type="text" name="name" class="form-control form-control-lg" ngModel />
-            </div>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <div class="input-group-text">Bağlı Bölüm</div>
-              </div>
-              <select type="text" name="floor_id" class="form-control form-control-lg" ngModel>
-                @for (item of floors(); track item._id) {
-                <option [value]="item._id">{{item.name}}</option>
-                }
-              </select>
-            </div>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <div class="input-group-text">Kişi Sayısı</div>
-              </div>
-              <input type="number" name="capacity" class="form-control form-control-lg" ngModel />
-            </div>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <div class="input-group-text">Açıklama</div>
-              </div>
-              <input type="text" name="description" class="form-control form-control-lg" ngModel />
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-          @if (onUpdate()) {
-          <button type="button" (click)="removeTable()" class="btn btn-danger btn-lg">Masayı
-            Sil</button>
-          }
-          <button type="submit" class="btn btn-primary btn-lg">Kaydet</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
