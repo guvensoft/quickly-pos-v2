@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
-export interface PromptData {
+export interface PromptModalData {
   title?: string;
   message?: string;
   placeholder?: string;
@@ -38,10 +38,10 @@ export interface PromptData {
     .modal-content { border: none; box-shadow: none; }
   `]
 })
-export class PromptModalComponent extends BaseModalComponent<PromptData> {
+export class PromptModalComponent extends BaseModalComponent<PromptModalData> {
   constructor(
-    dialogRef: DialogRef<string>,
-    @Inject(DIALOG_DATA) data: PromptData
+    protected override dialogRef: DialogRef<string>,
+    @Inject(DIALOG_DATA) public override data: PromptModalData
   ) {
     super(dialogRef, data);
   }

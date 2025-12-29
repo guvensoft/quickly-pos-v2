@@ -7,10 +7,12 @@ import { NgxMaskPipe } from 'ngx-mask';
 import { Call } from '../../../core/models/caller.model';
 import { Customer } from '../../../core/models/customer.model';
 
-export interface CallerData {
+export interface CallerModalData {
   call: Call;
   customer: Customer | null;
 }
+
+export type CallerModalResult = { action: 'open' | 'save'; formValue?: any };
 
 @Component({
   standalone: true,
@@ -93,12 +95,12 @@ export interface CallerData {
     .rounded-lg { border-radius: 12px; }
   `]
 })
-export class CallerModalComponent extends BaseModalComponent<CallerData> {
+export class CallerModalComponent extends BaseModalComponent<CallerModalData> {
   customerForm = viewChild<NgForm>('customerForm');
 
   constructor(
-    dialogRef: DialogRef<any>,
-    @Inject(DIALOG_DATA) data: CallerData
+    protected override dialogRef: DialogRef<CallerModalResult>,
+    @Inject(DIALOG_DATA) public override data: CallerModalData
   ) {
     super(dialogRef, data);
   }

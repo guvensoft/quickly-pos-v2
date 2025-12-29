@@ -137,7 +137,6 @@ export class SellingScreenComponent implements OnDestroy {
     new PaymentMethod('Kupon', 'İndirim Kuponu veya Yemek Çeki', '#5bc0de', 'fa-bookmark', 3, 1),
     new PaymentMethod('İkram', 'İkram Hesap', '#c9302c', 'fa-handshake-o', 4, 1)
   ];
-
   readonly day = signal<number>(new Date().getDay());
   readonly askForPrint = signal<boolean>(false);
   readonly askForCheckPrint = signal<boolean>(false);
