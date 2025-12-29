@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
-import { PrinterService } from '../../core/services/printer.service';
-import { MessageService } from '../../core/services/message.service';
-import { Printer } from '../../core/models/settings.model';
+import { PrinterService } from '../../../core/services/printer.service';
+import { MessageService } from '../../../core/services/message.service';
+import { Printer } from '../../../core/models/settings.model';
 
 @Component({
     standalone: true,

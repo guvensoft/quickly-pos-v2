@@ -4,8 +4,8 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 import { NgxMaskPipe } from 'ngx-mask';
-import { Call } from '../../../../core/models/caller.model';
-import { Customer } from '../../../../core/models/customer.model';
+import { Call } from '../../../core/models/caller.model';
+import { Customer } from '../../../core/models/customer.model';
 
 @Component({
     standalone: true,

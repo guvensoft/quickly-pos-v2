@@ -11,6 +11,11 @@ export interface SelectionItem {
     data?: any;
 }
 
+export interface SelectionModalData {
+    title?: string;
+    items: SelectionItem[];
+}
+
 @Component({
     standalone: true,
     imports: [CommonModule, PricePipe],
@@ -51,10 +56,10 @@ export interface SelectionItem {
     .btn-block { width: 100%; }
   `]
 })
-export class SelectionModalComponent extends BaseModalComponent<SelectionItem> {
+export class SelectionModalComponent extends BaseModalComponent<SelectionModalData> {
     constructor(
-        dialogRef: DialogRef<SelectionItem>,
-        @Inject(DIALOG_DATA) data: { title: string, items: SelectionItem[] }
+        protected override dialogRef: DialogRef<SelectionItem>,
+        @Inject(DIALOG_DATA) public override data: SelectionModalData
     ) {
         super(dialogRef, data);
     }

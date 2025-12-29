@@ -3,6 +3,14 @@ import { CommonModule } from '@angular/common';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
+interface TableSelectionModalData {
+  title?: string;
+  actionText?: string;
+  currentTableId?: string;
+  floors: Array<{ _id: string; name: string }>;
+  tables: Array<{ _id: string; name: string; floor_id: string; status: number; capacity: number }>;
+}
+
 @Component({
     standalone: true,
     imports: [CommonModule],
@@ -87,7 +95,7 @@ import { BaseModalComponent } from '../base-modal.component';
     .list-group-item.active { background-color: #dc3545; border-color: #dc3545; }
   `]
 })
-export class TableSelectionModalComponent extends BaseModalComponent<string> {
+export class TableSelectionModalComponent extends BaseModalComponent<TableSelectionModalData> {
     readonly selectedFloorId = signal<string | null>(null);
     readonly selectedTableId = signal<string | null>(null);
 
@@ -98,8 +106,8 @@ export class TableSelectionModalComponent extends BaseModalComponent<string> {
     });
 
     constructor(
-        dialogRef: DialogRef<string>,
-        @Inject(DIALOG_DATA) data: any
+        protected override dialogRef: DialogRef<string | null>,
+        @Inject(DIALOG_DATA) public override data: TableSelectionModalData
     ) {
         super(dialogRef, data);
     }

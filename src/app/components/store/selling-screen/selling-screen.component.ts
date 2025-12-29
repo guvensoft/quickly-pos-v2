@@ -125,45 +125,44 @@ export class SellingScreenComponent implements OnDestroy {
   readonly printers = signal<any[]>([]);
   readonly scalerValue = signal<number>(0);
   readonly cancelReasons: Array<string> = [
-    readonly discounts: Array<number> = [5, 10, 15, 20, 25, 40];
-    readonly paymentMethods: Array<any> = [
-      new PaymentMethod('Nakit', 'Nakit Ödeme', '#5cb85c', 'fa-money', 1, 1),
-      new PaymentMethod('Kart', 'Kredi veya Banka Kartı', '#f0ad4e', 'fa-credit-card', 2, 1),
-      new PaymentMethod('Kupon', 'İndirim Kuponu veya Yemek Çeki', '#5bc0de', 'fa-bookmark', 3, 1),
-      new PaymentMethod('İkram', 'İkram Hesap', '#c9302c', 'fa-handshake-o', 4, 1)
-    ];
-    readonly cancelReasons: Array<string> = [
-      'Zayi',
-      'Stokta Yok',
-      'Yanlış Sipariş',
-      'Müşteri İstemedi',
-    ];
-    readonly day = signal<number>(new Date().getDay());
-    readonly askForPrint = signal<boolean>(false);
-    readonly askForCheckPrint = signal<boolean>(false);
-    readonly onProductChange = signal<boolean>(false);
-    readonly selectedQuantity = signal<number>(1);
-    readonly takeaway = signal<boolean>(false);
-    readonly changes = signal<any>(undefined);
-    scalerListener!: Subscription;
-    readonly selectedTableId = signal<string | undefined>(undefined);
+    'Zayi',
+    'Stokta Yok',
+    'Yanlış Sipariş',
+    'Müşteri İstemedi',
+  ];
+  readonly discounts: Array<number> = [5, 10, 15, 20, 25, 40];
+  readonly paymentMethods: Array<any> = [
+    new PaymentMethod('Nakit', 'Nakit Ödeme', '#5cb85c', 'fa-money', 1, 1),
+    new PaymentMethod('Kart', 'Kredi veya Banka Kartı', '#f0ad4e', 'fa-credit-card', 2, 1),
+    new PaymentMethod('Kupon', 'İndirim Kuponu veya Yemek Çeki', '#5bc0de', 'fa-bookmark', 3, 1),
+    new PaymentMethod('İkram', 'İkram Hesap', '#c9302c', 'fa-handshake-o', 4, 1)
+  ];
+  readonly day = signal<number>(new Date().getDay());
+  readonly askForPrint = signal<boolean>(false);
+  readonly askForCheckPrint = signal<boolean>(false);
+  readonly onProductChange = signal<boolean>(false);
+  readonly selectedQuantity = signal<number>(1);
+  readonly takeaway = signal<boolean>(false);
+  readonly changes = signal<any>(undefined);
+  scalerListener!: Subscription;
+  readonly selectedTableId = signal<string | undefined>(undefined);
 
-    readonly selectedTable = computed(() => {
-      return this.tables().find(t => t._id === this.selectedTableId());
-    });
+  readonly selectedTable = computed(() => {
+    return this.tables().find(t => t._id === this.selectedTableId());
+  });
 
-    // Input element references using Signal-based viewChild API
-    productFilterInput = viewChild<ElementRef>('productName');
-    productUnit = viewChild<ElementRef>('specsUnit');
-    noteInput = viewChild<ElementRef>('noteInput');
+  // Input element references using Signal-based viewChild API
+  productFilterInput = viewChild<ElementRef>('productName');
+  productUnit = viewChild<ElementRef>('specsUnit');
+  noteInput = viewChild<ElementRef>('noteInput');
 
-    constructor() {
-      this.owner.set(this.settingsService.getUser('name') as string);
-      this.ownerRole.set(this.settingsService.getUser('type') as string);
-      this.ownerId.set(this.settingsService.getUser('id') as string);
+  constructor() {
+    this.owner.set(this.settingsService.getUser('name') as string);
+    this.ownerRole.set(this.settingsService.getUser('type') as string);
+    this.ownerId.set(this.settingsService.getUser('id') as string);
 
-      // route.params subscription wrapped in effect
-      effect(() => {
+    // route.params subscription wrapped in effect
+    effect(() => {
       this.route.params.subscribe((params: any) => {
         this.id.set(params['id']);
         this.type.set(params['type']);

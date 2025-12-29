@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import { ServerInfo, Settings } from '../../core/models/settings.model';
 import { Product } from '../../core/models/product.model';
 import { Table } from '../../core/models/table.model';
-import { DialogFacade } from '../../core/services/dialog.facade';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
