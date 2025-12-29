@@ -10,6 +10,7 @@ import { MessageService } from '../../../core/services/message.service';
 import { PrinterService } from '../../../core/services/printer.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { SignalValidatorService } from '../../../core/services/signal-validator.service';
+import { DialogFacade } from '../../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -27,6 +28,7 @@ export class ApplicationSettingsComponent implements OnInit {
   private readonly validatorService = inject(SignalValidatorService);
   private readonly zone = inject(NgZone);
   private readonly mainService = inject(MainService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly restInfo = signal<any>(undefined);
   readonly restMap = signal<string | null>(null);
@@ -253,21 +255,17 @@ export class ApplicationSettingsComponent implements OnInit {
         const printersData = currentPrinters.filter(obj => obj.name == form.name);
         if (printersData.length == 0) {
           this.settings.addPrinter(printer);
-          this.zone.run(() => {
-            (window as any).$('#printerModal').modal('hide');
-          });
           this.message.sendMessage('Yazıcı Oluşturuldu.');
           this.fillData();
+          this.setDefault();
         } else {
           this.message.sendMessage('Farklı Bir İsim Girmek Zorundasınız');
         }
       } else {
         this.settings.addPrinter(printer);
-        this.zone.run(() => {
-          (window as any).$('#printerModal').modal('hide');
-        });
         this.message.sendMessage('Yazıcı Oluşturuldu.');
         this.fillData();
+        this.setDefault();
       }
     } else {
       this.message.sendMessage('Yazıcı Adı Girmek Zorundasınız.');
@@ -336,8 +334,14 @@ export class ApplicationSettingsComponent implements OnInit {
     } else {
       alert('Yanlış Şifre');
     }
-    this.zone.run(() => {
-      (window as any).$('#adminModal').modal('hide');
+  }
+
+  setDefaultAdmin() {
+    this.dialogFacade.openAdminModal(this.appSettings()).closed.subscribe((formData: any) => {
+      if (formData) {
+        // Admin modal is mainly for viewing/validating settings
+        // Business logic handled via makeAdmin password validation
+      }
     });
   }
 
