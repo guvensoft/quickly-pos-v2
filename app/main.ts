@@ -194,6 +194,33 @@ try {
     appendLog('error', payload.message, { source: 'renderer', ...(payload.meta ?? {}) });
   });
 
+  ipcMain.on('window:reload', () => {
+    if (win) win.reload();
+  });
+
+  ipcMain.on('window:fullscreen', (event, flag) => {
+    if (win) win.setFullScreen(flag);
+  });
+
+  ipcMain.on('window:devtools', () => {
+    if (win) win.webContents.openDevTools();
+  });
+
+  ipcMain.on('app:relaunch', () => {
+    app.relaunch();
+    app.exit(0);
+  });
+
+  ipcMain.on('app:quit', () => {
+    app.quit();
+  });
+
+  ipcMain.on('closeServer', () => {
+    // Implement server closing logic if needed
+    // For now logging it
+    console.log('Close server requested');
+  });
+
   // Ignore certificate errors for development
   app.commandLine.appendSwitch('ignore-certificate-errors');
 
