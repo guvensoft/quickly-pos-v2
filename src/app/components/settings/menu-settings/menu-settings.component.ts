@@ -10,6 +10,7 @@ import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
 import { SignalValidatorService } from '../../../core/services/signal-validator.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
+import { DialogFacade } from '../../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -24,6 +25,7 @@ export class MenuSettingsComponent implements OnInit {
   private readonly logService = inject(LogService);
   private readonly validatorService = inject(SignalValidatorService);
   private readonly zone = inject(NgZone);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly categories = signal<Array<Category>>([]);
   readonly sub_categories = signal<Array<SubCategory>>([]);
@@ -229,31 +231,45 @@ export class MenuSettingsComponent implements OnInit {
     });
   }
 
-  addCategory(categoryForm: NgForm) {
-    const form = categoryForm.value;
-    if (!form.name) {
-      this.messageService.sendMessage('Kategori Adı Belirtmelisiniz');
-      return false;
-    }
-    const schema = new Category(form.name, form.description || '', 1, form.printer || '', 0, form.tags || []);
-    this.mainService.addData('categories', schema).then(() => {
-      this.fillData();
-      this.messageService.sendMessage('Kategori Oluşturuldu');
-    })
-    categoryForm.reset();
-    this.zone.run(() => {
-      (window as any).$('#categoryModal').modal('hide');
+  setDefaultCategory() {
+    this.onUpdate.set(false);
+    if (this.categoryForm()) this.categoryForm()!.reset();
+
+    this.dialogFacade.openCategoryModal().closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitCategoryForm(formData, null);
+      }
     });
-    return true;
   }
 
   updateCategory(catDetails: NgForm) {
     const form = catDetails.value;
+    if (!form.name) {
+      this.messageService.sendMessage('Kategori Adı Belirtmelisiniz');
+      return;
+    }
+
     this.mainService.updateData('categories', form._id, form).then(() => {
       this.fillData();
       this.messageService.sendMessage('Kategori Düzenlendi');
       this.selectedCat.set(undefined);
     });
+  }
+
+  private submitCategoryForm(formData: any, categoryId: string | null) {
+    if (!formData.name) {
+      this.messageService.sendMessage('Kategori Adı Belirtmelisiniz');
+      return;
+    }
+
+    if (categoryId === null) {
+      // Add new category
+      const schema = new Category(formData.name, formData.description || '', 1, formData.printer || '', 0, formData.tags || []);
+      this.mainService.addData('categories', schema).then(() => {
+        this.fillData();
+        this.messageService.sendMessage('Kategori Oluşturuldu');
+      });
+    }
   }
 
   removeCategory(id: string) {
@@ -291,112 +307,83 @@ export class MenuSettingsComponent implements OnInit {
     }
   }
 
-  addSubCategory(subCatForm: NgForm) {
-    const form = subCatForm.value;
-    const cat = this.selectedCat();
-    if (!cat) return false;
-
-    if (!form._id) {
-      const schema = new SubCategory(cat._id!, form.name, form.description || '', 1);
-      this.mainService.addData('sub_categories', schema).then(res => {
-        this.getCategory(cat);
-      });
-    } else {
-      this.mainService.updateData('sub_categories', form._id, form).then(res => {
-        this.getCategory(cat);
-      });
-    }
-    this.selectedSubCat.set(undefined);
+  setDefaultSubCategory() {
     this.onUpdate.set(false);
-    subCatForm.reset();
-    this.zone.run(() => {
-      (window as any).$('#subCatModal').modal('hide');
+    this.selectedSubCat.set(undefined);
+    if (this.subCatForm()) this.subCatForm()!.reset();
+
+    this.dialogFacade.openSubcategoryModal().closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitSubCategoryForm(formData, null);
+      }
     });
-    return true;
   }
 
   updateSubCategory(subCat: SubCategory) {
     this.selectedSubCat.set(subCat);
     this.onUpdate.set(true);
-    if (this.subCatForm()) {
-      this.subCatForm()!.form.patchValue(subCat);
-    }
-    this.zone.run(() => {
-      (window as any).$('#subCatModal').modal('show');
+
+    this.dialogFacade.openSubcategoryModal(subCat).closed.subscribe((formData: any) => {
+      if (formData && subCat._id) {
+        this.submitSubCategoryForm(formData, subCat._id);
+      }
     });
+  }
+
+  private submitSubCategoryForm(formData: any, subCategoryId: string | null) {
+    const cat = this.selectedCat();
+    if (!cat) {
+      this.messageService.sendMessage('Kategori Seçmelisiniz');
+      return;
+    }
+
+    if (subCategoryId === null) {
+      // Add new subcategory
+      const schema = new SubCategory(cat._id!, formData.name, formData.description || '', 1);
+      this.mainService.addData('sub_categories', schema).then(() => {
+        this.getCategory(cat);
+        this.messageService.sendMessage('Alt Kategori Oluşturuldu');
+      });
+    } else {
+      // Update existing subcategory
+      this.mainService.updateData('sub_categories', subCategoryId, formData).then(() => {
+        this.getCategory(cat);
+        this.messageService.sendMessage('Alt Kategori Düzenlendi');
+      });
+    }
+    this.selectedSubCat.set(undefined);
+    this.onUpdate.set(false);
   }
 
   removeSubCategory(id: string) {
-    this.mainService.removeData('sub_categories', id).then(res => {
+    this.mainService.removeData('sub_categories', id).then(() => {
       const cat = this.selectedCat();
       if (cat) this.getCategory(cat);
       this.onUpdate.set(false);
-    });
-    if (this.subCatForm()) this.subCatForm()!.reset();
-    this.zone.run(() => {
-      (window as any).$('#subCatModal').modal('hide');
+      this.selectedSubCat.set(undefined);
+      this.messageService.sendMessage('Alt Kategori Silindi');
     });
   }
 
-  addProduct(productForm: NgForm) {
-    const form = productForm.value;
+  setDefaultProduct() {
+    this.onUpdate.set(false);
+    this.selectedId.set(undefined);
+    this.productRecipe.set([]);
+    this.recipesTable.set([]);
+    this.oldRecipes.set([]);
+    this.recipe.set([]);
+    this.productSpecs.set([]);
+    this.productType.set(1);
+    this.hasRecipe.set(false);
 
-    // Update validation signals from form
-    this.productName.set(form.name || '');
-    this.productCategory.set(form.cat_id || '');
-    this.productPrice.set(form.price || 0);
-    this.productTaxValue.set(form.tax_value || 0);
-
-    // Check if form is valid
-    if (!this.isProductFormValid()) {
-      this.messageService.sendMessage('Gerekli Alanları Doldurmalısınız');
-      return false;
-    }
-
-    if (form.type == 2 && this.oldRecipes().length == 0) {
-      if (form.type == 2 && this.productRecipe().length == 0) {
-        this.messageService.sendMessage('Stok Girişi Yapmalısınız!');
-        return false;
-      }
-    }
-    const specs = this.productSpecs();
-    const recipeItems = this.productRecipe();
-    const schema = new Product(form.cat_id, form.type, form.description || '', form.name, form.price, 1, form.tax_value, form.barcode || '', form.notes || '', form.subcat_id || '', specs, form._id, form._rev);
-    if (form._id == undefined) {
-      this.mainService.addData('products', schema).then((response: any) => {
-        this.mainService.addData('reports', new Report('Product', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), schema.name, Date.now())).then((res: any) => {
-          this.logService.createLog(logType.PRODUCT_CREATED, res.id, `${form.name} adlı Ürün Oluşturuldu`)
-        });
-        if (recipeItems.length > 0) {
-          const recipeSchema = new Recipe(response.id, recipeItems);
-          this.mainService.addData('recipes', recipeSchema);
-        }
-        this.messageService.sendMessage('Ürün Oluşturuldu');
-      });
-    } else {
-      this.mainService.updateData('products', form._id, schema).then((res: any) => {
-        if (res.ok) {
-          this.logService.createLog(logType.PRODUCT_UPDATED, res.id, `${form.name} adlı Ürün Güncellendi`);
-          if (recipeItems.length > 0) {
-            const currentRecipeId = this.recipeId();
-            if (this.recipe().length == 0) {
-              const recipeSchema = new Recipe(form._id, recipeItems);
-              this.mainService.addData('recipes', recipeSchema);
-            } else if (currentRecipeId) {
-              const combined = this.recipe().concat(recipeItems);
-              this.mainService.updateData('recipes', currentRecipeId, { recipe: combined });
-            }
-          }
-          this.messageService.sendMessage('Ürün Düzenlendi');
-        }
-      });
-    }
     if (this.recipesForm()) this.recipesForm()!.reset();
     if (this.productForm()) this.productForm()!.reset();
-    this.zone.run(() => {
-      (window as any).$('#productModal').modal('hide');
+
+    this.dialogFacade.openProductModal().closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitProductForm(formData, null);
+      }
     });
-    return true;
   }
 
   updateProduct(id: string) {
@@ -413,23 +400,26 @@ export class MenuSettingsComponent implements OnInit {
       this.mainService.getAllBy('sub_categories', { cat_id: result.cat_id }).then((res: any) => {
         this.subCats.set(res.docs);
       });
-      result.note = "";
-      if (result.specifies == undefined || result.specifies == '') {
-        result.specifies = [];
+
+      // Prepare data for modal
+      const modalData = { ...result };
+      if (modalData.specifies == undefined || modalData.specifies == '') {
+        modalData.specifies = [];
       }
-      this.productSpecs.set(result.specifies);
-      if (result.subcat_id == undefined) {
-        result.subcat_id = "";
+      this.productSpecs.set(modalData.specifies);
+      if (modalData.subcat_id == undefined) {
+        modalData.subcat_id = "";
       }
-      if (!result.notes) {
-        result.notes = '';
+      if (!modalData.notes) {
+        modalData.notes = '';
       }
-      this.productType.set(result.type);
-      if (this.productForm()) {
-        this.productForm()!.form.patchValue(result);
-      }
-      this.zone.run(() => {
-        (window as any).$('#productModal').modal('show');
+      this.productType.set(modalData.type);
+
+      // Open product modal with product data
+      this.dialogFacade.openProductModal(modalData).closed.subscribe((formData: any) => {
+        if (formData) {
+          this.submitProductForm(formData, id);
+        }
       });
     });
 
@@ -452,12 +442,73 @@ export class MenuSettingsComponent implements OnInit {
     });
   }
 
+  private submitProductForm(formData: any, productId: string | null) {
+    // Update validation signals from form
+    this.productName.set(formData.name || '');
+    this.productCategory.set(formData.cat_id || '');
+    this.productPrice.set(formData.price || 0);
+    this.productTaxValue.set(formData.tax_value || 0);
+
+    // Check if form is valid
+    if (!this.isProductFormValid()) {
+      this.messageService.sendMessage('Gerekli Alanları Doldurmalısınız');
+      return;
+    }
+
+    if (formData.type == 2 && this.oldRecipes().length == 0) {
+      if (formData.type == 2 && this.productRecipe().length == 0) {
+        this.messageService.sendMessage('Stok Girişi Yapmalısınız!');
+        return;
+      }
+    }
+
+    const specs = this.productSpecs();
+    const recipeItems = this.productRecipe();
+    const schema = new Product(formData.cat_id, formData.type, formData.description || '', formData.name, formData.price, 1, formData.tax_value, formData.barcode || '', formData.notes || '', formData.subcat_id || '', specs, formData._id, formData._rev);
+
+    if (productId === null) {
+      // Add new product
+      this.mainService.addData('products', schema).then((response: any) => {
+        this.mainService.addData('reports', new Report('Product', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), schema.name, Date.now())).then((res: any) => {
+          this.logService.createLog(logType.PRODUCT_CREATED, res.id, `${formData.name} adlı Ürün Oluşturuldu`)
+        });
+        if (recipeItems.length > 0) {
+          const recipeSchema = new Recipe(response.id, recipeItems);
+          this.mainService.addData('recipes', recipeSchema);
+        }
+        this.fillData();
+        this.messageService.sendMessage('Ürün Oluşturuldu');
+      });
+    } else {
+      // Update existing product
+      this.mainService.updateData('products', productId, schema).then((res: any) => {
+        if (res.ok) {
+          this.logService.createLog(logType.PRODUCT_UPDATED, res.id, `${formData.name} adlı Ürün Güncellendi`);
+          if (recipeItems.length > 0) {
+            const currentRecipeId = this.recipeId();
+            if (this.recipe().length == 0) {
+              const recipeSchema = new Recipe(productId, recipeItems);
+              this.mainService.addData('recipes', recipeSchema);
+            } else if (currentRecipeId) {
+              const combined = this.recipe().concat(recipeItems);
+              this.mainService.updateData('recipes', currentRecipeId, { recipe: combined });
+            }
+          }
+          this.fillData();
+          this.messageService.sendMessage('Ürün Düzenlendi');
+        }
+      });
+    }
+    this.setDefault();
+  }
+
   removeProduct() {
     const isOk = confirm('Ürünü Silmek Üzerisiniz..');
     const id = this.selectedId();
     if (isOk && id) {
       this.mainService.removeData('products', id).then((result) => {
-        const productName = this.productForm() ? this.productForm()!.value.name : 'Ürün';
+        const selectedProd = this.selectedProduct();
+        const productName = selectedProd ? selectedProd.name : 'Ürün';
         this.logService.createLog(logType.PRODUCT_DELETED, result.id, `${productName} adlı Ürün Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id }).then((res: any) => {
           if (res.docs.length > 0)
@@ -467,6 +518,8 @@ export class MenuSettingsComponent implements OnInit {
           if (res.docs.length > 0)
             this.mainService.removeData('recipes', res.docs[0]._id);
         });
+        this.fillData();
+        this.setDefault();
         this.messageService.sendMessage('Ürün Silindi!');
       });
     }
