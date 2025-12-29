@@ -8,6 +8,7 @@ import { MessageService } from '../../../core/services/message.service';
 import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
+import { DialogFacade } from '../../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -21,6 +22,7 @@ export class UserSettingsComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
   private readonly zone = inject(NgZone);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly users = signal<Array<User>>([]);
   readonly groups = signal<Array<UserGroup>>([]);
@@ -144,13 +146,45 @@ export class UserSettingsComponent implements OnInit {
           this.fillData();
           this.messageService.sendMessage('Grup Oluşturuldu!');
           groupForm.reset();
-          this.zone.run(() => {
-            (window as any).$('#groupModal').modal('hide');
-          });
+          this.selectedGroup.set(undefined);
         });
       }
     });
     return true;
+  }
+
+  setDefaultGroup() {
+    this.onUpdate.set(false);
+    if (this.groupForm()) this.groupForm()!.reset();
+
+    this.dialogFacade.openUserGroupModal().closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitGroupForm(formData, null);
+      }
+    });
+  }
+
+  private submitGroupForm(formData: any, groupId: string | null) {
+    if (formData.name == undefined) {
+      this.messageService.sendMessage('Grup Adı Girmek Zorundasınız.');
+      return;
+    }
+    const userAuth = new UserAuth(new ComponentsAuth(formData.store, formData.cashbox, formData.endoftheday, formData.reports, formData.settings), formData.cancelCheck, formData.cancelProduct, formData.discount, formData.payment, formData.end);
+
+    if (groupId === null) {
+      // Add new group
+      const schema = new UserGroup(formData.name, formData.description, userAuth, 1, Date.now());
+      this.mainService.getAllBy('users_group', { name: formData.name }).then(result => {
+        if (result.docs.length > 0) {
+          this.messageService.sendMessage('Belirtilen Grup İsmi Kullanılmaktadır..');
+        } else {
+          this.mainService.addData('users_group', schema).then(() => {
+            this.fillData();
+            this.messageService.sendMessage('Grup Oluşturuldu!');
+          });
+        }
+      });
+    }
   }
 
   updateGroup(groupDetailForm: NgForm) {
@@ -230,9 +264,7 @@ export class UserSettingsComponent implements OnInit {
               this.messageService.sendMessage('Kullanıcı Oluşturuldu!');
               this.fillData();
               userForm.reset();
-              this.zone.run(() => {
-                (window as any).$('#userModal').modal('hide');
-              });
+              this.selectedUser.set(undefined);
             });
           });
         }
@@ -248,14 +280,52 @@ export class UserSettingsComponent implements OnInit {
             this.messageService.sendMessage('Bilgiler Güncellendi!');
             this.fillData();
             userForm.reset();
-            this.zone.run(() => {
-              (window as any).$('#userModal').modal('hide');
-            });
+            this.selectedUser.set(undefined);
           });
         }
       });
     }
     return true;
+  }
+
+  setDefaultUser() {
+    this.onUpdate.set(false);
+    if (this.userForm()) this.userForm()!.reset();
+
+    this.dialogFacade.openUserModal(undefined, this.groups()).closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitUserForm(formData, null);
+      }
+    });
+  }
+
+  private submitUserForm(formData: any, userId: string | null) {
+    if (formData.name == undefined || formData.role_id == undefined || formData.pincode == undefined) {
+      this.messageService.sendMessage('Gerekli alanları doldurunuz.');
+      return;
+    }
+
+    formData.pincode = parseInt(formData.pincode);
+
+    if (userId === null) {
+      // Add new user
+      this.mainService.getAllBy('users', { pincode: formData.pincode }).then(result => {
+        if (result.docs.length > 0) {
+          this.messageService.sendMessage('Bu giriş kodu ile başka bir kullanıcı kayıtlı. Lütfen başka bir giriş kodu deneyin.');
+        } else {
+          this.mainService.getData('users_group', formData.role_id).then(res => {
+            const schema = new User(formData.name, res.name, formData.role_id, formData.pincode, 1, Date.now());
+            this.mainService.addData('users', schema as any).then((response) => {
+              this.mainService.addData('reports', new Report('User', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), formData.name, Date.now()) as any).then(() => {
+                this.logService.createLog(logType.USER_CREATED, response.id, `${formData.name} Adlı Kullanıcı Oluşturuldu`);
+              });
+              this.fillData();
+              this.messageService.sendMessage('Kullanıcı Oluşturuldu!');
+            });
+          });
+        }
+      });
+    }
   }
 
   updateUser(id: string | undefined) {
@@ -265,12 +335,30 @@ export class UserSettingsComponent implements OnInit {
     this.mainService.getData('users', id).then(result => {
       const resultCopy = { ...result } as any;
       delete resultCopy.role;
-      if (this.userForm()) {
-        this.userForm()!.form.patchValue(resultCopy);
-      }
-      this.zone.run(() => {
-        (window as any).$('#userModal').modal('show');
+
+      this.dialogFacade.openUserModal(resultCopy, this.groups()).closed.subscribe((formData: any) => {
+        if (formData && id) {
+          this.submitUpdateUserForm(formData, id);
+        }
       });
+    });
+  }
+
+  private submitUpdateUserForm(formData: any, userId: string) {
+    formData.pincode = parseInt(formData.pincode);
+
+    this.mainService.getAllBy('users', { pincode: formData.pincode }).then(result => {
+      const docs = result.docs;
+      if (docs.length > 0 && docs[0]._id != userId) {
+        this.messageService.sendMessage('Bu giriş kodu ile başka bir kullanıcı kayıtlı. Lütfen başka bir giriş kodu deneyin.');
+      } else {
+        this.mainService.updateData('users', userId, formData).then((res) => {
+          this.logService.createLog(logType.USER_UPDATED, res.id, `${formData.name} Adlı Kullanıcı Güncellendi`);
+          this.fillData();
+          this.selectedUser.set(undefined);
+          this.messageService.sendMessage('Bilgiler Güncellendi!');
+        });
+      }
     });
   }
 
@@ -279,18 +367,17 @@ export class UserSettingsComponent implements OnInit {
     const isOk = confirm('Kulanıcıyı Silmek Üzerisiniz. Bu işlem Geri Alınamaz.');
     if (isOk) {
       this.mainService.removeData('users', id).then((result) => {
-        const userName = this.userForm()?.value?.name || 'Kullanıcı';
+        const selectedUserObj = this.selectedUserObj();
+        const userName = selectedUserObj?.name || 'Kullanıcı';
         this.logService.createLog(logType.USER_DELETED, result.id, `${userName} Adlı Kullanıcı Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id }).then(res => {
           if (res && res.docs && res.docs[0]?._id) {
             this.mainService.removeData('reports', res.docs[0]._id);
           }
         });
-        this.messageService.sendMessage('Kullanıcı Silindi!');
+        this.selectedUser.set(undefined);
         this.fillData();
-        this.zone.run(() => {
-          (window as any).$('#userModal').modal('hide');
-        });
+        this.messageService.sendMessage('Kullanıcı Silindi!');
       });
     }
   }
