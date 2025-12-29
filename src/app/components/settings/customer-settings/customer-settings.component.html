@@ -26,8 +26,7 @@
             <h5 class="mt-2">Müşteriler</h5>
           </div>
           <div class="col-lg-4 pr-2 pl-0">
-            <button class="btn btn-danger btn-md btn-block" (click)="setDefault()" data-toggle="modal"
-              data-target="#customerModal">
+            <button class="btn btn-danger btn-md btn-block" (click)="setDefault()">
               <i class="fa fa-plus"></i> Müşteri Ekle
             </button>
           </div>
@@ -199,81 +198,6 @@
       <div class="card-footer">
         <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
       </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="customerModal" tabindex="-1" role="dialog" aria-labelledby="customerModal"
-  aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><strong>Müşteri Ekle</strong></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <form #customerForm="ngForm" (ngSubmit)="addCustomer(customerForm)">
-        <div class="modal-body">
-          @if (onUpdate()) {
-          <div>
-            <input type="hidden" name="_id" ngModel>
-            <input type="hidden" name="_rev" ngModel>
-            <input type="hidden" name="picture" ngModel>
-            <input type="hidden" name="timestamp" ngModel>
-          </div>
-          }
-          <div class="form-group">
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <div class="input-group-text">Adı</div>
-              </div>
-              <input type="text" name="name" class="form-control form-control-lg" ngModel />
-            </div>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <div class="input-group-text">Soyadı</div>
-              </div>
-              <input type="text" name="surname" class="form-control form-control-lg" ngModel />
-            </div>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <div class="input-group-text">
-                  Telefon
-                </div>
-              </div>
-              <input type="text" prefix="0" mask=" (000) 000 00 00" placeholder="0 (000) 000 00 00" name="phone_number"
-                class="form-control form-control-lg" ngModel />
-            </div>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <div class="input-group-text">
-                  Adres
-                </div>
-              </div>
-              <input type="text" name="address" class="form-control form-control-lg" ngModel />
-            </div>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <div class="input-group-text">Müşteri Tipi</div>
-              </div>
-              <select #role name="type" class="form-control form-control-lg" ngModel>
-                <option value="0">Restoran</option>
-                <option value="1">Paket Servis</option>
-              </select>
-            </div>
-
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-          @if (onUpdate()) {
-          <button type="button" class="btn btn-danger btn-lg" (click)="removeCustomer(selectedCustomer()!)">
-            Müşteriyi Sil</button>
-          }
-          <button type="submit" class="btn btn-primary btn-lg">Kaydet</button>
-        </div>
-      </form>
     </div>
   </div>
 </div>

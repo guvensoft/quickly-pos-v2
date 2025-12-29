@@ -15,6 +15,7 @@ import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { NgxMaskPipe } from 'ngx-mask';
+import { DialogFacade } from '../../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -31,6 +32,7 @@ export class CustomerSettingsComponent implements OnInit {
   private readonly logService = inject(LogService);
   private readonly validatorService = inject(SignalValidatorService);
   private readonly zone = inject(NgZone);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly customers = signal<Array<Customer>>([]);
   readonly selectedCustomer = signal<string | undefined>(undefined);
@@ -181,87 +183,69 @@ export class CustomerSettingsComponent implements OnInit {
     this.addressError.set(null);
     this.typeError.set(null);
     if (this.customerForm()) this.customerForm()!.reset();
+
+    // Open customer modal for adding new customer
+    this.dialogFacade.openCustomerModal().closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitCustomerForm(formData, null);
+      }
+    });
   }
 
-  addCustomer(customerForm: NgForm) {
-    const form = customerForm.value;
+  updateCustomer(id: string) {
+    // Fetch customer data and open modal for editing
+    this.mainService.getData('customers', id).then((customer: any) => {
+      this.dialogFacade.openCustomerModal(customer).closed.subscribe((formData: any) => {
+        if (formData) {
+          this.submitCustomerForm(formData, id);
+        }
+      });
+    });
+  }
 
-    // Update validation signals from form
-    this.customerName.set(form.name || '');
-    this.customerType.set(form.type || '');
-    this.customerPhone.set(form.phone_number || '');
-    this.customerAddress.set(form.address || '');
+  private submitCustomerForm(formData: any, customerId: string | null) {
+    // Convert phone number to int
+    const phoneNumber = parseInt(formData.phone_number);
+    formData.phone_number = phoneNumber;
 
-    // Check if form is valid
-    if (!this.isCustomerFormValid()) {
-      this.messageService.sendMessage('Lütfen tüm zorunlu alanları doldurunuz.');
-      return false;
-    }
-    form.phone_number = parseInt(form.phone_number);
-    if (form._id == undefined) {
-      this.mainService.getAllBy('customers', { phone_number: form.phone_number }).then((result: any) => {
+    if (customerId === null) {
+      // Add new customer - check for duplicate phone number
+      this.mainService.getAllBy('customers', { phone_number: phoneNumber }).then((result: any) => {
         if (result.docs.length > 0) {
           this.messageService.sendMessage('Bu telefon numarası ile başka bir Müşteri kayıtlı. Lütfen başka bir numara deneyin.');
-          customerForm.reset();
         } else {
-          const schema = new Customer(form.name, form.surname, form.phone_number, form.address, '', form.type, Date.now());
+          const schema = new Customer(formData.name, formData.surname, phoneNumber, formData.address, '', formData.type, Date.now());
           this.mainService.addData('customers', schema as any).then((response: any) => {
-            this.mainService.addData('reports', new Report('Customer', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now()) as any).then((res: any) => {
-              this.logService.createLog(logType.CUSTOMER_CREATED, res.id, `${form.name} Adlı Müşteri Oluşturuldu`);
+            this.mainService.addData('reports', new Report('Customer', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), formData.name, Date.now()) as any).then((res: any) => {
+              this.logService.createLog(logType.CUSTOMER_CREATED, res.id, `${formData.name} Adlı Müşteri Oluşturuldu`);
             });
             this.messageService.sendMessage('Müşteri Oluşturuldu!');
             this.fillData();
-            customerForm.reset();
-            this.zone.run(() => {
-              (window as any).$('#customerModal').modal('hide');
-            });
           });
         }
       });
     } else {
-      this.mainService.getAllBy('customers', { phone_number: form.phone_number }).then((result: any) => {
-        if (result.docs.length > 0 && result.docs[0].phone_number != form.phone_number) {
+      // Update existing customer - check for duplicate phone number
+      this.mainService.getAllBy('customers', { phone_number: phoneNumber }).then((result: any) => {
+        if (result.docs.length > 0 && result.docs[0]._id !== customerId) {
           this.messageService.sendMessage('Bu telefon numarası ile başka bir Müşteri kayıtlı. Lütfen başka bir numara deneyin.');
         } else {
-          this.mainService.updateData('customers', form._id, form).then((res: any) => {
-            this.logService.createLog(logType.CUSTOMER_UPDATED, res.id, `${form.name} Adlı Müşteri Güncellendi`);
+          this.mainService.updateData('customers', customerId, formData).then((res: any) => {
+            this.logService.createLog(logType.CUSTOMER_UPDATED, res.id, `${formData.name} Adlı Müşteri Güncellendi`);
             this.messageService.sendMessage('Bilgiler Güncellendi!');
             this.fillData();
-            customerForm.reset();
-            this.zone.run(() => {
-              (window as any).$('#customerModal').modal('hide');
-            });
           });
         }
       });
     }
-    return true;
-  }
-
-  updateCustomer(id: string) {
-    this.onUpdate.set(true);
-    this.selectedCustomer.set(id);
-    this.mainService.getData('customers', id).then((result: any) => {
-      delete result.role;
-      // Sync form data to validation signals
-      this.customerName.set(result.name || '');
-      this.customerPhone.set(result.phone_number || '');
-      this.customerAddress.set(result.address || '');
-      this.customerType.set(result.type || '');
-      if (this.customerForm()) {
-        this.customerForm()!.form.patchValue(result);
-      }
-      this.zone.run(() => {
-        (window as any).$('#customerModal').modal('show');
-      });
-    });
   }
 
   removeCustomer(id: string) {
     const isOk = confirm('Müşteriyi Silmek Üzerisiniz. Bu işlem Geri Alınamaz.');
     if (isOk) {
       this.mainService.removeData('customers', id).then((result: any) => {
-        const customerName = this.customerForm() ? this.customerForm()!.value.name : 'Müşteri';
+        const selectedCustObj = this.selectedCustomerObj();
+        const customerName = selectedCustObj ? selectedCustObj.name : 'Müşteri';
         this.logService.createLog(logType.CUSTOMER_DELETED, result.id, `${customerName} Adlı Müşteri Silindi`);
         this.mainService.getAllBy('reports', { connection_id: result.id! }).then((res: any) => {
           if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
@@ -270,9 +254,6 @@ export class CustomerSettingsComponent implements OnInit {
         });
         this.messageService.sendMessage('Müşteri Silindi!');
         this.fillData();
-        this.zone.run(() => {
-          (window as any).$('#customerModal').modal('hide');
-        });
       });
     }
   }
