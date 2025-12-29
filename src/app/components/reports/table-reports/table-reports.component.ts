@@ -129,12 +129,14 @@ export class TableReportsComponent implements OnInit {
     this.DetailLoaded.set(false);
     this.ItemReport.set(report);
     this.mainService.getData('reports', report._id!).then(res => {
-      res.weekly = this.normalWeekOrder(res.weekly || []);
-      res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
-      this.DetailData.set([{ data: res.weekly, label: 'Hesap Tutarı' }]);
-      this.DetailLoaded.set(true);
       this.zone.run(() => {
-        (window as any).$('#reportDetail').modal('show');
+        res.weekly = this.normalWeekOrder(res.weekly || []);
+        res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
+        this.DetailData.set([{ data: res.weekly, label: 'Hesap Tutarı' }]);
+        this.DetailLoaded.set(true);
+        this.zone.run(() => {
+          (window as any).$('#reportDetail').modal('show');
+        });
       });
     });
   }
@@ -168,23 +170,29 @@ export class TableReportsComponent implements OnInit {
     const selected = this.selectedCat();
     if (selected) {
       this.mainService.getAllBy('tables', { floor_id: selected }).then(res => {
-        const floors_ids = res.docs.map((obj: any) => obj._id);
-        this.tablesList.set(this.tablesList().filter((obj: any) => floors_ids.includes(obj.connection_id)));
-      })
+        this.zone.run(() => {
+          const floors_ids = res.docs.map((obj: any) => obj._id);
+          this.tablesList.set(this.tablesList().filter((obj: any) => floors_ids.includes(obj.connection_id)));
+        });
+      });
     }
   }
 
   getReportsByCategory(cat_id: string) {
     this.selectedCat.set(cat_id);
     this.mainService.getAllBy('tables', { floor_id: cat_id }).then(res => {
-      const floors_ids = res.docs.map((obj: any) => obj._id);
-      this.tablesList.set(this.generalList().filter((obj: any) => floors_ids.includes(obj.connection_id)));
-    })
+      this.zone.run(() => {
+        const floors_ids = res.docs.map((obj: any) => obj._id);
+        this.tablesList.set(this.generalList().filter((obj: any) => floors_ids.includes(obj.connection_id)));
+      });
+    });
   }
 
   getLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.tableLogs.set((res.docs.filter((obj: any) => obj.type >= logType.TABLE_CREATED && obj.type <= logType.TABLE_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as any);
+      this.zone.run(() => {
+        this.tableLogs.set((res.docs.filter((obj: any) => obj.type >= logType.TABLE_CREATED && obj.type <= logType.TABLE_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as any);
+      });
     });
   }
 
@@ -193,31 +201,37 @@ export class TableReportsComponent implements OnInit {
     this.ChartData.set([]);
     this.ChartLoaded.set(false);
     this.mainService.getAllBy('reports', { type: 'Table' }).then(res => {
-      const general = (res.docs.sort((a: any, b: any) => b.count - a.count)) as Report[];
-      this.generalList.set(general);
-      const tablesL = JSON.parse(JSON.stringify(general)) as Report[];
-      this.tablesList.set(tablesL);
-      const chartTable = tablesL.slice(0, 5);
-      chartTable.forEach((obj, index) => {
-        this.mainService.getData('tables', obj.connection_id).then(res => {
-          obj.weekly = this.normalWeekOrder(obj.weekly);
-          obj.weekly_count = this.normalWeekOrder(obj.weekly_count);
-          let schema;
-          if (daily) {
-            schema = { data: obj.weekly_count, label: res.name };
-          } else {
-            schema = { data: obj.weekly, label: res.name };
-          }
-          this.ChartData.update(data => [...data, schema]);
-          if (chartTable.length - 1 == index) {
-            this.ChartLoaded.set(true);
-          };
+      this.zone.run(() => {
+        const general = (res.docs.sort((a: any, b: any) => b.count - a.count)) as Report[];
+        this.generalList.set(general);
+        const tablesL = JSON.parse(JSON.stringify(general)) as Report[];
+        this.tablesList.set(tablesL);
+        const chartTable = tablesL.slice(0, 5);
+        chartTable.forEach((obj, index) => {
+          this.mainService.getData('tables', obj.connection_id).then(res => {
+            this.zone.run(() => {
+              obj.weekly = this.normalWeekOrder(obj.weekly);
+              obj.weekly_count = this.normalWeekOrder(obj.weekly_count);
+              let schema;
+              if (daily) {
+                schema = { data: obj.weekly_count, label: res.name };
+              } else {
+                schema = { data: obj.weekly, label: res.name };
+              }
+              this.ChartData.update(data => [...data, schema]);
+              if (chartTable.length - 1 == index) {
+                this.ChartLoaded.set(true);
+              }
+            });
+          });
         });
       });
     });
     this.mainService.getAllBy('floors', {}).then(res => {
-      this.floorsList.set(res.docs as unknown as Floor[]);
-    })
+      this.zone.run(() => {
+        this.floorsList.set(res.docs as unknown as Floor[]);
+      });
+    });
   }
 
 }

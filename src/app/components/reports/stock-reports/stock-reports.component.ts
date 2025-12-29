@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Log, logType } from '../../../core/models/log.model';
 import { Stock, StockCategory } from '../../../core/models/stocks.model';
@@ -15,6 +15,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 })
 export class StockReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
+  private readonly zone = inject(NgZone);
 
   readonly stocksView = signal<Stock[]>([]);
   readonly allStocks = signal<Stock[]>([]);
@@ -36,29 +37,35 @@ export class StockReportsComponent implements OnInit {
   fillData() {
     this.selectedCat.set(undefined);
     this.mainService.getAllBy('stocks', {}).then(result => {
-      if (result && result.docs) {
-        let allS = result.docs as unknown as Stock[];
-        allS = allS.sort((b: any, a: any) => (b.left_total / (b.total * b.first_quantity)) * 100 - (a.left_total / (a.total * a.first_quantity)) * 100);
-        this.allStocks.set(allS);
-        this.stocksView.set([...allS].sort((b: any, a: any) => (b.left_total / (b.total * b.first_quantity)) * 100 - (a.left_total / (a.total * a.first_quantity)) * 100));
-      } else {
-        this.allStocks.set([]);
-        this.stocksView.set([]);
-      }
+      this.zone.run(() => {
+        if (result && result.docs) {
+          let allS = result.docs as unknown as Stock[];
+          allS = allS.sort((b: any, a: any) => (b.left_total / (b.total * b.first_quantity)) * 100 - (a.left_total / (a.total * a.first_quantity)) * 100);
+          this.allStocks.set(allS);
+          this.stocksView.set([...allS].sort((b: any, a: any) => (b.left_total / (b.total * b.first_quantity)) * 100 - (a.left_total / (a.total * a.first_quantity)) * 100));
+        } else {
+          this.allStocks.set([]);
+          this.stocksView.set([]);
+        }
+      });
     });
     this.mainService.getAllBy('stocks_cat', {}).then(result => {
-      if (result && result.docs) {
-        this.allCats.set(result.docs as StockCategory[]);
-      } else {
-        this.allCats.set([]);
-      }
+      this.zone.run(() => {
+        if (result && result.docs) {
+          this.allCats.set(result.docs as StockCategory[]);
+        } else {
+          this.allCats.set([]);
+        }
+      });
     });
     this.mainService.getAllBy('logs', {}).then(res => {
-      if (res && res.docs) {
-        this.stockLogs.set((res.docs.filter((obj: any) => obj.type >= logType.STOCK_CREATED && obj.type <= logType.STOCK_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[]);
-      } else {
-        this.stockLogs.set([]);
-      }
+      this.zone.run(() => {
+        if (res && res.docs) {
+          this.stockLogs.set((res.docs.filter((obj: any) => obj.type >= logType.STOCK_CREATED && obj.type <= logType.STOCK_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[]);
+        } else {
+          this.stockLogs.set([]);
+        }
+      });
     });
   }
 }
