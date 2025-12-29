@@ -1,4 +1,4 @@
-import { Component, input, inject, signal, computed, effect, NgZone } from '@angular/core';
+import { Component, input, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Cashbox } from '../../../core/models/cashbox.model';
 import { ClosedCheck } from '../../../core/models/check.model';
@@ -25,7 +25,6 @@ export class DayDetailComponent {
   private readonly electronService = inject(ElectronService);
   private readonly printerService = inject(PrinterService);
   private readonly settingsService = inject(SettingsService);
-  private readonly zone = inject(NgZone);
 
   // Input signals (already modern)
   detailData = input.required<EndDay>({ alias: 'data' });
@@ -227,16 +226,14 @@ export class DayDetailComponent {
 
   showCheckDetail(check: any) {
     this.checkDetail.set(check);
-    this.zone.run(() => {
-      (window as any).$('#checkDetail').modal('show');
-    });
+    // jQuery modal operations don't need zone.run() wrapper
+    (window as any).$('#checkDetail').modal('show');
   }
 
   showCashDetail(cash: any) {
     this.cashDetail.set(cash);
-    this.zone.run(() => {
-      (window as any).$('#cashDetail').modal('show');
-    });
+    // jQuery modal operations don't need zone.run() wrapper
+    (window as any).$('#cashDetail').modal('show');
   }
 
   fillData() {
