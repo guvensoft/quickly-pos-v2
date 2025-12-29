@@ -115,12 +115,14 @@ export class UserReportsComponent implements OnInit {
     this.DetailLoaded.set(false);
     this.ItemReport.set(report);
     this.mainService.getData('reports', report._id!).then(res => {
-      res.weekly = this.normalWeekOrder(res.weekly || []);
-      res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
-      this.DetailData.set([{ data: res.weekly, label: 'Sipariş Tutarı' }, { data: res.weekly_count, label: 'Sipariş Adedi' }]);
-      this.DetailLoaded.set(true);
       this.zone.run(() => {
-        (window as any).$('#reportDetail').modal('show');
+        res.weekly = this.normalWeekOrder(res.weekly || []);
+        res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
+        this.DetailData.set([{ data: res.weekly, label: 'Sipariş Tutarı' }, { data: res.weekly_count, label: 'Sipariş Adedi' }]);
+        this.DetailLoaded.set(true);
+        this.zone.run(() => {
+          (window as any).$('#reportDetail').modal('show');
+        });
       });
     });
   }
@@ -155,7 +157,9 @@ export class UserReportsComponent implements OnInit {
 
   getLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.userLogs.set((res.docs.filter((obj: any) => obj.type >= logType.USER_CREATED && obj.type <= logType.USER_CHECKPOINT || obj.type == logType.ORDER_CREATED).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[]);
+      this.zone.run(() => {
+        this.userLogs.set((res.docs.filter((obj: any) => obj.type >= logType.USER_CREATED && obj.type <= logType.USER_CHECKPOINT || obj.type == logType.ORDER_CREATED).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[]);
+      });
     });
   }
 
@@ -163,25 +167,29 @@ export class UserReportsComponent implements OnInit {
     this.ChartData.set([]);
     this.ChartLoaded.set(false);
     this.mainService.getAllBy('reports', { type: 'User' }).then(res => {
-      const general = (res.docs.sort((a: any, b: any) => b.count - a.count)) as Report[];
-      this.generalList.set(general);
-      const userL = JSON.parse(JSON.stringify(general)) as Report[];
-      this.usersList.set(userL);
-      const chartTable = userL.slice(0, 5);
-      chartTable.forEach((obj, index) => {
-        this.mainService.getData('users', obj.connection_id).then(res => {
-          obj.weekly = this.normalWeekOrder(obj.weekly);
-          obj.weekly_count = this.normalWeekOrder(obj.weekly_count);
-          let schema;
-          if (daily) {
-            schema = { data: obj.weekly_count, label: res.name };
-          } else {
-            schema = { data: obj.weekly, label: res.name };
-          }
-          this.ChartData.update(data => [...data, schema]);
-          if (chartTable.length - 1 == index) {
-            this.ChartLoaded.set(true);
-          };
+      this.zone.run(() => {
+        const general = (res.docs.sort((a: any, b: any) => b.count - a.count)) as Report[];
+        this.generalList.set(general);
+        const userL = JSON.parse(JSON.stringify(general)) as Report[];
+        this.usersList.set(userL);
+        const chartTable = userL.slice(0, 5);
+        chartTable.forEach((obj, index) => {
+          this.mainService.getData('users', obj.connection_id).then(res => {
+            this.zone.run(() => {
+              obj.weekly = this.normalWeekOrder(obj.weekly);
+              obj.weekly_count = this.normalWeekOrder(obj.weekly_count);
+              let schema;
+              if (daily) {
+                schema = { data: obj.weekly_count, label: res.name };
+              } else {
+                schema = { data: obj.weekly, label: res.name };
+              }
+              this.ChartData.update(data => [...data, schema]);
+              if (chartTable.length - 1 == index) {
+                this.ChartLoaded.set(true);
+              }
+            });
+          });
         });
       });
     });
