@@ -1,0 +1,1 @@
+export const defaultSessionTime: number = 604800000;

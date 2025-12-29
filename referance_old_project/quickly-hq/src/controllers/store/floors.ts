@@ -1,0 +1,85 @@
+import { Request, Response } from "express";
+import { StoreDB, DatabaseQueryLimit } from '../../configrations/database';
+import { FloorMessages } from '../../utils/messages';
+import { Report } from "../../models/store/report";
+import { createReport } from "../../functions/store/reports";
+
+
+////// /floor [POST]
+export const createFloor = async (req: Request, res: Response) => {
+    const StoreID = req.headers.store;
+    try {
+        const StoresDB = await StoreDB(StoreID);
+        let FloorWillCreate = { db_name: 'floors', db_seq: 0, ...req.body };
+        let Floor = await StoresDB.post(FloorWillCreate);
+        FloorWillCreate._id = Floor.id;
+        FloorWillCreate._rev = Floor.rev;
+        let GroupReport = { db_name: 'reports', db_seq: 0, ...createReport('Floor', FloorWillCreate) }
+        const isCreated = await StoresDB.post(GroupReport)
+        if (isCreated && Floor.ok) {
+            res.status(FloorMessages.FLOOR_CREATED.code).json(FloorMessages.FLOOR_CREATED.response);
+        } else {
+            res.status(FloorMessages.FLOOR_NOT_CREATED.code).json(FloorMessages.FLOOR_NOT_CREATED.response);
+        }
+    } catch (error) {
+        res.status(FloorMessages.FLOOR_NOT_CREATED.code).json(FloorMessages.FLOOR_NOT_CREATED.response);
+    }
+}
+
+////// /floor/id [DELETE]
+export const deleteFloor = async (req: Request, res: Response) => {
+    const StoreID = req.headers.store;
+    try {
+        const StoresDB = await StoreDB(StoreID);
+        const Floor = await StoresDB.get(req.params.id);
+        const FloorReport = await StoresDB.find({ selector: { db_name: 'reports', connection_id: Floor._id } });
+        StoresDB.remove(Floor);
+        StoresDB.remove(FloorReport.docs[0]);
+        res.status(FloorMessages.FLOOR_DELETED.code).json(FloorMessages.FLOOR_DELETED.response);
+    } catch (error) {
+        res.status(FloorMessages.FLOOR_NOT_DELETED.code).json(FloorMessages.FLOOR_NOT_DELETED.response);
+    }
+
+}
+
+////// /floor/id [PUT]
+export const updateFloor = async (req: Request, res: Response) => {
+    const StoreID = req.headers.store;
+    try {
+        const StoresDB = await StoreDB(StoreID);
+        const Floor = await StoresDB.get(req.params.id);
+        await StoresDB.put({ Floor, ...req.body });
+        res.status(FloorMessages.FLOOR_CREATED.code).json(FloorMessages.FLOOR_CREATED.response);
+    } catch (error) {
+        res.status(FloorMessages.FLOOR_NOT_CREATED.code).json(FloorMessages.FLOOR_NOT_CREATED.response);
+    }
+
+}
+
+////// /floor/id [GET]
+export const getFloor = async (req: Request, res: Response) => {
+    const StoreID = req.headers.store;
+    try {
+        const StoresDB = await StoreDB(StoreID);
+        const Floor = await StoresDB.get(req.params.id);
+        res.json(Floor);
+    } catch (error) {
+        res.status(FloorMessages.FLOOR_NOT_CREATED.code).json(FloorMessages.FLOOR_NOT_CREATED.response);
+    }
+}
+
+////// /floors + QueryString [GET]
+export const queryFloors = async (req: Request, res: Response) => {
+    const StoreID = req.headers.store;
+    let qLimit = req.query.limit || DatabaseQueryLimit;
+    let qSkip = req.query.skip || 0;
+    delete req.query.skip;
+    delete req.query.limit;
+    try {
+        const StoresDB = await StoreDB(StoreID);
+        const Floors = await StoresDB.find({ selector: { db_name: 'floors', ...req.query }, limit: qLimit, skip: qSkip });
+        res.json(Floors.docs);
+    } catch (error) {
+        res.status(FloorMessages.FLOOR_NOT_EXIST.code).json(FloorMessages.FLOOR_NOT_EXIST.response);
+    }
+}

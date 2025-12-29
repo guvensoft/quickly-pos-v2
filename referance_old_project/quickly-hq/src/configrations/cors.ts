@@ -1,0 +1,20 @@
+import { CorsOptions } from 'cors';
+
+const whitelist = [
+    'https://qr.quickly.com.tr',
+    'https://manage.quickly.com.tr',
+    'https://quickly.cafe',
+    'https://quickly.restaurant',
+    'https://quickly.market',
+];
+
+export const corsOptions: CorsOptions = {
+    origin: function (origin, callback) {
+        if (whitelist.indexOf(origin) !== -1) {
+            callback(null, true)
+        } else {
+            callback(null, false)
+        }
+    },
+    credentials: true,
+}

@@ -1,0 +1,84 @@
+import { Response, Request } from "express";
+import { ManagementDB, DatabaseQueryLimit } from "../../configrations/database";
+import { AccountMessages } from '../../utils/messages';
+import { Account } from "../../models/management/account";
+import { createLog, LogType } from '../../utils/logger';
+
+//////  /account [POST]
+export const createAccount = (req: Request, res: Response) => {
+    let newAccount: Account = req.body;
+    ManagementDB.Accounts.find({ selector: { name: newAccount.name } }).then(accounts => {
+        if (accounts.docs.length > 0) {
+            res.status(AccountMessages.ACCOUNT_EXIST.code).json(AccountMessages.ACCOUNT_EXIST.response);
+        } else {
+            newAccount.timestamp = Date.now();
+            ManagementDB.Accounts.post(newAccount).then(() => {
+                res.status(AccountMessages.ACCOUNT_CREATED.code).json(AccountMessages.ACCOUNT_CREATED.response);
+            }).catch(err => {
+                res.status(AccountMessages.ACCOUNT_NOT_CREATED.code).json(AccountMessages.ACCOUNT_NOT_CREATED.response);
+                createLog(req, LogType.DATABASE_ERROR, err);
+            });
+        }
+    }).catch(err => {
+        res.status(AccountMessages.ACCOUNT_NOT_CREATED.code).json(AccountMessages.ACCOUNT_NOT_CREATED.response);
+        createLog(req, LogType.DATABASE_ERROR, err);
+    });
+};
+
+//////  /account/:id [PUT]
+export const updateAccount = (req: Request, res: Response) => {
+    let accountID = req.params.id;
+    let formData = req.body;
+    ManagementDB.Accounts.get(accountID).then(obj => {
+        ManagementDB.Accounts.put({...obj, ...formData}).then(() => {
+            res.status(AccountMessages.ACCOUNT_UPDATED.code).json(AccountMessages.ACCOUNT_UPDATED.response);
+        }).catch(err => {
+            res.status(AccountMessages.ACCOUNT_UPDATED.code).json(AccountMessages.ACCOUNT_UPDATED.response);
+            createLog(req, LogType.DATABASE_ERROR, err);
+        })
+    }).catch(err => {
+        res.status(AccountMessages.ACCOUNT_NOT_EXIST.code).json(AccountMessages.ACCOUNT_NOT_EXIST.response);
+        createLog(req, LogType.DATABASE_ERROR, err);
+    });
+}
+
+//////  /account/:id [GET]
+export const getAccount = (req: Request, res: Response) => {
+    let accountID = req.params.id;
+    ManagementDB.Accounts.get(accountID).then((obj: any) => {
+        res.send(obj);
+    }).catch(err => {
+        res.status(AccountMessages.ACCOUNT_NOT_EXIST.code).json(AccountMessages.ACCOUNT_NOT_EXIST.response);
+        createLog(req, LogType.DATABASE_ERROR, err);
+    });
+}
+
+//////  /account/:id [DELETE]
+export const deleteAccount = (req: Request, res: Response) => {
+    let accountID = req.params.id;
+    ManagementDB.Accounts.get(accountID).then(obj => {
+        ManagementDB.Accounts.remove(obj).then(() => {
+            res.status(AccountMessages.ACCOUNT_DELETED.code).json(AccountMessages.ACCOUNT_DELETED.response);
+        }).catch(err => {
+            res.status(AccountMessages.ACCOUNT_NOT_DELETED.code).json(AccountMessages.ACCOUNT_NOT_DELETED.response);
+            createLog(req, LogType.DATABASE_ERROR, err);
+        })
+    }).catch(err => {
+        res.status(AccountMessages.ACCOUNT_NOT_EXIST.code).json(AccountMessages.ACCOUNT_NOT_EXIST.response);
+        createLog(req, LogType.DATABASE_ERROR, err);
+    });
+}
+
+//////  /accounts + QueryString [GET]
+export const queryAccounts = (req: Request, res: Response) => {
+    let qLimit = req.query.limit || DatabaseQueryLimit;
+    let qSkip = req.query.skip || 0;
+    delete req.query.skip;
+    delete req.query.limit;
+    ManagementDB.Accounts.find({ selector: req.query, limit: qLimit, skip: qSkip }).then((obj: any) => {
+        res.send(obj.docs);
+    }).catch(err => {
+        res.status(AccountMessages.ACCOUNT_NOT_EXIST.code).json(AccountMessages.ACCOUNT_NOT_EXIST.response);
+        createLog(req, LogType.DATABASE_ERROR, err);
+    });
+};
