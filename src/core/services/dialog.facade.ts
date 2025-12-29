@@ -8,6 +8,8 @@ import { CustomerModalComponent } from '../../app/shared/modals/customer-modal/c
 import { TableModalComponent } from '../../app/shared/modals/table-modal/table-modal.component';
 import { ConfirmModalComponent } from '../../app/shared/modals/confirm-modal/confirm-modal.component';
 import { SubcategoryModalComponent } from '../../app/shared/modals/subcategory-modal/subcategory-modal.component';
+import { StockCategoryModalComponent } from '../../app/shared/modals/stock-category-modal/stock-category-modal.component';
+import { StockModalComponent } from '../../app/shared/modals/stock-modal/stock-modal.component';
 
 /**
  * DialogFacade - Single entry point for all modal dialogs
@@ -116,6 +118,34 @@ export class DialogFacade {
       width: '500px',
       data: subcategory,
       panelClass: 'subcategory-dialog',
+    });
+  }
+
+  /**
+   * Open Stock Category Modal
+   * @param stockCategory Optional stock category data for editing
+   * @returns DialogRef with result
+   */
+  openStockCategoryModal(stockCategory?: any): DialogRef<any> {
+    return this.open(StockCategoryModalComponent, {
+      title: stockCategory ? 'Stok Kategorisi Düzenle' : 'Stok Kategorisi Ekle',
+      width: '500px',
+      data: stockCategory,
+      panelClass: 'stock-category-dialog',
+    });
+  }
+
+  /**
+   * Open Stock Modal
+   * @param stock Optional stock data for editing
+   * @returns DialogRef with result
+   */
+  openStockModal(stock?: any): DialogRef<any> {
+    return this.open(StockModalComponent, {
+      title: stock ? 'Stok Düzenle' : 'Stok Ekle',
+      width: '500px',
+      data: stock,
+      panelClass: 'stock-dialog',
     });
   }
 

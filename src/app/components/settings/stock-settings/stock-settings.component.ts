@@ -8,6 +8,7 @@ import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
 import { SignalValidatorService } from '../../../core/services/signal-validator.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
+import { DialogFacade } from '../../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -22,6 +23,7 @@ export class StockSettingsComponent implements OnInit {
   private readonly logService = inject(LogService);
   private readonly validatorService = inject(SignalValidatorService);
   private readonly zone = inject(NgZone);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly categories = signal<Array<StockCategory>>([]);
   readonly stocks = signal<Array<Stock>>([]);
@@ -193,9 +195,7 @@ export class StockSettingsComponent implements OnInit {
             this.logService.createLog(logType.STOCK_DELETED, res.id, `${currentStock.name} adlı Stok silindi.`);
           }
           this.fillData();
-          this.zone.run(() => {
-            (window as any).$('#stock').modal('hide');
-          });
+          this.selectedStock.set(undefined);
           this.messageService.sendMessage('Stok Silindi!');
         });
       }
@@ -206,12 +206,11 @@ export class StockSettingsComponent implements OnInit {
     this.onUpdate.set(true);
     if (!stock._id) return;
     this.mainService.getData('stocks', stock._id).then(result => {
-      if (this.stockForm()) {
-        this.stockForm()!.form.patchValue(result);
-      }
-      this.selectedStock.set(stock);
-      this.zone.run(() => {
-        (window as any).$('#stock').modal('show');
+      this.selectedStock.set(result as any);
+      this.dialogFacade.openStockModal(result).closed.subscribe((formData: any) => {
+        if (formData && stock._id) {
+          this.submitStockForm(formData, stock._id);
+        }
       });
     });
   }
@@ -236,63 +235,91 @@ export class StockSettingsComponent implements OnInit {
       this.stockForm()!.form.patchValue(updatedStock);
     }
 
-    this.zone.run(() => {
-      (window as any).$('#quantityModal').modal('hide');
-    });
-    this.zone.run(() => {
-      (window as any).$('#stock').modal('show');
+    this.selectedStock.set(updatedStock as any);
+  }
+
+  setDefaultStock() {
+    this.onUpdate.set(false);
+    if (this.stockForm()) this.stockForm()!.reset();
+    // Clear validation signals
+    this.stockName.set('');
+    this.stockQuantity.set(0);
+    this.stockWarningLimit.set(0);
+    this.stockPrice.set(0);
+    this.nameError.set(null);
+    this.quantityError.set(null);
+    this.warningError.set(null);
+    this.priceError.set(null);
+
+    this.dialogFacade.openStockModal().closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitStockForm(formData, null);
+      }
     });
   }
 
-  addStock(stockForm: NgForm) {
-    const form = stockForm.value;
-
+  private submitStockForm(formData: any, stockId: string | null) {
     // Update validation signals from form
-    this.stockName.set(form.name || '');
-    this.stockQuantity.set(form.quantity || 0);
-    this.stockWarningLimit.set(form.warning_limit || 0);
-    this.stockPrice.set(form.price || 0);
+    this.stockName.set(formData.name || '');
+    this.stockQuantity.set(formData.quantity || 0);
+    this.stockWarningLimit.set(formData.warning_limit || 0);
+    this.stockPrice.set(formData.price || 0);
 
     // Check if form is valid
     if (!this.isStockFormValid()) {
       this.messageService.sendMessage('Lütfen tüm zorunlu alanları kontrol ediniz.');
-      return false;
+      return;
     }
 
-    if (form._id == undefined) {
-      // Logic for adding new stock was commented out in original component
-      // const left_total = form.total * form.quantity;
-      // ...
+    if (stockId === null) {
+      // Add new stock - logic was commented out in original
+      this.messageService.sendMessage('Stok ekleme özelliği şu anda aktif değildir.');
     } else {
-      form.warning_limit = (form.total * form.quantity) * form.warning_value / 100;
-      this.mainService.updateData('stocks', form._id, form).then(() => {
+      // Update existing stock
+      formData.warning_limit = (formData.total * formData.quantity) * (formData.warning_value || 25) / 100;
+      this.mainService.updateData('stocks', stockId, formData).then(() => {
         this.fillData();
-        stockForm.reset();
-        this.logService.createLog(logType.STOCK_UPDATED, form._id, `${form.name} adlı Stok Güncellendi.`);
+        this.logService.createLog(logType.STOCK_UPDATED, stockId, `${formData.name} adlı Stok Güncellendi.`);
         this.messageService.sendMessage('Stok Düzenlendi');
+        this.selectedStock.set(undefined);
       });
     }
-    this.zone.run(() => {
-      (window as any).$('#stock').modal('hide');
+  }
+
+  setDefaultCategory() {
+    if (this.stockCatForm()) this.stockCatForm()!.reset();
+
+    this.dialogFacade.openStockCategoryModal().closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitCategoryForm(formData, null);
+      }
     });
+  }
+
+  private submitCategoryForm(formData: any, categoryId: string | null) {
+    if (!formData.name) {
+      this.messageService.sendMessage('Kategori İsmi Belirtmelisiniz!');
+      return;
+    }
+
+    if (categoryId === null) {
+      // Add new category
+      const schema = new StockCategory(formData.name, formData.description);
+      this.mainService.addData('stocks_cat', schema).then(() => {
+        this.fillData();
+        this.messageService.sendMessage('Stok Kategorisi Oluşturuldu.');
+      });
+    }
+  }
+
+  // Template compatibility methods - delegate to modal-based approach
+  addCategory(stockCatForm: NgForm) {
+    this.setDefaultCategory();
     return true;
   }
 
-  addCategory(stockCatForm: NgForm) {
-    const form = stockCatForm.value;
-    if (!form.name) {
-      this.messageService.sendMessage('Kategori İsmi Belirtmelisiniz!');
-      return false;
-    }
-    const schema = new StockCategory(form.name, form.description);
-    this.mainService.addData('stocks_cat', schema).then(() => {
-      this.fillData();
-      this.messageService.sendMessage('Stok Kategorisi Oluşturuldu.');
-      stockCatForm.reset();
-    });
-    this.zone.run(() => {
-      (window as any).$('#stockCat').modal('hide');
-    });
+  addStock(stockForm: NgForm) {
+    this.setDefaultStock();
     return true;
   }
 
