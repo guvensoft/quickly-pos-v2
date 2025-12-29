@@ -224,32 +224,35 @@ export class EndofthedayComponent {
 
   stepChecks() {
     this.mainService.getAllBy('closed_checks', {}).then(res => {
+      this.zone.run(() => {
+        this.progress.set('Kapatılan Hesaplar Yedekleniyor...');
+        this.checks.set(res.docs as any);
+        const checksBackup = new BackupData('closed_checks', this.checks());
+        const newBackupData = [...this.backupData()];
+        newBackupData.push(checksBackup);
+        this.backupData.set(newBackupData);
 
-      this.progress.set('Kapatılan Hesaplar Yedekleniyor...');
-      this.checks.set(res.docs as any);
-      const checksBackup = new BackupData('closed_checks', this.checks());
-      const newBackupData = [...this.backupData()];
-      newBackupData.push(checksBackup);
-      this.backupData.set(newBackupData);
+        const Sales = this.StoreSalesReport(this.checks());
 
-      const Sales = this.StoreSalesReport(this.checks());
-
-      const updatedReport = this.endDayReport();
-      updatedReport.card_total = Sales.card;
-      updatedReport.cash_total = Sales.cash;
-      updatedReport.coupon_total = Sales.coupon;
-      updatedReport.free_total = Sales.free;
-      updatedReport.discount_total = Sales.discount;
-      updatedReport.canceled_total = Sales.canceled;
-      updatedReport.total_income = Sales.cash + Sales.card + Sales.coupon;
-      updatedReport.check_count = this.checks().length;
-      updatedReport.customers.male = Sales.customers.male;
-      updatedReport.customers.female = Sales.customers.female;
-      this.endDayReport.set(updatedReport);
+        const updatedReport = this.endDayReport();
+        updatedReport.card_total = Sales.card;
+        updatedReport.cash_total = Sales.cash;
+        updatedReport.coupon_total = Sales.coupon;
+        updatedReport.free_total = Sales.free;
+        updatedReport.discount_total = Sales.discount;
+        updatedReport.canceled_total = Sales.canceled;
+        updatedReport.total_income = Sales.cash + Sales.card + Sales.coupon;
+        updatedReport.check_count = this.checks().length;
+        updatedReport.customers.male = Sales.customers.male;
+        updatedReport.customers.female = Sales.customers.female;
+        this.endDayReport.set(updatedReport);
+      });
 
       this.mainService.removeAll('closed_checks', {}).then(() => {
         this.mainService.removeAll('allData', { db_name: 'closed_checks' }).then(() => {
-          this.progress.set('Kapatılan Hesaplar Temizlendi...');
+          this.zone.run(() => {
+            this.progress.set('Kapatılan Hesaplar Temizlendi...');
+          });
           this.stepCashbox();
         });
       });
@@ -260,35 +263,39 @@ export class EndofthedayComponent {
     let incomes = 0;
     let outcomes = 0;
     this.mainService.getAllBy('cashbox', {}).then(res => {
-      this.progress.set('Kasa Verileri Yedekleniyor...');
-      this.cashbox.set(res.docs as any);
-      const cashboxBackup = new BackupData('cashbox', this.cashbox());
-      const newBackupData = [...this.backupData()];
-      newBackupData.push(cashboxBackup);
-      this.backupData.set(newBackupData);
+      this.zone.run(() => {
+        this.progress.set('Kasa Verileri Yedekleniyor...');
+        this.cashbox.set(res.docs as any);
+        const cashboxBackup = new BackupData('cashbox', this.cashbox());
+        const newBackupData = [...this.backupData()];
+        newBackupData.push(cashboxBackup);
+        this.backupData.set(newBackupData);
 
-      const incomeItems = this.cashbox().filter(obj => obj.type == 'Gelir');
-      if (incomeItems.length > 0) {
-        incomes = incomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
-      } else {
-        console.log('Kasa Geliri Yok..');
-      }
+        const incomeItems = this.cashbox().filter(obj => obj.type == 'Gelir');
+        if (incomeItems.length > 0) {
+          incomes = incomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
+        } else {
+          console.log('Kasa Geliri Yok..');
+        }
 
-      const outcomeItems = this.cashbox().filter(obj => obj.type == 'Gider');
-      if (outcomeItems.length > 0) {
-        outcomes = outcomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
-      } else {
-        console.log('Kasa Gideri Yok..');
-      }
+        const outcomeItems = this.cashbox().filter(obj => obj.type == 'Gider');
+        if (outcomeItems.length > 0) {
+          outcomes = outcomeItems.map(obj => obj.card + obj.cash + obj.coupon).reduce((a, b) => a + b, 0);
+        } else {
+          console.log('Kasa Gideri Yok..');
+        }
 
-      const updatedReport = this.endDayReport();
-      updatedReport.incomes = incomes;
-      updatedReport.outcomes = outcomes;
-      this.endDayReport.set(updatedReport);
+        const updatedReport = this.endDayReport();
+        updatedReport.incomes = incomes;
+        updatedReport.outcomes = outcomes;
+        this.endDayReport.set(updatedReport);
+      });
 
       this.mainService.removeAll('cashbox', {}).then(res => {
         this.mainService.removeAll('allData', { db_name: 'cashbox' }).then(() => {
-          this.progress.set('Kasa Verileri Temizlendi...');
+          this.zone.run(() => {
+            this.progress.set('Kasa Verileri Temizlendi...');
+          });
           this.stepReports();
         });
       });
@@ -297,12 +304,14 @@ export class EndofthedayComponent {
 
   stepReports() {
     this.mainService.getAllBy('reports', {}).then(res => {
-      this.progress.set('Raporlar Yedekleniyor...');
-      this.reports.set((res.docs.filter((obj: any) => obj.type !== 'Activity')) as any);
-      const reportsBackup = new BackupData('reports', res.docs);
-      const newBackupData = [...this.backupData()];
-      newBackupData.push(reportsBackup);
-      this.backupData.set(newBackupData);
+      this.zone.run(() => {
+        this.progress.set('Raporlar Yedekleniyor...');
+        this.reports.set((res.docs.filter((obj: any) => obj.type !== 'Activity')) as any);
+        const reportsBackup = new BackupData('reports', res.docs);
+        const newBackupData = [...this.backupData()];
+        newBackupData.push(reportsBackup);
+        this.backupData.set(newBackupData);
+      });
       const activities = res.docs.filter((obj: any) => obj.type == 'Activity');
 
       this.mainService.localSyncBeforeRemote('reports').on('complete', () => {
@@ -333,12 +342,14 @@ export class EndofthedayComponent {
 
   stepLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
-      this.progress.set('Kayıtlar Yedekleniyor...');
-      this.logs.set(res.docs as any);
-      const logsBackup = new BackupData('logs', this.logs());
-      const newBackupData = [...this.backupData()];
-      newBackupData.push(logsBackup);
-      this.backupData.set(newBackupData);
+      this.zone.run(() => {
+        this.progress.set('Kayıtlar Yedekleniyor...');
+        this.logs.set(res.docs as any);
+        const logsBackup = new BackupData('logs', this.logs());
+        const newBackupData = [...this.backupData()];
+        newBackupData.push(logsBackup);
+        this.backupData.set(newBackupData);
+      });
       this.mainService.removeAll('prints', {}).then(() => {
         this.mainService.removeAll('logs', {}).then(() => {
           this.mainService.removeAll('allData', { db_name: 'logs' }).then(() => {
@@ -354,12 +365,14 @@ export class EndofthedayComponent {
 
   stepOrders() {
     this.mainService.getAllBy('orders', {}).then(res => {
-      this.progress.set('Siparişler Yedekleniyor...');
-      this.logs.set(res.docs as any);
-      const logsBackup = new BackupData('orders', this.logs());
-      const newBackupData = [...this.backupData()];
-      newBackupData.push(logsBackup);
-      this.backupData.set(newBackupData);
+      this.zone.run(() => {
+        this.progress.set('Siparişler Yedekleniyor...');
+        this.logs.set(res.docs as any);
+        const logsBackup = new BackupData('orders', this.logs());
+        const newBackupData = [...this.backupData()];
+        newBackupData.push(logsBackup);
+        this.backupData.set(newBackupData);
+      });
       this.mainService.removeAll('orders', {}).then(() => {
         this.mainService.removeAll('allData', { db_name: 'orders' }).then(() => {
           this.progress.set('Siparişler Temizlendi...');
@@ -373,12 +386,14 @@ export class EndofthedayComponent {
 
   stepReceipts() {
     this.mainService.getAllBy('receipts', {}).then(res => {
-      this.progress.set('Ödemeler Yedekleniyor...');
-      this.logs.set(res.docs as any);
-      const logsBackup = new BackupData('receipts', this.logs());
-      const newBackupData = [...this.backupData()];
-      newBackupData.push(logsBackup);
-      this.backupData.set(newBackupData);
+      this.zone.run(() => {
+        this.progress.set('Ödemeler Yedekleniyor...');
+        this.logs.set(res.docs as any);
+        const logsBackup = new BackupData('receipts', this.logs());
+        const newBackupData = [...this.backupData()];
+        newBackupData.push(logsBackup);
+        this.backupData.set(newBackupData);
+      });
       this.mainService.removeAll('receipts', {}).then(() => {
         this.mainService.removeAll('allData', { db_name: 'receipts' }).then(() => {
           this.progress.set('Ödemeler Temizlendi...');
@@ -555,8 +570,10 @@ export class EndofthedayComponent {
 
   fillData() {
     this.mainService.getAllBy('endday', {}).then((result) => {
-      const sortedData = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp).filter((obj: any) => obj.total_income !== 0);
-      this.endDayData.set(sortedData);
+      this.zone.run(() => {
+        const sortedData = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp).filter((obj: any) => obj.total_income !== 0);
+        this.endDayData.set(sortedData);
+      });
     });
   }
 }
