@@ -7,6 +7,7 @@ import { CategoryModalComponent } from '../../app/shared/modals/category-modal/c
 import { CustomerModalComponent } from '../../app/shared/modals/customer-modal/customer-modal.component';
 import { TableModalComponent } from '../../app/shared/modals/table-modal/table-modal.component';
 import { ConfirmModalComponent } from '../../app/shared/modals/confirm-modal/confirm-modal.component';
+import { SubcategoryModalComponent } from '../../app/shared/modals/subcategory-modal/subcategory-modal.component';
 
 /**
  * DialogFacade - Single entry point for all modal dialogs
@@ -101,6 +102,20 @@ export class DialogFacade {
       width: '400px',
       data: { ...table, floors: floors || [] },
       panelClass: 'table-dialog',
+    });
+  }
+
+  /**
+   * Open Subcategory Modal
+   * @param subcategory Optional subcategory data for editing
+   * @returns DialogRef with result
+   */
+  openSubcategoryModal(subcategory?: any): DialogRef<any> {
+    return this.open(SubcategoryModalComponent, {
+      title: subcategory ? 'Alt Kategori Düzenle' : 'Alt Kategori Ekle',
+      width: '500px',
+      data: subcategory,
+      panelClass: 'subcategory-dialog',
     });
   }
 
