@@ -141,9 +141,6 @@ export class RestaurantSettingsComponent implements OnInit {
       this.messageService.sendMessage('Bölüm Oluşturuldu!');
       areaForm.reset();
     });
-    this.zone.run(() => {
-      (window as any).$('#areaModal').modal('hide');
-    });
     return true;
   }
 

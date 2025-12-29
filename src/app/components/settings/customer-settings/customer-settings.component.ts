@@ -272,9 +272,6 @@ export class CustomerSettingsComponent implements OnInit {
     this.mainService.addData('checks', checkWillReOpen).then(() => {
       this.mainService.removeData('credits', check._id!).then(() => {
         this.fillData();
-        this.zone.run(() => {
-          (window as any).$('#checkDetail').modal('hide');
-        });
         this.messageService.sendAlert('Başarılı !', 'Hesap Geri Açıldı', 'success');
       });
     });
@@ -305,9 +302,8 @@ export class CustomerSettingsComponent implements OnInit {
 
   getDetail(check: Check) {
     this.checkDetail.set(check);
-    this.zone.run(() => {
-      (window as any).$('#reportDetail').modal('show');
-    });
+    // Modal opening is now handled via CDK Dialog in templates
+    // This method now just sets the check detail signal for display
   }
 
   cancelCheck(id: string, note: string) {
@@ -318,9 +314,6 @@ export class CustomerSettingsComponent implements OnInit {
           const price = detail ? detail.total_price : 0;
           this.logService.createLog(logType.CHECK_CANCELED, id, `${price} TL tutarındaki kapatılan hesap iptal edildi. Açıklama:'${note}'`)
           this.fillData();
-          this.zone.run(() => {
-            (window as any).$('#cancelDetail').modal('hide');
-          });
         });
       }
     });
