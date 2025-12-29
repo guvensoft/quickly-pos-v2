@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, NgZone } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MainService } from '../../../core/services/main.service';
 import { Activity } from '../../../core/models/report.model';
@@ -14,7 +14,7 @@ import { BaseChartDirective } from 'ng2-charts';
 })
 export class ActivityReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
-  private readonly zone = inject(NgZone);
+
 
   readonly activityData = signal<any[]>([]);
   readonly activityLabels = signal<string[]>([]);
@@ -155,12 +155,10 @@ export class ActivityReportsComponent implements OnInit {
 
   fillData() {
     this.mainService.getAllBy('reports', { type: 'Activity' }).then(res => {
-      this.zone.run(() => {
-        if (res && res.docs && res.docs.length > 0) {
-          this.sellingActivity.set(res.docs[0] as any);
-          this.dailySalesActivity();
-        }
-      });
+      if (res && res.docs && res.docs.length > 0) {
+        this.sellingActivity.set(res.docs[0] as any);
+        this.dailySalesActivity();
+      }
     });
   }
 

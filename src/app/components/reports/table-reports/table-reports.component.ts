@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, NgZone } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Log, logType } from '../../../core/models/log.model';
 import { Report } from '../../../core/models/report.model';
@@ -19,7 +19,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 })
 export class TableReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
-  private readonly zone = inject(NgZone);
+
 
   readonly tablesList = signal<Report[]>([]);
   readonly generalList = signal<Report[]>([]);
@@ -170,10 +170,8 @@ export class TableReportsComponent implements OnInit {
     const selected = this.selectedCat();
     if (selected) {
       this.mainService.getAllBy('tables', { floor_id: selected }).then(res => {
-        this.zone.run(() => {
-          const floors_ids = res.docs.map((obj: any) => obj._id);
-          this.tablesList.set(this.tablesList().filter((obj: any) => floors_ids.includes(obj.connection_id)));
-        });
+        const floors_ids = res.docs.map((obj: any) => obj._id);
+        this.tablesList.set(this.tablesList().filter((obj: any) => floors_ids.includes(obj.connection_id)));
       });
     }
   }
