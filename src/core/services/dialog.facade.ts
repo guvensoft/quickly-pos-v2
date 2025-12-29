@@ -10,6 +10,10 @@ import { ConfirmModalComponent } from '../../app/shared/modals/confirm-modal/con
 import { SubcategoryModalComponent } from '../../app/shared/modals/subcategory-modal/subcategory-modal.component';
 import { StockCategoryModalComponent } from '../../app/shared/modals/stock-category-modal/stock-category-modal.component';
 import { StockModalComponent } from '../../app/shared/modals/stock-modal/stock-modal.component';
+import { UserGroupModalComponent } from '../../app/shared/modals/user-group-modal/user-group-modal.component';
+import { UserModalComponent } from '../../app/shared/modals/user-modal/user-modal.component';
+import { PrinterModalComponent } from '../../app/shared/modals/printer-modal/printer-modal.component';
+import { AdminModalComponent } from '../../app/shared/modals/admin-modal/admin-modal.component';
 
 /**
  * DialogFacade - Single entry point for all modal dialogs
@@ -146,6 +150,63 @@ export class DialogFacade {
       width: '500px',
       data: stock,
       panelClass: 'stock-dialog',
+    });
+  }
+
+  /**
+   * Open User Group Modal
+   * @param userGroup Optional user group data for editing
+   * @returns DialogRef with result
+   */
+  openUserGroupModal(userGroup?: any): DialogRef<any> {
+    return this.open(UserGroupModalComponent, {
+      title: userGroup ? 'Kullanıcı Grubu Düzenle' : 'Kullanıcı Grubu Ekle',
+      width: '500px',
+      data: userGroup,
+      panelClass: 'user-group-dialog',
+    });
+  }
+
+  /**
+   * Open User Modal
+   * @param user Optional user data for editing
+   * @param groups Optional user groups array for selection
+   * @returns DialogRef with result
+   */
+  openUserModal(user?: any, groups?: any[]): DialogRef<any> {
+    return this.open(UserModalComponent, {
+      title: user ? 'Kullanıcı Düzenle' : 'Kullanıcı Ekle',
+      width: '500px',
+      data: { ...user, groups: groups || [] },
+      panelClass: 'user-dialog',
+    });
+  }
+
+  /**
+   * Open Printer Modal
+   * @param printer Optional printer data for editing
+   * @returns DialogRef with result
+   */
+  openPrinterModal(printer?: any): DialogRef<any> {
+    return this.open(PrinterModalComponent, {
+      title: printer ? 'Yazıcı Düzenle' : 'Yazıcı Ekle',
+      width: '500px',
+      data: printer,
+      panelClass: 'printer-dialog',
+    });
+  }
+
+  /**
+   * Open Admin Modal
+   * @param adminSettings Optional admin settings data for editing
+   * @returns DialogRef with result
+   */
+  openAdminModal(adminSettings?: any): DialogRef<any> {
+    return this.open(AdminModalComponent, {
+      title: 'Uygulama Ayarları',
+      width: '600px',
+      data: adminSettings,
+      panelClass: 'admin-dialog',
     });
   }
 
