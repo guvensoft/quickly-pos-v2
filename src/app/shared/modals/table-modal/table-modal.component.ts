@@ -30,6 +30,27 @@ import { NotificationService } from '../../services/notification.service';
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
       <div class="modal-body">
+        @if (floors.length > 0) {
+        <div class="mb-3">
+          <label class="form-label">Bölüm *</label>
+          <select
+            class="form-select"
+            formControlName="floor_id"
+            [class.is-invalid]="isFieldInvalid('floor_id')"
+          >
+            <option value="">Seçiniz</option>
+            @for (floor of floors; track floor._id) {
+              <option [value]="floor._id">{{ floor.name }}</option>
+            }
+          </select>
+          @if (isFieldInvalid('floor_id')) {
+            <div class="invalid-feedback">
+              Bölüm seçiniz
+            </div>
+          }
+        </div>
+        }
+
         <div class="mb-3">
           <label class="form-label">Masa Adı *</label>
           <input
@@ -109,6 +130,7 @@ import { NotificationService } from '../../services/notification.service';
 export class TableModalComponent extends BaseModalComponent {
   form: FormGroup;
   loading = false;
+  floors: any[] = [];
 
   private fb = inject(FormBuilder);
   private mainService = inject(MainService);
@@ -120,10 +142,14 @@ export class TableModalComponent extends BaseModalComponent {
   ) {
     super(dialogRef, data);
 
+    this.floors = data?.floors || [];
+    const hasFloors = this.floors.length > 0;
+
     this.form = this.fb.group({
       name: [data?.name || '', Validators.required],
       capacity: [data?.capacity || 2, [Validators.required, Validators.min(1)]],
       description: [data?.description || ''],
+      floor_id: [data?.floor_id || '', hasFloors ? Validators.required : []],
     });
   }
 
@@ -139,24 +165,9 @@ export class TableModalComponent extends BaseModalComponent {
   onSubmit() {
     if (this.form.invalid) return;
 
-    this.loading = true;
+    // Return the form data to the parent component
+    // Parent component handles the actual submission with business logic
     const formValue = this.form.value;
-
-    const promise = this.data?._id
-      ? this.mainService.updateData('tables', this.data._id, formValue)
-      : this.mainService.addData('tables', formValue);
-
-    promise
-      .then((result: any) => {
-        this.loading = false;
-        this.notification.success(
-          this.data?._id ? 'Masa güncellendi' : 'Masa eklendi'
-        );
-        this.close(result);
-      })
-      .catch((error: any) => {
-        this.loading = false;
-        this.notification.error('Kayıt başarısız: ' + error.message);
-      });
+    this.close(formValue);
   }
 }

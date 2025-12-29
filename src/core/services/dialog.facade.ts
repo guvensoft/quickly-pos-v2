@@ -92,13 +92,14 @@ export class DialogFacade {
   /**
    * Open Table Modal
    * @param table Optional table data for editing
+   * @param floors Optional floors array for selection
    * @returns DialogRef with result
    */
-  openTableModal(table?: any): DialogRef<any> {
+  openTableModal(table?: any, floors?: any[]): DialogRef<any> {
     return this.open(TableModalComponent, {
       title: table ? 'Masa Düzenle' : 'Masa Ekle',
       width: '400px',
-      data: table,
+      data: { ...table, floors: floors || [] },
       panelClass: 'table-dialog',
     });
   }
