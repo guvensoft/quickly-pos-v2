@@ -172,37 +172,56 @@ export class SetupComponent implements OnInit {
   makeAdmin(adminForm: NgForm) {
     const Form = adminForm.value;
     const userAuth = new UserAuth(new ComponentsAuth(true, true, true, true, true), true, true, true, true, true);
-    this.mainService.addData('users_group', new UserGroup('Yönetici', 'Yönetici Grubu', userAuth, 1, Date.now()) as any).then(res => {
-      if (!res || !res.id) {
-        console.error('Failed to create user group');
-        return;
-      }
-      this.mainService.addData('users', new User(Form.admin_name, 'Yönetici', res.id, parseInt(Form.admin_pass), 1, Date.now()) as any).then((user) => {
-        if (user && user.id) {
-          this.mainService.addData('reports', new Report('User', user.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), (user as any).name, Date.now()) as any);
-          localStorage.setItem('userName', Form.admin_name);
-          localStorage.setItem('userType', 'Yönetici');
-          localStorage.setItem('userAuth', res.id);
+
+    // Create user group first
+    this.mainService.addData('users_group', new UserGroup('Yönetici', 'Yönetici Grubu', userAuth, 1, Date.now()) as any)
+      .then(res => {
+        if (!res || !res.id) {
+          console.error('Failed to create user group');
+          this.message.sendMessage('Kullanıcı grubu oluşturulamadı!');
+          return Promise.reject('No user group ID');
         }
-      }).catch(err => {
-        console.error('Error creating user:', err);
+
+        // Create user and properly chain the promise
+        return this.mainService.addData('users', new User(Form.admin_name, 'Yönetici', res.id, parseInt(Form.admin_pass), 1, Date.now()) as any)
+          .then((user) => {
+            if (user && user.id) {
+              // Add user report
+              this.mainService.addData('reports', new Report('User', user.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), (user as any).name, Date.now()) as any);
+
+              // Save user info to localStorage
+              localStorage.setItem('userName', Form.admin_name);
+              localStorage.setItem('userType', 'Yönetici');
+              localStorage.setItem('userAuth', res.id);
+
+              return res;
+            }
+            return Promise.reject('User creation failed');
+          });
+      })
+      .then((groupRes) => {
+        // Add store reports after user is successfully created
+        this.mainService.addData('reports', new Report('Store', 'Nakit', 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), 'Nakit Satış Raporu', Date.now()) as any);
+        this.mainService.addData('reports', new Report('Store', 'Kart', 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), 'Kart Satış Raporu', Date.now()) as any);
+        this.mainService.addData('reports', new Report('Store', 'Kupon', 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), 'Kupon Satış Raporu', Date.now()) as any);
+        this.mainService.addData('reports', new Report('Store', 'İkram', 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), 'İkram Satış Raporu', Date.now()) as any);
+        this.mainService.addData('reports', new Activity('Activity', 'Selling', [0], ['GB'], [0]) as any);
+
+        // Now reload the program after everything is saved
+        this.message.sendMessage('Program Yeniden Başlatıyor..');
+        setTimeout(() => {
+          // Fallback to window.location.reload() for web/dev environment
+          if (this.electron.isElectron()) {
+            this.electron.reloadProgram();
+          } else {
+            window.location.reload();
+          }
+        }, 3000);
+      })
+      .catch(err => {
+        console.error('Error in admin setup:', err);
+        this.message.sendMessage('Kurulum sırasında hata oluştu! Lütfen tekrar deneyin.');
       });
-    }).then(() => {
-      this.mainService.addData('reports', new Report('Store', 'Nakit', 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), 'Nakit Satış Raporu', Date.now()) as any);
-      this.mainService.addData('reports', new Report('Store', 'Kart', 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), 'Kart Satış Raporu', Date.now()) as any);
-      this.mainService.addData('reports', new Report('Store', 'Kupon', 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), 'Kupon Satış Raporu', Date.now()) as any);
-      this.mainService.addData('reports', new Report('Store', 'İkram', 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), 'İkram Satış Raporu', Date.now()) as any);
-      this.mainService.addData('reports', new Activity('Activity', 'Selling', [0], ['GB'], [0]) as any);
-      this.message.sendMessage('Program Yeniden Başlatıyor..');
-      setTimeout(() => {
-        // Fallback to window.location.reload() for web/dev environment
-        if (this.electron.isElectron()) {
-          this.electron.reloadProgram();
-        } else {
-          window.location.reload();
-        }
-      }, 3000)
-    });
   }
 
   progressBar(step: number) {
