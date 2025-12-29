@@ -10,7 +10,7 @@ import { MessageService } from '../../../core/services/message.service';
 import { PrinterService } from '../../../core/services/printer.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { SignalValidatorService } from '../../../core/services/signal-validator.service';
-import { DialogFacade } from '../../../../core/services/dialog.facade';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -286,6 +286,22 @@ export class ApplicationSettingsComponent implements OnInit {
     this.serverPort.set(3000);
     this.urlError.set(null);
     this.portError.set(null);
+  }
+
+  removePrinter(printer: any) {
+    if (confirm('Bu yazıcıyı silmek istediğinize emin misiniz?')) {
+      this.settings.removePrinter(printer);
+      this.message.sendMessage('Yazıcı Silindi.');
+      this.choosenPrinter.set(undefined);
+    }
+  }
+
+  updatePrinter(form: NgForm) {
+    if (form.invalid) return;
+    const newPrinter = { ...this.choosenPrinter(), ...form.value };
+    this.settings.updatePrinter(newPrinter, this.choosenPrinter());
+    this.message.sendMessage('Yazıcı Güncellendi.');
+    this.choosenPrinter.set(newPrinter);
   }
 
   fillData() {

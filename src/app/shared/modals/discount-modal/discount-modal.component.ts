@@ -5,11 +5,16 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 import { PricePipe } from '../../pipes/price.pipe';
 
+export interface DiscountData {
+  currentAmount: number;
+  discounts: number[];
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule, FormsModule, PricePipe],
-    selector: 'app-discount-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule, PricePipe],
+  selector: 'app-discount-modal',
+  template: `
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title">İndirim Yap</h4>
@@ -51,27 +56,27 @@ import { PricePipe } from '../../pipes/price.pipe';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border-radius: 15px; overflow: hidden; }
     .btn-block { width: 100%; }
   `]
 })
-export class DiscountModalComponent extends BaseModalComponent<{ type: 'amount' | 'percent', value: number }> {
-    constructor(
-        dialogRef: DialogRef<{ type: 'amount' | 'percent', value: number }>,
-        @Inject(DIALOG_DATA) public override data: { currentAmount: number, discounts: number[] }
-    ) {
-        super(dialogRef, data);
-    }
+export class DiscountModalComponent extends BaseModalComponent<DiscountData> {
+  constructor(
+    dialogRef: DialogRef<{ type: 'amount' | 'percent', value: number }>,
+    @Inject(DIALOG_DATA) data: DiscountData
+  ) {
+    super(dialogRef, data);
+  }
 
-    applyAmount(val: string) {
-        const amount = parseFloat(val);
-        if (!isNaN(amount) && amount > 0 && amount < this.data.currentAmount) {
-            this.close({ type: 'amount', value: amount });
-        }
+  applyAmount(val: string) {
+    const amount = parseFloat(val);
+    if (!isNaN(amount) && amount > 0 && amount < this.data.currentAmount) {
+      this.close({ type: 'amount', value: amount });
     }
+  }
 
-    applyPercent(val: number) {
-        this.close({ type: 'percent', value: val });
-    }
+  applyPercent(val: number) {
+    this.close({ type: 'percent', value: val });
+  }
 }

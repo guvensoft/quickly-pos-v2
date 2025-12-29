@@ -14,6 +14,7 @@ import { ConflictService } from '../../core/services/conflict.service';
 import { HttpService } from '../../core/services/http.service';
 import { DayDetailComponent } from './day-detail/day-detail.component';
 import { PricePipe } from '../../shared/pipes/price.pipe';
+import { DialogFacade } from '../../core/services/dialog.facade';
 
 @Component({
   standalone: true,

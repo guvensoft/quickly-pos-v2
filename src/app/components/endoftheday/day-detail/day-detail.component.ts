@@ -13,6 +13,7 @@ import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { TruncatePipe } from '../../../shared/pipes/truncate.pipe';
 import { BaseChartDirective } from 'ng2-charts';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -222,11 +223,11 @@ export class DayDetailComponent {
   }
 
   showCheckDetail(check: any) {
-    this.dialogFacade.openCheckDetailModal({ ...check, readOnly: true }).closed.subscribe(result => {
+    this.dialogFacade.openCheckDetailModal({ ...check, readOnly: true }).closed.subscribe((result: any) => {
       if (result?.action === 'print') {
         const printerList = this.printers();
         if (printerList && printerList.length > 0) {
-          this.printerService.printCheck(printerList[0], result.data);
+          this.printerService.printCheck(printerList[0], {}, result.data);
         }
       }
     });

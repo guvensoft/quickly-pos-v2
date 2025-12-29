@@ -6,6 +6,7 @@ import { MainService } from '../../../core/services/main.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { ChartType } from 'chart.js';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 @Component({
   standalone: true,
   imports: [CommonModule, BaseChartDirective, GeneralPipe],

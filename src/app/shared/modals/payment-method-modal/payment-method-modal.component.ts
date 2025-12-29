@@ -3,11 +3,15 @@ import { CommonModule } from '@angular/common';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
+export interface PaymentMethodData {
+  methods: any[];
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule],
-    selector: 'app-payment-method-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule],
+  selector: 'app-payment-method-modal',
+  template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
         <h4 class="modal-title">Ödeme Yöntemi Seçin</h4>
@@ -35,7 +39,7 @@ import { BaseModalComponent } from '../base-modal.component';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border: none; box-shadow: none; }
     .payment-btn { 
       border-width: 2px; 
@@ -50,11 +54,11 @@ import { BaseModalComponent } from '../base-modal.component';
     }
   `]
 })
-export class PaymentMethodModalComponent extends BaseModalComponent<string> {
-    constructor(
-        dialogRef: DialogRef<string>,
-        @Inject(DIALOG_DATA) data: any
-    ) {
-        super(dialogRef, data);
-    }
+export class PaymentMethodModalComponent extends BaseModalComponent<PaymentMethodData> {
+  constructor(
+    dialogRef: DialogRef<string>,
+    @Inject(DIALOG_DATA) data: PaymentMethodData
+  ) {
+    super(dialogRef, data);
+  }
 }

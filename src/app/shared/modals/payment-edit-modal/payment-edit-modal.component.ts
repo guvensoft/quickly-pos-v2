@@ -4,11 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
+export interface PaymentEditData {
+  amount: number;
+  method: string;
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    selector: 'app-payment-edit-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  selector: 'app-payment-edit-modal',
+  template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
         <h4 class="modal-title">Ödeme Düzenle</h4>
@@ -46,15 +51,15 @@ import { BaseModalComponent } from '../base-modal.component';
       </form>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border: none; box-shadow: none; }
   `]
 })
-export class PaymentEditModalComponent extends BaseModalComponent<any> {
-    constructor(
-        dialogRef: DialogRef<any>,
-        @Inject(DIALOG_DATA) data: any
-    ) {
-        super(dialogRef, data);
-    }
+export class PaymentEditModalComponent extends BaseModalComponent<PaymentEditData> {
+  constructor(
+    dialogRef: DialogRef<any>,
+    @Inject(DIALOG_DATA) data: PaymentEditData
+  ) {
+    super(dialogRef, data);
+  }
 }

@@ -4,11 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
+export interface CreditData {
+  customers: any[];
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    selector: 'app-credit-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  selector: 'app-credit-modal',
+  template: `
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title">Alacaklı Kapat (Cari)</h4>
@@ -41,25 +45,25 @@ import { BaseModalComponent } from '../base-modal.component';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border-radius: 15px; overflow: hidden; }
     .custom-select { height: calc(1.5em + 1rem + 2px); }
   `]
 })
-export class CreditModalComponent extends BaseModalComponent<{ customer_id: string, note: string }> {
-    selectedCustomerId: string = '';
-    note: string = '';
+export class CreditModalComponent extends BaseModalComponent<CreditData> {
+  selectedCustomerId: string = '';
+  note: string = '';
 
-    constructor(
-        dialogRef: DialogRef<{ customer_id: string, note: string }>,
-        @Inject(DIALOG_DATA) public override data: { customers: any[] }
-    ) {
-        super(dialogRef, data);
-    }
+  constructor(
+    dialogRef: DialogRef<{ customer_id: string, note: string }>,
+    @Inject(DIALOG_DATA) data: CreditData
+  ) {
+    super(dialogRef, data);
+  }
 
-    submit() {
-        if (this.selectedCustomerId && this.note.trim()) {
-            this.close({ customer_id: this.selectedCustomerId, note: this.note });
-        }
+  submit() {
+    if (this.selectedCustomerId && this.note.trim()) {
+      this.close({ customer_id: this.selectedCustomerId, note: this.note });
     }
+  }
 }

@@ -5,6 +5,16 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 import { PricePipe } from '../../pipes/price.pipe';
 
+export interface NumpadData {
+  productName: string;
+  productPrice: number;
+  stockAmount: number;
+  unit: string;
+  showTare?: boolean;
+  onTare?: (val: number) => void;
+  scaler$?: any;
+}
+
 @Component({
   standalone: true,
   imports: [CommonModule, FormsModule, PricePipe],
@@ -68,9 +78,10 @@ import { PricePipe } from '../../pipes/price.pipe';
     .key-btn { font-size: 1.8rem; font-weight: 700; border-radius: 12px; transition: all 0.1s; border-width: 2px; }
     .key-btn:active { background-color: #343a40 !important; color: white !important; transform: scale(0.95); }
     .btn-block { width: 100%; }
+    .list-group-item.active { background-color: #dc3545; border-color: #dc3545; }
   `]
 })
-export class NumpadModalComponent extends BaseModalComponent<number> {
+export class NumpadModalComponent extends BaseModalComponent<NumpadData> {
   readonly numpad = signal<string>('');
   readonly numboard = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '◂'];
 
@@ -83,12 +94,10 @@ export class NumpadModalComponent extends BaseModalComponent<number> {
 
   constructor(
     dialogRef: DialogRef<number>,
-    @Inject(DIALOG_DATA) data: any
+    @Inject(DIALOG_DATA) data: NumpadData
   ) {
     super(dialogRef, data);
     if (data?.scaler$) {
-      // Unsubscribe happens when modal is destroyed because we use a local subscription if we had one,
-      // but here we just subscribe. For better hygiene, let's track it.
       data.scaler$.subscribe((v: number) => {
         if (v !== undefined && v !== null) {
           this.numpad.set(v.toString());

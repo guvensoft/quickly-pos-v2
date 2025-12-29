@@ -2,7 +2,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import swal from 'sweetalert';
-import { ToastService } from '../../../core/services/toast.service';
+import { ToastService } from './toast.service';
 
 @Injectable({
     providedIn: 'root'

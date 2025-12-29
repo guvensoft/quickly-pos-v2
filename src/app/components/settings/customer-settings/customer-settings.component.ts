@@ -15,7 +15,7 @@ import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { NgxMaskPipe } from 'ngx-mask';
-import { DialogFacade } from '../../../../core/services/dialog.facade';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,

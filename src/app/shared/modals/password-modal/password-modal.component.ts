@@ -4,11 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
+export interface PasswordData {
+  title?: string;
+  message?: string;
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    selector: 'app-password-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  selector: 'app-password-modal',
+  template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
         <h5 class="modal-title">{{ data?.title || 'Şifre Gerekli' }}</h5>
@@ -26,15 +31,15 @@ import { BaseModalComponent } from '../base-modal.component';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border: none; box-shadow: none; }
   `]
 })
-export class PasswordModalComponent extends BaseModalComponent<string> {
-    constructor(
-        dialogRef: DialogRef<string>,
-        @Inject(DIALOG_DATA) data: any
-    ) {
-        super(dialogRef, data);
-    }
+export class PasswordModalComponent extends BaseModalComponent<PasswordData> {
+  constructor(
+    dialogRef: DialogRef<string>,
+    @Inject(DIALOG_DATA) data: PasswordData
+  ) {
+    super(dialogRef, data);
+  }
 }

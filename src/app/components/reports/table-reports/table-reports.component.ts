@@ -9,6 +9,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,

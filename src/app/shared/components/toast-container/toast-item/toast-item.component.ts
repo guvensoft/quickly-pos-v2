@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Toast } from '../../../../../core/services/toast.service';
+import { Toast } from '../../../../core/services/toast.service';
 
 /**
  * ToastItemComponent - Individual toast notification item

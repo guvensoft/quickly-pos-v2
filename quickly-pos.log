@@ -1,1 +1,2 @@
 [2025-12-29T11:44:35.884Z] [error] [render-process-gone] {"reason":"clean-exit","exitCode":1,"url":"http://localhost:4200/setup"}
+[2025-12-29T21:27:44.956Z] [error] Uncaught (in promise) Error: ENOENT: no such file or directory, open 'data/customer.png' {"source":"renderer","url":"http://localhost:4200/setup","line":1,"sourceId":"http://localhost:4200/main.js"}

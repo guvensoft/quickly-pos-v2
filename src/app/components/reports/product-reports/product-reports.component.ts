@@ -12,6 +12,7 @@ import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 @Component({
   standalone: true,
   imports: [CommonModule, BaseChartDirective, GeneralPipe, PricePipe],

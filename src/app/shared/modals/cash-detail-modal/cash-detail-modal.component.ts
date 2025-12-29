@@ -4,11 +4,21 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 import { PricePipe } from '../../pipes/price.pipe';
 
+export interface CashDetailData {
+  type: string;
+  description: string;
+  cash: number;
+  card: number;
+  coupon: number;
+  user: string;
+  timestamp: number;
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule, PricePipe],
-    selector: 'app-cash-detail-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, PricePipe],
+  selector: 'app-cash-detail-modal',
+  template: `
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title">{{ data.type }} Hareketi</h4>
@@ -78,15 +88,15 @@ import { PricePipe } from '../../pipes/price.pipe';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border-radius: 15px; overflow: hidden; }
   `]
 })
-export class CashDetailModalComponent extends BaseModalComponent<void> {
-    constructor(
-        dialogRef: DialogRef<void>,
-        @Inject(DIALOG_DATA) public override data: any
-    ) {
-        super(dialogRef, data);
-    }
+export class CashDetailModalComponent extends BaseModalComponent<CashDetailData> {
+  constructor(
+    dialogRef: DialogRef<void>,
+    @Inject(DIALOG_DATA) data: CashDetailData
+  ) {
+    super(dialogRef, data);
+  }
 }

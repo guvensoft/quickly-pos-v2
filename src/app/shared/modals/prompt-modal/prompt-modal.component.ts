@@ -4,11 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
+export interface PromptData {
+  title?: string;
+  message?: string;
+  placeholder?: string;
+  value?: string;
+  required?: boolean;
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    selector: 'app-prompt-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  selector: 'app-prompt-modal',
+  template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
         <h5 class="modal-title">{{ data?.title || 'Bilgi Girişi' }}</h5>
@@ -26,15 +34,15 @@ import { BaseModalComponent } from '../base-modal.component';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border: none; box-shadow: none; }
   `]
 })
-export class PromptModalComponent extends BaseModalComponent<string> {
-    constructor(
-        dialogRef: DialogRef<string>,
-        @Inject(DIALOG_DATA) data: any
-    ) {
-        super(dialogRef, data);
-    }
+export class PromptModalComponent extends BaseModalComponent<PromptData> {
+  constructor(
+    dialogRef: DialogRef<string>,
+    @Inject(DIALOG_DATA) data: PromptData
+  ) {
+    super(dialogRef, data);
+  }
 }

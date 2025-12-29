@@ -5,11 +5,17 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 import { PricePipe } from '../../pipes/price.pipe';
 
+export interface CheckEditData {
+  total_price?: number;
+  payment_method?: string;
+  payment_flow?: any[];
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule, FormsModule, PricePipe],
-    selector: 'app-check-edit-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule, PricePipe],
+  selector: 'app-check-edit-modal',
+  template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
         <h4 class="modal-title">Hesap Düzenle</h4>
@@ -63,20 +69,20 @@ import { PricePipe } from '../../pipes/price.pipe';
       </form>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border: none; box-shadow: none; }
     .btn-block { width: 100%; }
   `]
 })
-export class CheckEditModalComponent extends BaseModalComponent<any> {
-    constructor(
-        dialogRef: DialogRef<any>,
-        @Inject(DIALOG_DATA) data: any
-    ) {
-        super(dialogRef, data);
-    }
+export class CheckEditModalComponent extends BaseModalComponent<CheckEditData> {
+  constructor(
+    dialogRef: DialogRef<any>,
+    @Inject(DIALOG_DATA) data: CheckEditData
+  ) {
+    super(dialogRef, data);
+  }
 
-    onEditPayment(index: number, payment: any) {
-        this.close({ action: 'edit_payment', index, payment });
-    }
+  onEditPayment(index: number, payment: any) {
+    this.close({ action: 'edit_payment', index, payment });
+  }
 }

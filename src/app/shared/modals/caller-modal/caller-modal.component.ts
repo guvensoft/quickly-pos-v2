@@ -4,14 +4,19 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 import { NgxMaskPipe } from 'ngx-mask';
-import { Call } from '../../../../core/models/caller.model';
-import { Customer } from '../../../../core/models/customer.model';
+import { Call } from '../../../core/models/caller.model';
+import { Customer } from '../../../core/models/customer.model';
+
+export interface CallerData {
+  call: Call;
+  customer: Customer | null;
+}
 
 @Component({
-    standalone: true,
-    imports: [CommonModule, FormsModule, NgxMaskPipe],
-    selector: 'app-caller-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule, NgxMaskPipe],
+  selector: 'app-caller-modal',
+  template: `
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title font-weight-bold">
@@ -76,33 +81,33 @@ import { Customer } from '../../../../core/models/customer.model';
           <i class="fa fa-sticky-note mr-2" aria-hidden="true"></i> Hesap Aç
         </button>
         } @else {
-        <button (click)="submit('save')" [disabled]="!customerForm().form.valid" type="button" class="btn btn-lg btn-success px-4 shadow">
+        <button (click)="submit('save')" [disabled]="!customerForm()?.form?.valid" type="button" class="btn btn-lg btn-success px-4 shadow">
           <i class="fa fa-save mr-2" aria-hidden="true"></i> Kaydet ve Hesap Aç
         </button>
         }
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border-radius: 15px; overflow: hidden; border: none; }
     .rounded-lg { border-radius: 12px; }
   `]
 })
-export class CallerModalComponent extends BaseModalComponent<{ action: 'open' | 'save', formValue?: any }> {
-    customerForm = viewChild.required<NgForm>('customerForm');
+export class CallerModalComponent extends BaseModalComponent<CallerData> {
+  customerForm = viewChild<NgForm>('customerForm');
 
-    constructor(
-        dialogRef: DialogRef<{ action: 'open' | 'save', formValue?: any }>,
-        @Inject(DIALOG_DATA) public override data: { call: Call, customer: Customer | null }
-    ) {
-        super(dialogRef, data);
-    }
+  constructor(
+    dialogRef: DialogRef<any>,
+    @Inject(DIALOG_DATA) data: CallerData
+  ) {
+    super(dialogRef, data);
+  }
 
-    submit(action: 'open' | 'save') {
-        if (action === 'save') {
-            this.close({ action, formValue: this.customerForm().value });
-        } else {
-            this.close({ action });
-        }
+  submit(action: 'open' | 'save') {
+    if (action === 'save') {
+      this.close({ action, formValue: this.customerForm()?.value });
+    } else {
+      this.close({ action });
     }
+  }
 }

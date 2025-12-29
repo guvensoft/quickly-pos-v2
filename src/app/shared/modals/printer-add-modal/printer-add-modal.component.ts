@@ -3,15 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
-import { PrinterService } from '../../core/services/printer.service';
-import { MessageService } from '../../core/services/message.service';
-import { Printer } from '../../core/models/settings.model';
+import { PrinterService } from '../../../core/services/printer.service';
+import { MessageService } from '../../../core/services/message.service';
+import { Printer } from '../../../core/models/settings.model';
 
 @Component({
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    selector: 'app-printer-add-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  selector: 'app-printer-add-modal',
+  template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
         <h4 class="modal-title">Yazıcı Ekle</h4>
@@ -137,77 +137,77 @@ import { Printer } from '../../core/models/settings.model';
       </form>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border: none; box-shadow: none; }
     .input-group-text { min-width: 100px; }
     .card-primary { background-color: #007bff; }
   `]
 })
 export class PrinterAddModalComponent extends BaseModalComponent<any> {
-    private printerService = inject(PrinterService);
-    private message = inject(MessageService);
+  private readonly printerService = inject(PrinterService);
+  private readonly message = inject(MessageService);
 
-    readonly printerProcess = signal<string | undefined>(undefined);
-    readonly printersFound = signal<Array<any>>([]);
-    readonly selectedPrinter = signal<any>(undefined);
+  readonly printerProcess = signal<string | undefined>(undefined);
+  readonly printersFound = signal<Array<any>>([]);
+  readonly selectedPrinter = signal<any>(undefined);
 
-    constructor(
-        dialogRef: DialogRef<any>,
-        @Inject(DIALOG_DATA) data: any
-    ) {
-        super(dialogRef, data);
-    }
+  constructor(
+    dialogRef: DialogRef<any>,
+    @Inject(DIALOG_DATA) data: any
+  ) {
+    super(dialogRef, data);
+  }
 
-    getPrinters(type: string) {
-        switch (type) {
-            case 'USB':
-                const usbPrinters = this.printerService.getUSBPrinters();
-                if (usbPrinters && Array.isArray(usbPrinters) && usbPrinters.length > 0) {
-                    this.printerProcess.set('USB');
-                    this.printersFound.set(usbPrinters);
-                } else {
-                    this.message.sendMessage('USB portlarında takılı yazıcı bulunamadı..');
-                }
-                break;
-            case 'LAN':
-                this.printerProcess.set('LAN');
-                this.printersFound.set([]);
-                this.selectedPrinter.set({});
-                break;
-            case 'SERIAL':
-                this.printerProcess.set('SERIAL');
-                const serialPrinters = this.printerService.getSerialPrinters('/dev/ttyS0');
-                this.printersFound.set(serialPrinters || []);
-                this.selectedPrinter.set({});
-                break;
-            case 'BLUETOOTH':
-                this.printerProcess.set('BLUETOOTH');
-                this.printersFound.set([]);
-                this.selectedPrinter.set({});
-                break;
-        }
-    }
-
-    printTest(device: any) {
-        this.printerService.printTest(device);
-    }
-
-    onSubmit(form: any) {
-        let address;
-        if (form.port_number === undefined) {
-            if (this.selectedPrinter() && this.selectedPrinter().portNumbers && this.selectedPrinter().portNumbers.length > 0) {
-                address = this.selectedPrinter().portNumbers[0];
-            }
+  getPrinters(type: string) {
+    switch (type) {
+      case 'USB':
+        const usbPrinters = this.printerService.getUSBPrinters();
+        if (usbPrinters && Array.isArray(usbPrinters) && usbPrinters.length > 0) {
+          this.printerProcess.set('USB');
+          this.printersFound.set(usbPrinters);
         } else {
-            address = form.port_number;
+          this.message.sendMessage('USB portlarında takılı yazıcı bulunamadı..');
         }
-
-        if (!form.name) {
-            this.message.sendMessage('Yazıcı Adı Girmek Zorundasınız.');
-            return;
-        }
-
-        const printer = new Printer(form.name, this.printerProcess()!, form.note, address, form.mission);
-        this.close(printer);
+        break;
+      case 'LAN':
+        this.printerProcess.set('LAN');
+        this.printersFound.set([]);
+        this.selectedPrinter.set({});
+        break;
+      case 'SERIAL':
+        this.printerProcess.set('SERIAL');
+        const serialPrinters = this.printerService.getSerialPrinters('/dev/ttyS0');
+        this.printersFound.set(serialPrinters || []);
+        this.selectedPrinter.set({});
+        break;
+      case 'BLUETOOTH':
+        this.printerProcess.set('BLUETOOTH');
+        this.printersFound.set([]);
+        this.selectedPrinter.set({});
+        break;
     }
+  }
+
+  printTest(device: any) {
+    this.printerService.printTest(device);
+  }
+
+  onSubmit(form: any) {
+    let address;
+    if (form.port_number === undefined) {
+      if (this.selectedPrinter() && this.selectedPrinter().portNumbers && this.selectedPrinter().portNumbers.length > 0) {
+        address = this.selectedPrinter().portNumbers[0];
+      }
+    } else {
+      address = form.port_number;
+    }
+
+    if (!form.name) {
+      this.message.sendMessage('Yazıcı Adı Girmek Zorundasınız.');
+      return;
+    }
+
+    const printer = new Printer(form.name, this.printerProcess()!, form.note, address, form.mission);
+    this.close(printer);
+  }
 }

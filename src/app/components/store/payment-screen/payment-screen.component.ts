@@ -12,6 +12,7 @@ import { SettingsService } from '../../../core/services/settings.service';
 import { DatabaseService } from '../../../core/services/database.service';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -336,7 +337,7 @@ export class PaymentScreenComponent implements OnDestroy {
 
     this.dialogFacade.openCreditModal({
       customers: this.customers() || []
-    }).closed.subscribe(result => {
+    }).closed.subscribe((result: { customer_id: string, note: string } | undefined) => {
       if (result) {
         this.createCredit(result.customer_id, result.note);
       }
@@ -385,7 +386,7 @@ export class PaymentScreenComponent implements OnDestroy {
     this.dialogFacade.openDiscountModal({
       currentAmount: this.currentAmount(),
       discounts: this.discounts()
-    }).closed.subscribe(result => {
+    }).closed.subscribe((result: { type: 'amount' | 'percent', value: number } | undefined) => {
       if (result) {
         if (result.type === 'percent') {
           this.setDiscount(result.value);
@@ -412,7 +413,7 @@ export class PaymentScreenComponent implements OnDestroy {
   openDivisionModal() {
     this.dialogFacade.openDivisionModal({
       totalAmount: this.priceWillPay()
-    }).closed.subscribe(val => {
+    }).closed.subscribe((val: number | undefined) => {
       if (val) {
         this.divideWillPay(val);
       }

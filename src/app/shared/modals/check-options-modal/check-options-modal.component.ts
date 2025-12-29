@@ -3,11 +3,15 @@ import { CommonModule } from '@angular/common';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
+export interface CheckOptionsData {
+  permissions: { discount: boolean };
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule],
-    selector: 'app-check-options-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule],
+  selector: 'app-check-options-modal',
+  template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
         <h4 class="modal-title">Hesap İşlemleri</h4>
@@ -36,18 +40,18 @@ import { BaseModalComponent } from '../base-modal.component';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border: none; box-shadow: none; border-radius: 15px; }
     .option-btn { border-width: 2px; border-radius: 12px; transition: all 0.2s; }
     .option-btn:hover:not(:disabled) { background-color: #f8f9fa; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     .btn-block { width: 100%; }
   `]
 })
-export class CheckOptionsModalComponent extends BaseModalComponent<string> {
-    constructor(
-        dialogRef: DialogRef<string>,
-        @Inject(DIALOG_DATA) data: any
-    ) {
-        super(dialogRef, data);
-    }
+export class CheckOptionsModalComponent extends BaseModalComponent<CheckOptionsData> {
+  constructor(
+    dialogRef: DialogRef<string>,
+    @Inject(DIALOG_DATA) data: CheckOptionsData
+  ) {
+    super(dialogRef, data);
+  }
 }

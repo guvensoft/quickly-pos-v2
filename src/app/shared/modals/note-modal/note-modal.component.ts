@@ -4,11 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
+export interface NoteData {
+  productName?: string;
+  currentNote?: string;
+  readyNotes?: string[];
+  permissions?: { discount: boolean };
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    selector: 'app-note-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  selector: 'app-note-modal',
+  template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
         <h4 class="modal-title">Not Ekle ( {{ data?.productName || 'Ürün' }} )</h4>
@@ -22,9 +29,9 @@ import { BaseModalComponent } from '../base-modal.component';
             <input #noteInput type="text" placeholder="Notunuz..." name="description"
               class="form-control form-control-lg" [ngModel]="data?.currentNote" autofocus>
           </div>
-          @if (data?.readyNotes?.length > 0) {
+          @if (data?.readyNotes && data?.readyNotes?.length! > 0) {
             <div class="row g-2">
-              @for (note of data.readyNotes; track note) {
+              @for (note of data?.readyNotes; track note) {
                 <div class="col-lg-4 mb-2">
                   <button type="button" class="btn btn-outline-info btn-lg btn-block" (click)="noteInput.value = note">
                     {{ note }}
@@ -45,16 +52,16 @@ import { BaseModalComponent } from '../base-modal.component';
       </form>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border: none; box-shadow: none; }
     .btn-block { width: 100%; }
   `]
 })
-export class NoteModalComponent extends BaseModalComponent<any> {
-    constructor(
-        dialogRef: DialogRef<any>,
-        @Inject(DIALOG_DATA) data: any
-    ) {
-        super(dialogRef, data);
-    }
+export class NoteModalComponent extends BaseModalComponent<NoteData> {
+  constructor(
+    dialogRef: DialogRef<any>,
+    @Inject(DIALOG_DATA) data: NoteData
+  ) {
+    super(dialogRef, data);
+  }
 }

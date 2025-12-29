@@ -4,10 +4,10 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
 @Component({
-    standalone: true,
-    imports: [CommonModule],
-    selector: 'app-processing-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule],
+  selector: 'app-processing-modal',
+  template: `
     <div class="modal-content text-center p-5">
       <div class="modal-body">
         <h4 class="mb-4">{{ data.title }}</h4>
@@ -20,19 +20,19 @@ import { BaseModalComponent } from '../base-modal.component';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border-radius: 20px; border: none; }
     .spinner-container { height: 100px; display: flex; align-items: center; justify-content: center; }
   `]
 })
-export class ProcessingModalComponent extends BaseModalComponent<void> {
-    readonly message = signal<string>('');
+export class ProcessingModalComponent extends BaseModalComponent<{ title: string, message: string }> {
+  readonly message = signal<string>('');
 
-    constructor(
-        dialogRef: DialogRef<void>,
-        @Inject(DIALOG_DATA) public override data: { title: string, message: string }
-    ) {
-        super(dialogRef, data);
-        this.message.set(data.message);
-    }
+  constructor(
+    dialogRef: DialogRef<void>,
+    @Inject(DIALOG_DATA) public override data: { title: string, message: string }
+  ) {
+    super(dialogRef, data);
+    this.message.set(data.message);
+  }
 }

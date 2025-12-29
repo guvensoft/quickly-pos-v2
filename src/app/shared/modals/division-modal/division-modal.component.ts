@@ -4,11 +4,15 @@ import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 import { PricePipe } from '../../pipes/price.pipe';
 
+export interface DivisionData {
+  totalAmount: number;
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule, PricePipe],
-    selector: 'app-division-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule, PricePipe],
+  selector: 'app-division-modal',
+  template: `
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title">Ödeme Bölme</h4>
@@ -48,16 +52,16 @@ import { PricePipe } from '../../pipes/price.pipe';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border-radius: 15px; overflow: hidden; }
     .btn-block { width: 100%; }
   `]
 })
-export class DivisionModalComponent extends BaseModalComponent<number> {
-    constructor(
-        dialogRef: DialogRef<number>,
-        @Inject(DIALOG_DATA) public override data: { totalAmount: number }
-    ) {
-        super(dialogRef, data);
-    }
+export class DivisionModalComponent extends BaseModalComponent<DivisionData> {
+  constructor(
+    dialogRef: DialogRef<number>,
+    @Inject(DIALOG_DATA) data: DivisionData
+  ) {
+    super(dialogRef, data);
+  }
 }

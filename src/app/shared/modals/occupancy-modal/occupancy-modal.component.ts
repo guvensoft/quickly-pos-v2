@@ -3,11 +3,15 @@ import { CommonModule } from '@angular/common';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
+export interface OccupancyData {
+  occupation?: { male: number, female: number };
+}
+
 @Component({
-    standalone: true,
-    imports: [CommonModule],
-    selector: 'app-occupancy-modal',
-    template: `
+  standalone: true,
+  imports: [CommonModule],
+  selector: 'app-occupancy-modal',
+  template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
         <h4 class="modal-title">Kişi Sayısı</h4>
@@ -48,24 +52,24 @@ import { BaseModalComponent } from '../base-modal.component';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-content { border: none; box-shadow: none; border-radius: 15px; }
     .btn-group .btn { min-width: 60px; font-weight: bold; border-width: 2px; }
     .btn-group .btn.active { box-shadow: inset 0 3px 5px rgba(0,0,0,0.125); }
   `]
 })
-export class OccupancyModalComponent extends BaseModalComponent<{ male: number, female: number }> {
-    readonly maleCount = signal<number>(0);
-    readonly femaleCount = signal<number>(0);
+export class OccupancyModalComponent extends BaseModalComponent<OccupancyData> {
+  readonly maleCount = signal<number>(0);
+  readonly femaleCount = signal<number>(0);
 
-    constructor(
-        dialogRef: DialogRef<{ male: number, female: number }>,
-        @Inject(DIALOG_DATA) data: any
-    ) {
-        super(dialogRef, data);
-        if (data?.occupation) {
-            this.maleCount.set(data.occupation.male || 0);
-            this.femaleCount.set(data.occupation.female || 0);
-        }
+  constructor(
+    dialogRef: DialogRef<{ male: number, female: number }>,
+    @Inject(DIALOG_DATA) data: OccupancyData
+  ) {
+    super(dialogRef, data);
+    if (data?.occupation) {
+      this.maleCount.set(data.occupation.male || 0);
+      this.femaleCount.set(data.occupation.female || 0);
     }
+  }
 }
