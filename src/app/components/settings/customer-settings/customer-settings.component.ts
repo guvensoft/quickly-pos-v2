@@ -356,17 +356,23 @@ export class CustomerSettingsComponent implements OnInit {
   filterCustomers(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('customers', { name: { $regex: regexp } }).then((res: any) => {
-      this.customers.set(res.docs);
+      this.zone.run(() => {
+        this.customers.set(res.docs);
+      });
     });
   }
 
   fillData() {
     this.mainService.getAllBy('customers', {}).then((result: any) => {
-      this.customers.set(result.docs);
+      this.zone.run(() => {
+        this.customers.set(result.docs);
+      });
     });
     this.mainService.getAllBy('credits', {}).then((res: any) => {
-      this.credits.set(res.docs);
-      this.creditsView.set([...res.docs].sort((a: any, b: any) => a.timestamp - b.timestamp));
+      this.zone.run(() => {
+        this.credits.set(res.docs);
+        this.creditsView.set([...res.docs].sort((a: any, b: any) => a.timestamp - b.timestamp));
+      });
     })
   }
 }

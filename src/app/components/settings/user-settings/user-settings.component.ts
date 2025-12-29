@@ -107,19 +107,23 @@ export class UserSettingsComponent implements OnInit {
   getUsersByGroup(id: string | null | undefined) {
     if (id) {
       this.mainService.getAllBy('users', { role_id: id }).then(res => {
-        if (res && res.docs) {
-          this.users.set(res.docs as any);
-        } else {
-          this.users.set([]);
-        }
+        this.zone.run(() => {
+          if (res && res.docs) {
+            this.users.set(res.docs as any);
+          } else {
+            this.users.set([]);
+          }
+        });
       });
     } else {
       this.mainService.getAllBy('users', {}).then(res => {
-        if (res && res.docs) {
-          this.users.set(res.docs as any);
-        } else {
-          this.users.set([]);
-        }
+        this.zone.run(() => {
+          if (res && res.docs) {
+            this.users.set(res.docs as any);
+          } else {
+            this.users.set([]);
+          }
+        });
       });
     }
   }
@@ -294,28 +298,34 @@ export class UserSettingsComponent implements OnInit {
   filterUsers(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('users', { name: { $regex: regexp } }).then(res => {
-      if (res && res.docs) {
-        this.users.set(res.docs as any);
-      } else {
-        this.users.set([]);
-      }
+      this.zone.run(() => {
+        if (res && res.docs) {
+          this.users.set(res.docs as any);
+        } else {
+          this.users.set([]);
+        }
+      });
     });
   }
 
   fillData() {
     this.mainService.getAllBy('users', {}).then(result => {
-      if (result && result.docs) {
-        this.users.set(result.docs as any);
-      } else {
-        this.users.set([]);
-      }
+      this.zone.run(() => {
+        if (result && result.docs) {
+          this.users.set(result.docs as any);
+        } else {
+          this.users.set([]);
+        }
+      });
     });
     this.mainService.getAllBy('users_group', {}).then(result => {
-      if (result && result.docs) {
-        this.groups.set(result.docs as any);
-      } else {
-        this.groups.set([]);
-      }
+      this.zone.run(() => {
+        if (result && result.docs) {
+          this.groups.set(result.docs as any);
+        } else {
+          this.groups.set([]);
+        }
+      });
     });
   }
 }

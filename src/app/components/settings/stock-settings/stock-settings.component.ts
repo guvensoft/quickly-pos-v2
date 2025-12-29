@@ -173,11 +173,13 @@ export class StockSettingsComponent implements OnInit {
 
   getStocks(id: string | undefined) {
     this.mainService.getAllBy('stocks', { sub_category: id }).then((result) => {
-      if (result && result.docs) {
-        this.stocks.set(result.docs as any);
-      } else {
-        this.stocks.set([]);
-      }
+      this.zone.run(() => {
+        if (result && result.docs) {
+          this.stocks.set(result.docs as any);
+        } else {
+          this.stocks.set([]);
+        }
+      });
     });
   }
 
@@ -329,30 +331,36 @@ export class StockSettingsComponent implements OnInit {
   filterStocks(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('stocks', { name: { $regex: regexp } }).then(res => {
-      if (res && res.docs) {
-        const sorted = (res.docs as any).sort((a: any, b: any) => a.left_total - b.left_total);
-        this.stocks.set(sorted);
-      } else {
-        this.stocks.set([]);
-      }
+      this.zone.run(() => {
+        if (res && res.docs) {
+          const sorted = (res.docs as any).sort((a: any, b: any) => a.left_total - b.left_total);
+          this.stocks.set(sorted);
+        } else {
+          this.stocks.set([]);
+        }
+      });
     });
   }
 
   fillData() {
     this.mainService.getAllBy('stocks_cat', {}).then(result => {
-      if (result && result.docs) {
-        this.categories.set(result.docs as any);
-      } else {
-        this.categories.set([]);
-      }
+      this.zone.run(() => {
+        if (result && result.docs) {
+          this.categories.set(result.docs as any);
+        } else {
+          this.categories.set([]);
+        }
+      });
     });
     this.mainService.getAllBy('stocks', {}).then(result => {
-      if (result && result.docs) {
-        const sorted = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp);
-        this.stocks.set(sorted);
-      } else {
-        this.stocks.set([]);
-      }
+      this.zone.run(() => {
+        if (result && result.docs) {
+          const sorted = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp);
+          this.stocks.set(sorted);
+        } else {
+          this.stocks.set([]);
+        }
+      });
     })
   }
 }

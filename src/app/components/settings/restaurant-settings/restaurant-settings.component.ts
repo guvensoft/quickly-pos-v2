@@ -94,21 +94,25 @@ export class RestaurantSettingsComponent implements OnInit {
   getTablesByFloor(id: string | null | undefined) {
     if (id) {
       this.mainService.getAllBy('tables', { floor_id: id }).then(result => {
-        if (result && result.docs) {
-          const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
-          this.tables.set(sorted);
-        } else {
-          this.tables.set([]);
-        }
+        this.zone.run(() => {
+          if (result && result.docs) {
+            const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
+            this.tables.set(sorted);
+          } else {
+            this.tables.set([]);
+          }
+        });
       });
     } else {
       this.mainService.getAllBy('tables', {}).then(result => {
-        if (result && result.docs) {
-          const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
-          this.tables.set(sorted);
-        } else {
-          this.tables.set([]);
-        }
+        this.zone.run(() => {
+          if (result && result.docs) {
+            const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
+            this.tables.set(sorted);
+          } else {
+            this.tables.set([]);
+          }
+        });
       });
     }
   }
@@ -263,31 +267,37 @@ export class RestaurantSettingsComponent implements OnInit {
   filterTables(value: string) {
     const regexp = new RegExp(value, 'i');
     this.mainService.getAllBy('tables', { name: { $regex: regexp } }).then(res => {
-      if (res && res.docs) {
-        const sorted = (res.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
-        this.tables.set(sorted);
-      } else {
-        this.tables.set([]);
-      }
+      this.zone.run(() => {
+        if (res && res.docs) {
+          const sorted = (res.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
+          this.tables.set(sorted);
+        } else {
+          this.tables.set([]);
+        }
+      });
     });
   }
 
   fillData() {
     this.mainService.getAllBy('floors', {}).then((result) => {
-      if (result && result.docs) {
-        const sorted = (result.docs as any).sort((a: any, b: any) => a.timestamp - b.timestamp);
-        this.floors.set(sorted);
-      } else {
-        this.floors.set([]);
-      }
+      this.zone.run(() => {
+        if (result && result.docs) {
+          const sorted = (result.docs as any).sort((a: any, b: any) => a.timestamp - b.timestamp);
+          this.floors.set(sorted);
+        } else {
+          this.floors.set([]);
+        }
+      });
     });
     this.mainService.getAllBy('tables', {}).then((result) => {
-      if (result && result.docs) {
-        const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
-        this.tables.set(sorted);
-      } else {
-        this.tables.set([]);
-      }
+      this.zone.run(() => {
+        if (result && result.docs) {
+          const sorted = (result.docs as any).sort((a: any, b: any) => a.name.localeCompare(b.name));
+          this.tables.set(sorted);
+        } else {
+          this.tables.set([]);
+        }
+      });
     });
   }
 }
