@@ -7,7 +7,7 @@ import { LogService, logType } from '../../core/services/log.service';
 import { MainService } from '../../core/services/main.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { PricePipe } from '../../shared/pipes/price.pipe';
-import { DialogFacade } from '../../../core/services/dialog.facade';
+import { DialogFacade } from '../../core/services/dialog.facade';
 
 @Component({
   standalone: true,

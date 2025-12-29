@@ -10,7 +10,7 @@ import { MessageService } from '../../../core/services/message.service';
 import { PrinterService } from '../../../core/services/printer.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { SignalValidatorService } from '../../../core/services/signal-validator.service';
-import { DialogFacade } from '../../../../core/services/dialog.facade';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,

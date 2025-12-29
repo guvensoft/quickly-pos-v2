@@ -8,7 +8,7 @@ import { MessageService } from '../../../core/services/message.service';
 import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
-import { DialogFacade } from '../../../../core/services/dialog.facade';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
