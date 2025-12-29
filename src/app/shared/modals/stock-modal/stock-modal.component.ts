@@ -8,11 +8,12 @@ import {
 } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
+import { SelectComponent, type SelectOption } from '../../../shared/components/ui-components';
 
 @Component({
   selector: 'app-stock-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SelectComponent],
   template: `
     <div class="modal-header">
       <h5 class="modal-title">
@@ -89,16 +90,12 @@ import { BaseModalComponent } from '../base-modal.component';
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Birim</label>
-          <select
-            class="form-select"
+          <app-select
             formControlName="unit"
-          >
-            <option value="">Seçiniz</option>
-            <option value="Gram">Gram</option>
-            <option value="Mililitre">Mililitre</option>
-            <option value="Adet">Adet</option>
-          </select>
+            label="Birim"
+            placeholder="Seçiniz"
+            [options]="unitOptions"
+          ></app-select>
         </div>
 
         <div class="mb-3">
@@ -146,6 +143,11 @@ import { BaseModalComponent } from '../base-modal.component';
 })
 export class StockModalComponent extends BaseModalComponent {
   form: FormGroup;
+  unitOptions: SelectOption[] = [
+    { label: 'Gram', value: 'Gram' },
+    { label: 'Mililitre', value: 'Mililitre' },
+    { label: 'Adet', value: 'Adet' }
+  ];
 
   private fb = inject(FormBuilder);
 
