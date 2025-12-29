@@ -7,6 +7,7 @@ import { LogService, logType } from '../../core/services/log.service';
 import { MainService } from '../../core/services/main.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { PricePipe } from '../../shared/pipes/price.pipe';
+import { DialogFacade } from '../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -20,6 +21,7 @@ export class CashboxComponent {
   private readonly settingsService = inject(SettingsService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly cashboxData = signal<Cashbox[]>([]);
   readonly selectedData = signal<Cashbox | undefined>(undefined);
@@ -48,46 +50,43 @@ export class CashboxComponent {
     this.fillData();
   }
 
-  addData(cashboxForm: NgForm) {
-    const form = cashboxForm.value;
+  private submitCashboxForm(form: any, type: string, onUpdate: boolean) {
     if (!form.description || form.description === '') {
       this.messageService.sendMessage('Açıklama Girmek Zorundasınız.');
-      return false;
+      return;
     }
     if (form.cash == null && form.card == null && form.coupon == null) {
-      this.messageService.sendMessage('Herhangi Bir ' + this.type() + ' Miktarı Belirtmelisiniz.');
-      return false;
+      this.messageService.sendMessage('Herhangi Bir ' + type + ' Miktarı Belirtmelisiniz.');
+      return;
     }
     if (form.cash == null) { form.cash = 0 }
     if (form.card == null) { form.card = 0 }
     if (form.coupon == null) { form.coupon = 0 }
 
-    if (!form._id) {
-      const schema = new Cashbox(this.type(), form.description, Date.now(), form.cash, form.card, form.coupon, this.user());
+    if (!onUpdate) {
+      const schema = new Cashbox(type, form.description, Date.now(), form.cash, form.card, form.coupon, this.user());
       this.mainService.addData('cashbox', schema as any).then(res => {
-        this.logService.createLog(logType.CASHBOX_CREATED, res.id, `Kasaya ${(form.cash + form.card + form.coupon)} tutarında ${this.type()} eklendi.`);
+        this.logService.createLog(logType.CASHBOX_CREATED, res.id, `Kasaya ${(form.cash + form.card + form.coupon)} tutarında ${type} eklendi.`);
         this.fillData();
-        this.messageService.sendMessage(this.type() + ' Eklendi');
+        this.messageService.sendMessage(type + ' Eklendi');
       });
     } else {
-      const schema = new Cashbox(this.type(), form.description, Date.now(), form.cash, form.card, form.coupon, this.user(), form._id, form._rev);
+      const schema = new Cashbox(type, form.description, Date.now(), form.cash, form.card, form.coupon, this.user(), form._id, form._rev);
       this.mainService.updateData('cashbox', form._id, schema as any).then(res => {
         this.fillData();
-        this.messageService.sendMessage(this.type() + ' Düzenlendi');
+        this.messageService.sendMessage(type + ' Düzenlendi');
       });
     }
-    this.cashboxForm()?.reset();
-    const $ = (window as any).$;
-    // Active element'e blur() uygula
-    const activeElement = document.activeElement as HTMLElement;
-    if (activeElement && activeElement.blur) {
-      activeElement.blur();
-    }
-    $('#cashboxModal').modal('hide');
-    // Backdrop ve scroll kilidini kaldır
-    $('.modal-backdrop').remove();
-    $('body').removeClass('modal-open');
-    return true;
+  }
+
+  openAddModal(type: string) {
+    this.type.set(type);
+    this.onUpdate.set(false);
+    this.dialogFacade.openCashboxModal({ type, onUpdate: false }).closed.subscribe(result => {
+      if (result) {
+        this.submitCashboxForm(result, type, false);
+      }
+    });
   }
 
   updateData(data: Cashbox) {
@@ -96,15 +95,17 @@ export class CashboxComponent {
     this.type.set(data.type);
     this.mainService.getData('cashbox', data._id!).then(res => {
       this.logService.createLog(logType.CASHBOX_UPDATED, (res as any).id, `Kasa '${data.description}' adlı ${this.type()}'i güncellendi.`);
-      if (this.cashboxForm()) {
-        this.cashboxForm()!.setValue(res);
-      }
-      this.fillData();
-      const $ = (window as any).$;
-      // Eski backdrop'ı temizle
-      $('.modal-backdrop').remove();
-      $('#cashboxModal').modal('show');
-    })
+
+      this.dialogFacade.openCashboxModal({ cashbox: res, type: data.type, onUpdate: true }).closed.subscribe((result: any) => {
+        if (result) {
+          if (result.action === 'delete') {
+            this.removeData(data._id!);
+          } else {
+            this.submitCashboxForm(result, data.type, true);
+          }
+        }
+      });
+    });
   }
 
   removeData(id: string) {
@@ -114,16 +115,6 @@ export class CashboxComponent {
       this.messageService.sendMessage('Kayıt Silindi');
       this.fillData();
     });
-    const $ = (window as any).$;
-    // Active element'e blur() uygula
-    const activeElement = document.activeElement as HTMLElement;
-    if (activeElement && activeElement.blur) {
-      activeElement.blur();
-    }
-    $('#cashboxModal').modal('hide');
-    // Backdrop ve scroll kilidini kaldır
-    $('.modal-backdrop').remove();
-    $('body').removeClass('modal-open');
   }
 
   setDefault() {

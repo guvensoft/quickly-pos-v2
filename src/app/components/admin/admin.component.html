@@ -19,7 +19,8 @@
         <div class="card inside-height">
           <div class="card-header">Dökümanlar
             <span class="float-right">
-              <button [disabled]="!selectedDB()" data-toggle="modal" data-target="#docModal" (click)="onCreate.set(true)" class="btn btn-sm btn-warning"> + Ekle</button>
+              <button [disabled]="!selectedDB()" (click)="openCreateModal()" class="btn btn-sm btn-warning"> +
+                Ekle</button>
             </span>
           </div>
           <div class="card-body p-0 flow">
@@ -38,7 +39,8 @@
               <input #filterKey type="text" placeholder="Key" class="form-control form-control-md">
               <input #filterValue type="text" placeholder="Value" class="form-control form-control-md">
               <span class="input-group-append">
-                <button class="btn btn-secondary" (click)="getByFilter(filterKey.value,filterValue.value)" type="button">Sorgula</button>
+                <button class="btn btn-secondary" (click)="getByFilter(filterKey.value,filterValue.value)"
+                  type="button">Sorgula</button>
               </span>
             </div>
           </div>
@@ -52,60 +54,41 @@
           <div class="card-body p-0">
           </div>
           <div class="card-footer p-1">
-            <button [disabled]="selectedDB === undefined" (click)="resolveDB()" class="btn btn-quickly btn-md btn-block">Veritabanı
+            <button [disabled]="selectedDB === undefined" (click)="resolveDB()"
+              class="btn btn-quickly btn-md btn-block">Veritabanı
               Düzelt</button>
           </div>
           <div class="card-footer p-1">
-            <button [disabled]="selectedDB === undefined" (click)="clearDB()" class="btn btn-secondary btn-md btn-block">Veritabanı
+            <button [disabled]="selectedDB === undefined" (click)="clearDB()"
+              class="btn btn-secondary btn-md btn-block">Veritabanı
               Boşalt</button>
           </div>
           <div class="card-footer p-1">
-            <button [disabled]="selectedDB === undefined" (click)="compactDB()" class="btn btn-default btn-md btn-block">Veritabanı
+            <button [disabled]="selectedDB === undefined" (click)="compactDB()"
+              class="btn btn-default btn-md btn-block">Veritabanı
               Sıkıştır</button>
           </div>
           <div class="card-footer p-1">
             <button (click)="resetReports()" class="btn btn-danger btn-md btn-block">Raporları Sıfırla</button>
           </div>
           <div class="card-footer p-1">
-            <button (click)="syncData()" [disabled]="!selectedDB() || selectedDB() === 'allData'" class="btn btn-warning btn-md btn-block">Senkorinize
+            <button (click)="syncData()" [disabled]="!selectedDB() || selectedDB() === 'allData'"
+              class="btn btn-warning btn-md btn-block">Senkorinize
               Et</button>
           </div>
           <div class="card-footer p-1">
-            <button type="button" (click)="refreshToken()" class="btn btn-success btn-block btn-md">Erişimi Güncelle</button>
+            <button type="button" (click)="refreshToken()" class="btn btn-success btn-block btn-md">Erişimi
+              Güncelle</button>
           </div>
           <div class="card-footer p-1">
-            <button type="button" (click)="testEndDay()" class="btn btn-info btn-block btn-md">Gün Sonu Güncelle</button>
+            <button type="button" (click)="testEndDay()" class="btn btn-info btn-block btn-md">Gün Sonu
+              Güncelle</button>
           </div>
           <div class="card-footer p-1">
-            <button type="button" (click)="updateProgram()" class="btn btn-primary btn-block btn-md">Programı Güncelle</button>
+            <button type="button" (click)="updateProgram()" class="btn btn-primary btn-block btn-md">Programı
+              Güncelle</button>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="docModal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title" id="modelTitleId">Döküman Düzenle</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <textarea #editArea rows="18" class="form-control">{{selectedDoc() | json }}</textarea>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-        @if (!onCreate()) {
-        <button type="button" (click)="removeDocument(selectedDoc()?._id)" class="btn btn-danger btn-lg">Sil</button>
-        <button type="button" (click)="editDocument(getEditAreaValue())" class="btn btn-success btn-lg">Kaydet</button>
-        }
-        @if (onCreate()) {
-        <button type="button" (click)="createDocument(getEditAreaValue())" class="btn btn-success btn-lg">Oluştur</button>
-        }
       </div>
     </div>
   </div>

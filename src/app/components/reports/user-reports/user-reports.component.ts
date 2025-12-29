@@ -15,6 +15,7 @@ import { ChartType } from 'chart.js';
 })
 export class UserReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly usersList = signal<Report[]>([]);
   readonly userLogs = signal<Log[]>([]);
@@ -76,8 +77,6 @@ export class UserReportsComponent implements OnInit {
   readonly ChartLoaded = signal<boolean>(false);
 
   readonly ItemReport = signal<Report | null>(null);
-  readonly DetailData = signal<any[]>([]);
-  readonly DetailLoaded = signal<boolean>(false);
 
   constructor() {
   }
@@ -111,14 +110,21 @@ export class UserReportsComponent implements OnInit {
   }
 
   getItemReport(report: Report) {
-    this.DetailLoaded.set(false);
     this.ItemReport.set(report);
     this.mainService.getData('reports', report._id!).then(res => {
       res.weekly = this.normalWeekOrder(res.weekly || []);
       res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
-      this.DetailData.set([{ data: res.weekly, label: 'Sipariş Tutarı' }, { data: res.weekly_count, label: 'Sipariş Adedi' }]);
-      this.DetailLoaded.set(true);
-      (window as any).$('#reportDetail').modal('show');
+
+      this.mainService.getData('users', report.connection_id).then(user => {
+        this.dialogFacade.openChartModal({
+          title: user.name || 'Kullanıcı Raporu',
+          datasets: [{ data: res.weekly, label: 'Satış Tutarı' }, { data: res.weekly_count, label: 'Satış Adedi' }],
+          labels: this.ChartLabels(),
+          options: this.ChartOptions,
+          legend: this.ChartLegend(),
+          type: this.ChartType
+        });
+      });
     });
   }
 

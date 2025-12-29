@@ -25,6 +25,7 @@ export class DayDetailComponent {
   private readonly electronService = inject(ElectronService);
   private readonly printerService = inject(PrinterService);
   private readonly settingsService = inject(SettingsService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   // Input signals (already modern)
   detailData = input.required<EndDay>({ alias: 'data' });
@@ -49,10 +50,6 @@ export class DayDetailComponent {
   readonly usersTable = signal<Array<Report>>([]);
   readonly tablesTable = signal<Array<Report>>([]);
   readonly logsTable = signal<Array<Log>>([]);
-
-  // Detail record signals (2)
-  readonly checkDetail = signal<ClosedCheck | undefined>(undefined);
-  readonly cashDetail = signal<Cashbox | undefined>(undefined);
 
   // Activity signals (3)
   readonly activityData = signal<any>(undefined);
@@ -225,15 +222,18 @@ export class DayDetailComponent {
   }
 
   showCheckDetail(check: any) {
-    this.checkDetail.set(check);
-    // jQuery modal operations don't need zone.run() wrapper
-    (window as any).$('#checkDetail').modal('show');
+    this.dialogFacade.openCheckDetailModal({ ...check, readOnly: true }).closed.subscribe(result => {
+      if (result?.action === 'print') {
+        const printerList = this.printers();
+        if (printerList && printerList.length > 0) {
+          this.printerService.printCheck(printerList[0], result.data);
+        }
+      }
+    });
   }
 
   showCashDetail(cash: any) {
-    this.cashDetail.set(cash);
-    // jQuery modal operations don't need zone.run() wrapper
-    (window as any).$('#cashDetail').modal('show');
+    this.dialogFacade.openCashDetailModal(cash);
   }
 
   fillData() {

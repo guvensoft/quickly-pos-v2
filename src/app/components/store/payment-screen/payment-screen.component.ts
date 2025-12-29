@@ -29,6 +29,7 @@ export class PaymentScreenComponent implements OnDestroy {
   private readonly printerService = inject(PrinterService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly id = signal<string | undefined>(undefined);
   readonly check_type = signal<'Normal' | 'Fast' | 'Order'>('Normal');
@@ -329,20 +330,34 @@ export class PaymentScreenComponent implements OnDestroy {
     });
   }
 
+  openCreditModal() {
+    const c = this.check();
+    if (!c) return;
+
+    this.dialogFacade.openCreditModal({
+      customers: this.customers() || []
+    }).closed.subscribe(result => {
+      if (result) {
+        this.createCredit(result.customer_id, result.note);
+      }
+    });
+  }
+
   createCredit(customer: string, creditNote: string) {
     const c = this.check();
     if (!c) return;
 
-    if (c.payment_flow !== undefined) {
-      let paymentMethod;
-      (c.payment_flow.length > 1) ? paymentMethod = 'Parçalı' : (c.payment_flow.length === 1 ? paymentMethod = c.payment_flow[0].method : paymentMethod = 'Belirsiz');
-      const checkWillClose = new ClosedCheck(c.table_id, c.discount, 0, this.userName() || '', '', c.status, c.products, Date.now(), c.type, paymentMethod, c.payment_flow, undefined, c.occupation);
-      this.updateSellingReport(paymentMethod);
-      if (c.type === 1) {
-        this.updateTableReport(c, paymentMethod);
-      }
-      this.mainService.addData('closed_checks', checkWillClose);
+    let paymentMethod = 'Belirsiz';
+    if (c.payment_flow && c.payment_flow.length > 0) {
+      paymentMethod = c.payment_flow.length > 1 ? 'Parçalı' : c.payment_flow[0].method;
     }
+
+    const checkWillClose = new ClosedCheck(c.table_id, c.discount || 0, 0, this.userName() || '', '', c.status || 0, c.products || [], Date.now(), c.type || 1, paymentMethod, c.payment_flow || [], undefined, c.occupation);
+    this.updateSellingReport(paymentMethod);
+    if (c.type === 1) {
+      this.updateTableReport(c, paymentMethod);
+    }
+    this.mainService.addData('closed_checks', checkWillClose);
 
     const creditData = {
       customer_id: customer,
@@ -359,10 +374,25 @@ export class PaymentScreenComponent implements OnDestroy {
         }
         this.mainService.removeData('checks', c._id!).then((result: any) => {
           if (result.ok) {
-            (window as any).$ ? (window as any).$('#otherOptions').modal('hide') : null;
             this.router.navigate(['/store']);
           }
-        })
+        });
+      }
+    });
+  }
+
+  openDiscountModal() {
+    this.dialogFacade.openDiscountModal({
+      currentAmount: this.currentAmount(),
+      discounts: this.discounts()
+    }).closed.subscribe(result => {
+      if (result) {
+        if (result.type === 'percent') {
+          this.setDiscount(result.value);
+        } else {
+          const percent = (result.value * 100) / this.priceWillPay();
+          this.setDiscount(percent);
+        }
       }
     });
   }
@@ -377,18 +407,22 @@ export class PaymentScreenComponent implements OnDestroy {
     } else {
       this.discountAmount.set((this.priceWillPay() * discount) / 100);
     }
+  }
 
-    if (this.discountInput()) {
-      this.discountInput()!.nativeElement.value = 0;
-    }
-    (window as any).$ ? (window as any).$('#discount').modal('hide') : null;
+  openDivisionModal() {
+    this.dialogFacade.openDivisionModal({
+      totalAmount: this.priceWillPay()
+    }).closed.subscribe(val => {
+      if (val) {
+        this.divideWillPay(val);
+      }
+    });
   }
 
   divideWillPay(division: number) {
     if (division <= 0) return;
     this.payedPrice.set(this.priceWillPay() / division);
     this.numpad.set(this.payedPrice().toFixed(2).toString());
-    (window as any).$ ? (window as any).$('#calculator').modal('hide') : null;
   }
 
   togglePayed() {

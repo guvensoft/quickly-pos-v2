@@ -23,6 +23,7 @@ export class ProductReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly settingsService = inject(SettingsService);
   private readonly printerService = inject(PrinterService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly categoriesList = signal<Category[]>([]);
   readonly selectedCat = signal<string | undefined>(undefined);
@@ -135,14 +136,21 @@ export class ProductReportsComponent implements OnInit {
   }
 
   getItemReport(report: Report) {
-    this.DetailLoaded.set(false);
     this.ItemReport.set(report);
     this.mainService.getData('reports', report._id!).then(res => {
       res.weekly = this.normalWeekOrder(res.weekly || []);
       res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
-      this.DetailData.set([{ data: res.weekly, label: 'Satış Tutarı' }]);
-      this.DetailLoaded.set(true);
-      (window as any).$('#reportDetail').modal('show');
+
+      this.mainService.getData('products', report.connection_id).then(product => {
+        this.dialogFacade.openChartModal({
+          title: product.name || 'Ürün Raporu',
+          datasets: [{ data: res.weekly, label: 'Satış Tutarı' }],
+          labels: this.ChartLabels(),
+          options: this.ChartOptions,
+          legend: this.ChartLegend,
+          type: this.ChartType
+        });
+      });
     });
   }
 

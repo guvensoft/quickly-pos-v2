@@ -80,16 +80,18 @@ export class RestaurantSettingsComponent implements OnInit {
   ngOnInit() {
   }
 
-  setDefault() {
+  setDefaultFloor() {
     this.onUpdate.set(false);
-    this.selectedTable.set(undefined);
     this.selectedFloor.set(undefined);
     if (this.areaForm()) {
       this.areaForm()!.reset();
     }
-    if (this.tableForm()) {
-      this.tableForm()!.reset();
-    }
+
+    this.dialogFacade.openFloorModal().closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitFloorForm(formData, null);
+      }
+    });
   }
 
   getTablesByFloor(id: string | null | undefined) {
@@ -123,20 +125,21 @@ export class RestaurantSettingsComponent implements OnInit {
     }
   }
 
-  addFloor(areaForm: NgForm) {
-    const form = areaForm.value;
-    if (!form.name) {
+  private submitFloorForm(formData: any, floorId: string | null) {
+    if (!formData.name) {
       this.messageService.sendMessage('Bölüm Adı Belirtmelisiniz');
-      return false;
+      return;
     }
-    const areaSpecs = new FloorSpecs(form.air, form.cigarate, form.reservation, form.music, form.events);
-    const schema = new Floor(form.name, form.description, 1, Date.now(), form.special, areaSpecs);
-    this.mainService.addData('floors', schema as any).then(() => {
-      this.fillData();
-      this.messageService.sendMessage('Bölüm Oluşturuldu!');
-      areaForm.reset();
-    });
-    return true;
+
+    if (floorId === null) {
+      // Add new floor
+      const areaSpecs = new FloorSpecs(formData.air, formData.cigarate, formData.reservation, formData.music, formData.events);
+      const schema = new Floor(formData.name, formData.description, 1, Date.now(), formData.special, areaSpecs);
+      this.mainService.addData('floors', schema as any).then(() => {
+        this.fillData();
+        this.messageService.sendMessage('Bölüm Oluşturuldu!');
+      });
+    }
   }
 
   updateFloor(areaDetailForm: NgForm) {

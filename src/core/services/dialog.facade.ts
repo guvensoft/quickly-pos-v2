@@ -14,6 +14,29 @@ import { UserGroupModalComponent } from '../../app/shared/modals/user-group-moda
 import { UserModalComponent } from '../../app/shared/modals/user-modal/user-modal.component';
 import { PrinterModalComponent } from '../../app/shared/modals/printer-modal/printer-modal.component';
 import { AdminModalComponent } from '../../app/shared/modals/admin-modal/admin-modal.component';
+import { FloorModalComponent } from '../../app/shared/modals/floor-modal/floor-modal.component';
+import { CheckDetailModalComponent } from '../../app/shared/modals/check-detail-modal/check-detail-modal.component';
+import { JsonEditorModalComponent } from '../../app/shared/modals/json-editor-modal/json-editor-modal.component';
+import { CashboxModalComponent } from '../../app/shared/modals/cashbox-modal/cashbox-modal.component';
+import { PasswordModalComponent } from '../../app/shared/modals/password-modal/password-modal.component';
+import { PrinterAddModalComponent } from '../../app/shared/modals/printer-add-modal/printer-add-modal.component';
+import { PromptModalComponent } from '../../app/shared/modals/prompt-modal/prompt-modal.component';
+import { CheckEditModalComponent } from '../../app/shared/modals/check-edit-modal/check-edit-modal.component';
+import { PaymentEditModalComponent } from '../../app/shared/modals/payment-edit-modal/payment-edit-modal.component';
+import { NoteModalComponent } from '../../app/shared/modals/note-modal/note-modal.component';
+import { SelectionModalComponent, SelectionItem } from '../../app/shared/modals/selection-modal/selection-modal.component';
+import { PaymentMethodModalComponent } from '../../app/shared/modals/payment-method-modal/payment-method-modal.component';
+import { TableSelectionModalComponent } from '../../app/shared/modals/table-selection-modal/table-selection-modal.component';
+import { NumpadModalComponent } from '../../app/shared/modals/numpad-modal/numpad-modal.component';
+import { OccupancyModalComponent } from '../../app/shared/modals/occupancy-modal/occupancy-modal.component';
+import { CheckOptionsModalComponent } from '../../app/shared/modals/check-options-modal/check-options-modal.component';
+import { DiscountModalComponent } from '../../app/shared/modals/discount-modal/discount-modal.component';
+import { DivisionModalComponent } from '../../app/shared/modals/division-modal/division-modal.component';
+import { CreditModalComponent } from '../../app/shared/modals/credit-modal/credit-modal.component';
+import { ChartModalComponent } from '../../app/shared/modals/chart-modal/chart-modal.component';
+import { CashDetailModalComponent } from '../../app/shared/modals/cash-detail-modal/cash-detail-modal.component';
+import { ProcessingModalComponent } from '../../app/shared/modals/processing-modal/processing-modal.component';
+import { CallerModalComponent } from '../../app/shared/modals/caller-modal/caller-modal.component';
 
 /**
  * DialogFacade - Single entry point for all modal dialogs
@@ -211,6 +234,62 @@ export class DialogFacade {
   }
 
   /**
+   * Open Floor Modal
+   * @param floor Optional floor data for editing
+   * @returns DialogRef with result
+   */
+  openFloorModal(floor?: any): DialogRef<any> {
+    return this.open(FloorModalComponent, {
+      title: floor ? 'Bölge Düzenle' : 'Bölge Ekle',
+      width: '600px',
+      data: floor,
+      panelClass: 'floor-dialog',
+    });
+  }
+
+  /**
+   * Open Check Detail Modal
+   * @param check Check data
+   * @returns DialogRef with action result
+   */
+  openCheckDetailModal(check: any): DialogRef<any> {
+    return this.open(CheckDetailModalComponent, {
+      title: 'Hesap Detayı',
+      width: '700px',
+      data: check,
+      panelClass: 'check-detail-dialog',
+    });
+  }
+
+  /**
+   * Open Json Editor Modal
+   * @param data { document: any, onCreate: boolean }
+   * @returns DialogRef with result
+   */
+  openJsonEditorModal(data: { document: any, onCreate: boolean }): DialogRef<any> {
+    return this.open(JsonEditorModalComponent, {
+      title: data.onCreate ? 'Döküman Oluştur' : 'Döküman Düzenle',
+      width: '800px',
+      data,
+      panelClass: 'json-editor-dialog',
+    });
+  }
+
+  /**
+   * Open Cashbox Modal
+   * @param data { cashbox?: any, type: string, onUpdate: boolean }
+   * @returns DialogRef with result
+   */
+  openCashboxModal(data: { cashbox?: any, type: string, onUpdate: boolean }): DialogRef<any> {
+    return this.open(CashboxModalComponent, {
+      title: `${data.type} ${data.onUpdate ? 'Düzenle' : 'Ekle'}`,
+      width: '600px',
+      data,
+      panelClass: 'cashbox-dialog',
+    });
+  }
+
+  /**
    * Open Confirm Dialog
    * @param message Message to display
    * @param title Dialog title (default: 'Onay')
@@ -222,6 +301,240 @@ export class DialogFacade {
       width: '400px',
       data: { message, title },
       panelClass: 'confirm-dialog',
+    });
+  }
+
+  /**
+   * Open Password Modal
+   * @param data { title: string, message: string }
+   * @returns DialogRef with result string (password)
+   */
+  openPasswordModal(data: { title: string, message: string }): DialogRef<string> {
+    return this.open(PasswordModalComponent, {
+      title: data.title,
+      width: '400px',
+      data,
+      panelClass: 'password-dialog',
+    });
+  }
+
+  /**
+   * Open Printer Add Modal (Scan and Add)
+   * @returns DialogRef with new Printer object
+   */
+  openPrinterAddModal(): DialogRef<any> {
+    return this.open(PrinterAddModalComponent, {
+      title: 'Yazıcı Ekle',
+      width: '600px',
+      panelClass: 'printer-add-dialog',
+    });
+  }
+
+  /**
+   * Open Prompt Modal
+   * @param data { title: string, message: string, placeholder?: string, value?: string, required?: boolean }
+   * @returns DialogRef with result string
+   */
+  openPromptModal(data: { title: string, message: string, placeholder?: string, value?: string, required?: boolean }): DialogRef<string> {
+    return this.open(PromptModalComponent, {
+      title: data.title,
+      width: '450px',
+      data,
+      panelClass: 'prompt-dialog',
+    });
+  }
+
+  /**
+   * Open Check Edit Modal
+   * @param data check object
+   * @returns DialogRef with action and value
+   */
+  openCheckEditModal(data: any): DialogRef<any> {
+    return this.open(CheckEditModalComponent, {
+      title: 'Hesap Düzenle',
+      width: '500px',
+      data,
+      panelClass: 'check-edit-dialog',
+    });
+  }
+
+  /**
+   * Open Payment Edit Modal
+   * @param data payment object
+   * @returns DialogRef with new payment values
+   */
+  openPaymentEditModal(data: any): DialogRef<any> {
+    return this.open(PaymentEditModalComponent, {
+      title: 'Ödeme Düzenle',
+      width: '450px',
+      data,
+      panelClass: 'payment-edit-dialog',
+    });
+  }
+
+  /**
+   * Open Note Modal for products
+   * @param data product details
+   */
+  openNoteModal(data: any): DialogRef<any> {
+    return this.open(NoteModalComponent, {
+      title: 'Not Ekle',
+      width: '600px',
+      data,
+      panelClass: 'note-dialog',
+    });
+  }
+
+  /**
+   * Open Selection Modal Generic
+   * @param data { title: string, items: SelectionItem[] }
+   */
+  openSelectionModal(data: { title: string, items: SelectionItem[] }): DialogRef<SelectionItem> {
+    return this.open(SelectionModalComponent, {
+      title: data.title,
+      width: '550px',
+      data,
+      panelClass: 'selection-dialog',
+    });
+  }
+
+  /**
+   * Open Payment Method Modal
+   * @param data { methods: any[] }
+   */
+  openPaymentMethodModal(data: { methods: any[] }): DialogRef<string> {
+    return this.open(PaymentMethodModalComponent, {
+      title: 'Ödeme Yöntemi',
+      width: '800px',
+      data,
+      panelClass: 'payment-method-dialog',
+    });
+  }
+
+  /**
+   * Open Table Selection Modal
+   * @param data { title: string, tables: any[], floors: any[], currentTableId: string, actionText: string }
+   */
+  openTableSelectionModal(data: any): DialogRef<string> {
+    return this.open(TableSelectionModalComponent, {
+      title: data.title,
+      width: '90vw',
+      data,
+      panelClass: 'table-selection-dialog',
+    });
+  }
+
+  /**
+   * Open Numpad Modal
+   * @param data { productName: string, productPrice: number, stockAmount: number, unit: string }
+   */
+  openNumpadModal(data: any): DialogRef<number> {
+    return this.open(NumpadModalComponent, {
+      title: data.productName,
+      width: '500px',
+      data,
+      panelClass: 'numpad-dialog',
+    });
+  }
+
+  /**
+   * Open Occupancy Modal
+   * @param data { occupation: any }
+   */
+  openOccupancyModal(data: any): DialogRef<{ male: number, female: number }> {
+    return this.open(OccupancyModalComponent, {
+      title: 'Kişi Sayısı',
+      width: '700px',
+      data,
+      panelClass: 'occupancy-dialog',
+    });
+  }
+
+  /**
+   * Open Check Options Modal
+   * @param data { permissions: any }
+   */
+  openCheckOptionsModal(data: { permissions: any }): DialogRef<string> {
+    return this.open(CheckOptionsModalComponent, {
+      title: 'Hesap İşlemleri',
+      width: '600px',
+      data,
+      panelClass: 'check-options-dialog',
+    });
+  }
+
+  /**
+   * Open Discount Modal for payments
+   * @param data { currentAmount: number, discounts: number[] }
+   */
+  openDiscountModal(data: { currentAmount: number, discounts: number[] }): DialogRef<{ type: 'amount' | 'percent', value: number }> {
+    return this.open(DiscountModalComponent, {
+      title: 'İndirim Yap',
+      width: '600px',
+      data,
+      panelClass: 'discount-dialog',
+    });
+  }
+
+  /**
+   * Open Division Modal for splitting payments
+   * @param data { totalAmount: number }
+   */
+  openDivisionModal(data: { totalAmount: number }): DialogRef<number> {
+    return this.open(DivisionModalComponent, {
+      title: 'Ödeme Bölme',
+      width: '500px',
+      data,
+      panelClass: 'division-dialog',
+    });
+  }
+
+  /**
+   * Open Credit Modal for cari closure
+   * @param data { customers: any[] }
+   */
+  openCreditModal(data: { customers: any[] }): DialogRef<{ customer_id: string, note: string }> {
+    return this.open(CreditModalComponent, {
+      title: 'Alacaklı Kapat',
+      width: '600px',
+      data,
+      panelClass: 'credit-dialog',
+    });
+  }
+
+  openChartModal(data: { title: string, datasets: any[], labels: string[], options: any, legend: boolean, type: any }): DialogRef<void> {
+    return this.open(ChartModalComponent, {
+      title: data.title,
+      width: '850px',
+      data,
+      panelClass: 'chart-dialog',
+    });
+  }
+
+  openCashDetailModal(data: any): DialogRef<void> {
+    return this.open(CashDetailModalComponent, {
+      title: 'Kasa Hareketi',
+      width: '500px',
+      data,
+      panelClass: 'cash-detail-dialog',
+    });
+  }
+
+  openProcessingModal(data: { title: string, message: string }): DialogRef<void> {
+    return this.open(ProcessingModalComponent, {
+      title: data.title,
+      width: '400px',
+      data,
+      panelClass: 'processing-dialog',
+    });
+  }
+
+  openCallerModal(data: { call: any, customer: any }): DialogRef<{ action: 'open' | 'save', formValue?: any }> {
+    return this.open(CallerModalComponent, {
+      title: 'Gelen Çağrı',
+      width: '500px',
+      data,
+      panelClass: 'caller-dialog',
     });
   }
 

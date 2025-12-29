@@ -23,58 +23,49 @@ export class CallerComponent {
   private readonly callerService = inject(CallerIDService);
   private readonly mainService = inject(MainService);
   private readonly settingsService = inject(SettingsService);
+  private readonly dialogFacade = inject(DialogFacade);
 
-  readonly call = signal<Call>({} as Call);
-  readonly customer = signal<Customer | null>(null);
   readonly owner = signal<any>(null);
-  readonly onUpdate = signal<boolean>(false);
-  readonly Date = signal<any>(Date);
-
-  customerForm = viewChild<NgForm>('customerForm');
 
   constructor() {
-    // Initialize owner from service
     this.owner.set(this.settingsService.getUser('name'));
 
-    // Set up reactive effect for call events
     effect(() => {
       this.callerService.listenCallEvent().subscribe(res => {
-        this.call.set(res);
         this.mainService.getAllBy('customers', { phone_number: res.number }).then(customers => {
-          if (customers.docs.length > 0) {
-            this.customer.set(customers.docs[0]);
-          } else {
-            this.customer.set(null);
-          }
-          (window as any).$('#callerModal').modal('show');
+          const customer = customers.docs.length > 0 ? customers.docs[0] : null;
+
+          this.dialogFacade.openCallerModal({
+            call: res,
+            customer: customer
+          }).closed.subscribe(result => {
+            if (result?.action === 'open') {
+              this.openCheck(customer);
+            } else if (result?.action === 'save') {
+              this.saveCustomer(res, result.formValue);
+            }
+          });
         });
       });
     }, { allowSignalWrites: true });
   }
 
-
-  openCheck() {
-    const currentCustomer = this.customer();
-    if (currentCustomer) {
-      const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner(), `${currentCustomer.name} | ${currentCustomer.phone_number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
+  openCheck(customer: any) {
+    if (customer) {
+      const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner(), `${customer.name} | ${customer.phone_number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
       this.mainService.addData('checks', checkWillOpen).then(res => {
-        (window as any).$('#callerModal').modal('hide');
         this.router.navigate(['/selling-screen', 'Order', res.id]);
       });
     }
   }
 
-  saveCustomer(form?: any) {
-    const unknownCustomer = this.customerForm()?.value;
-    const currentCall = this.call();
-    const customerWillCreate = new Customer(unknownCustomer.name, unknownCustomer.surname, currentCall.number, unknownCustomer.address, '', CustomerType.FAR, Date.now())
+  saveCustomer(call: any, formValue: any) {
+    const customerWillCreate = new Customer(formValue.name, formValue.surname, call.number, formValue.address, '', CustomerType.FAR, Date.now())
     this.mainService.addData('customers', customerWillCreate as any).then(res => {
-      const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner(), `${unknownCustomer.name} | ${currentCall.number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
+      const checkWillOpen = new Check('Paket Servis', 0, 0, this.owner(), `${formValue.name} | ${call.number}`, CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo());
       this.mainService.addData('checks', checkWillOpen).then(res => {
-        (window as any).$('#callerModal').modal('hide');
         this.router.navigate(['/selling-screen', 'Order', res.id]);
       });
     });
   }
-
 }

@@ -151,18 +151,9 @@ export class StockSettingsComponent implements OnInit {
   }
 
   setDefault() {
-    if (this.stockCatForm()) this.stockCatForm()!.reset();
-    if (this.stockForm()) this.stockForm()!.reset();
     this.onUpdate.set(false);
-    // Clear validation signals
-    this.stockName.set('');
-    this.stockQuantity.set(0);
-    this.stockWarningLimit.set(0);
-    this.stockPrice.set(0);
-    this.nameError.set(null);
-    this.quantityError.set(null);
-    this.warningError.set(null);
-    this.priceError.set(null);
+    this.selectedStock.set(undefined);
+    this.selectedCat.set(undefined);
   }
 
   getStockCatDetail(category: StockCategory) {
@@ -310,15 +301,7 @@ export class StockSettingsComponent implements OnInit {
   }
 
   // Template compatibility methods - delegate to modal-based approach
-  addCategory(stockCatForm: NgForm) {
-    this.setDefaultCategory();
-    return true;
-  }
-
-  addStock(stockForm: NgForm) {
-    this.setDefaultStock();
-    return true;
-  }
+  // These can be removed if buttons in template are updated to call setDefaultX directly
 
   updateCategory(formElement: NgForm) {
     const form = formElement.value;

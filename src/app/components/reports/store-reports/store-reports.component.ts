@@ -13,6 +13,7 @@ import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { NgxMaskPipe } from 'ngx-mask';
+import { DialogFacade } from '../../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -28,6 +29,7 @@ export class StoreReportsComponent {
   private readonly settingsService = inject(SettingsService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly dialogFacade = inject(DialogFacade);
 
 
   readonly AllChecks = signal<ClosedCheck[]>([]);
@@ -96,7 +98,61 @@ export class StoreReportsComponent {
 
   getDetail(check: any) {
     this.checkDetail.set(check);
-    (window as any).$('#reportDetail').modal('show');
+    this.dialogFacade.openCheckDetailModal(check).closed.subscribe((result: any) => {
+      if (result) {
+        switch (result.action) {
+          case 'print':
+            this.rePrintCheck(result.data);
+            break;
+          case 'reopen':
+            this.reOpenCheck(result.data);
+            break;
+          case 'edit_check':
+            this.openEditModal(result.data);
+            break;
+          case 'cancel_check':
+            this.openCancelModal(result.data);
+            break;
+        }
+      }
+    });
+  }
+
+  private openCancelModal(check: any) {
+    this.dialogFacade.openPromptModal({
+      title: 'Hesap İptal Et',
+      message: 'Lütfen iptal nedenini giriniz.',
+      placeholder: 'Açıklama...',
+      required: true
+    }).closed.subscribe(note => {
+      if (note) {
+        this.cancelCheck(check._id, note);
+      }
+    });
+  }
+
+  private openEditModal(check: any) {
+    this.dialogFacade.openCheckEditModal(check).closed.subscribe((result: any) => {
+      if (result) {
+        if (result.action === 'save') {
+          this.submitEditCheck(result.value);
+        } else if (result.action === 'reopen') {
+          this.reOpenCheck(check);
+        } else if (result.action === 'edit_payment') {
+          this.openPaymentEdit(result.index, result.payment);
+        }
+      }
+    });
+  }
+
+  private openPaymentEdit(index: number, payment: any) {
+    this.dialogFacade.openPaymentEditModal(payment).closed.subscribe(result => {
+      if (result) {
+        this.selectedPayment.set(payment);
+        this.selectedPaymentIndex.set(index);
+        this.changePaymentResult(result);
+      }
+    });
   }
 
   filterTables(value: string) {
@@ -178,7 +234,6 @@ export class StoreReportsComponent {
     this.mainService.addData('checks', checkWillReOpen).then(res => {
       this.mainService.removeData('closed_checks', (check as any)._id).then(res => {
         this.fillData();
-        (window as any).$('#checkDetail').modal('hide');
         this.messageService.sendAlert('Başarılı !', 'Hesap Geri Açıldı', 'success');
       });
     });
@@ -207,8 +262,7 @@ export class StoreReportsComponent {
     }
   }
 
-  editCheck(form: NgForm) {
-    const Form = form.value;
+  submitEditCheck(Form: any) {
     const currentDay = this.day();
     const detail = this.checkDetail();
     if (detail.payment_method !== Form.payment_method) {
@@ -235,7 +289,6 @@ export class StoreReportsComponent {
       this.mainService.updateData('closed_checks', detail._id, { total_price: Form.total_price, payment_method: Form.payment_method }).then(res => {
         this.messageService.sendMessage('Hesap Düzenlendi!');
         this.fillData();
-        (window as any).$('#editCheck').modal('hide');
       });
     } else {
       if (detail.total_price !== Form.total_price) {
@@ -252,13 +305,10 @@ export class StoreReportsComponent {
         this.mainService.updateData('closed_checks', detail._id, { total_price: Form.total_price }).then(res => {
           this.messageService.sendMessage('Hesap Düzenlendi!');
           this.fillData();
-          (window as any).$('#editCheck').modal('hide');
         });
-      } else {
-        return false;
       }
     }
-    this.logService.createLog(logType.CHECK_UPDATED, Form._id, `${detail.total_price} TL tutarındaki kapatılan ${detail.payment_method} hesap ${Form.total_price} TL ${Form.payment_method} olarak güncellendi.`);
+    this.logService.createLog(logType.CHECK_UPDATED, detail._id, `${detail.total_price} TL tutarındaki kapatılan ${detail.payment_method} hesap ${Form.total_price} TL ${Form.payment_method} olarak güncellendi.`);
   }
 
   cancelCheck(id: any, note: any) {
@@ -268,22 +318,12 @@ export class StoreReportsComponent {
         this.mainService.updateData('closed_checks', id, { description: note, type: 3 }).then(res => {
           this.logService.createLog(logType.CHECK_CANCELED, id, `${detail.total_price} TL tutarındaki kapatılan hesap iptal edildi. Açıklama:'${note}'`);
           this.fillData();
-          (window as any).$('#cancelDetail').modal('hide');
         });
       }
     });
   }
 
-  editPayment(i: number) {
-    (window as any).$('#editCheck').modal('hide');
-    const detail = this.checkDetail();
-    this.selectedPayment.set(detail.payment_flow[i]);
-    this.selectedPaymentIndex.set(i);
-    (window as any).$('#paymentDetail').modal('show');
-  }
-
-  changePayment(paymentDetail: NgForm) {
-    const Form = paymentDetail.value;
+  changePaymentResult(Form: any) {
     const selectedPay = this.selectedPayment();
     const detail = this.checkDetail();
     const currentDay = this.day();
@@ -317,8 +357,7 @@ export class StoreReportsComponent {
           this.mainService.updateData('closed_checks', detail._id, { total_price: detail.total_price, payment_flow: detail.payment_flow }).then(res => {
             this.messageService.sendMessage('Hesap Düzenlendi!');
             this.fillData();
-            (window as any).$('#editCheck').modal('show');
-            (window as any).$('#paymentDetail').modal('hide');
+            this.openEditModal(detail);
           });
         });
       });
@@ -340,13 +379,10 @@ export class StoreReportsComponent {
           this.mainService.updateData('closed_checks', detail._id, { total_price: detail.total_price, payment_flow: detail.payment_flow }).then(res => {
             this.messageService.sendMessage('Hesap Düzenlendi!');
             this.fillData();
-            (window as any).$('#editCheck').modal('show');
-            (window as any).$('#paymentDetail').modal('hide');
+            this.openEditModal(detail);
           });
         });
 
-      } else {
-        return false;
       }
     }
   }

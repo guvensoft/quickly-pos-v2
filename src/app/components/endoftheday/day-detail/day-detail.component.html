@@ -216,8 +216,9 @@
                   </strong>
                 </div>
                 <div class="col-xl-7 col-lg-6 pt-4 pl-0">
-                  <canvas baseChart [datasets]="pieData()" [labels]="pieLabels()" [options]="pieOptions()" [legend]="true"
-                    [type]="'pie'" (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)"></canvas>
+                  <canvas baseChart [datasets]="pieData()" [labels]="pieLabels()" [options]="pieOptions()"
+                    [legend]="true" [type]="'pie'" (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)"></canvas>
                 </div>
               </div>
             </section>
@@ -333,7 +334,8 @@
                   <tr>
                     <td>{{i+1}}</td>
                     <td>{{user.connection_id | general:'users' | async}}</td>
-                    <td><strong>% {{(user.weekly[detailDay()]/detailData().total_income) * 100 | number:'1.0-2' }}</strong>
+                    <td><strong>% {{(user.weekly[detailDay()]/detailData().total_income) * 100 | number:'1.0-2'
+                        }}</strong>
                     </td>
                     <td>{{user.weekly[detailDay()] | price }} </td>
                     <td>{{user.weekly_count[detailDay()]}} Adet</td>
@@ -363,7 +365,8 @@
                   <tr>
                     <td>{{i+1}}</td>
                     <td>{{table.connection_id | general:'tables' | async}}</td>
-                    <td><strong>% {{(table.weekly[detailDay()]/detailData().total_income) * 100 | number:'1.0-2'}}</strong>
+                    <td><strong>% {{(table.weekly[detailDay()]/detailData().total_income) * 100 |
+                        number:'1.0-2'}}</strong>
                     </td>
                     <td>{{table.weekly[detailDay()] | price }} </td>
                     <td>{{table.weekly_count[detailDay()]}} Adet</td>
@@ -407,197 +410,6 @@
             }
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="checkDetail" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-md" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">Hesap Detayı
-        </h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body p-0">
-        <div class="card checkDetail">
-          <div class="card-header">
-            <b>{{checkDetail()?.table_id | general:'tables' | async}}
-              <small class="text-muted"> ({{checkDetail()?.timestamp | date:'dd/M/y HH:mm'}})</small>
-            </b>
-            <span class="pull-right text-muted"> Hesap Türü : {{checkDetail()?.payment_method}}</span>
-          </div>
-          <div class="card-body flow p-0">
-            @if (checkDetail()?.payment_method !== 'Parçalı') {
-            <table class="table table-striped table-sm  table-bordered mb-0">
-              <thead class="thead-dark">
-                <th width="8%">#</th>
-                <th width="46%">Ürün</th>
-                <th width="17%">Garson</th>
-                <th width="14%">Saat</th>
-                <th width="14%">Fiyat</th>
-              </thead>
-              <tbody>
-                @for (item of checkDetail()?.products || []; track $index; let i = $index) {
-                <tr
-                  [ngClass]="{'table-danger': item.status === 3}">
-                  <td>{{i+1}}</td>
-                  <td>{{item.name}}
-                    @if (item.note !== '' && item.note !== undefined) {
-                    <small class="text-muted">({{item.note}})</small>
-                    }
-                  </td>
-                  <td>{{item.owner | general:'users' | async}}</td>
-                  <td>{{item.timestamp |date:'HH:mm'}}</td>
-                  <td>{{item.price | price}} </td>
-                </tr>
-                }
-              </tbody>
-            </table>
-            }
-            @if (checkDetail()?.payment_method === 'Parçalı') {
-            <section>
-              @for (item of checkDetail()?.payment_flow || []; track $index; let i = $index) {
-              <table
-                class="table table-sm  table-bordered table-striped mb-0">
-                <thead class="thead-dark">
-                  <th width="8%">#</th>
-                  <th width="44%">{{item.owner}}</th>
-                  <th width="15%">{{item.method}}</th>
-                  <th width="15%">{{item.timestamp | date:'HH:mm'}}</th>
-                  <th width="17%">{{item.amount + item.discount | price }} </th>
-                </thead>
-                <tbody>
-                  @if (item.discount > 0) {
-                  <tr class="table-info">
-                    <td width="5%"><i class="fa fa-arrow-down" aria-hidden="true"></i></td>
-                    <td width="46%" colspan="3">İndirim Tutarı</td>
-                    <td width="17%">{{item.discount | price }} </td>
-                  </tr>
-                  }
-                  @for (product of item.payed_products || []; track $index; let j = $index) {
-                  <tr
-                    [ngClass]="{'table-danger': product.status === 3}">
-                    <td>{{j+1}}</td>
-                    <td>{{product.name}}
-                      @if (product.note !== '' && product.note !== undefined) {
-                      <small class="text-muted">({{product.note}})</small>
-                      }
-                    </td>
-                    <td>{{product.owner | general:'users' | async}}</td>
-                    <td>{{product.timestamp |date:'HH:mm'}}</td>
-                    <td>{{product.price | price}} </td>
-                  </tr>
-                  }
-                </tbody>
-              </table>
-              }
-            </section>
-            }
-          </div>
-          <div class="card-footer">
-            <b>
-              <i class="fa fa-user mr-1" aria-hidden="true"></i> Kullanıcı:
-              <span class="pull-right">{{checkDetail()?.owner}}</span>
-            </b>
-          </div>
-          @if ((checkDetail()?.discount || 0) > 0) {
-          <div class="card-footer">
-            <b>
-              <i class="fa fa-arrow-down" aria-hidden="true"></i> Toplam İndirim Tutarı:
-              <span class="pull-right">{{checkDetail()?.discount || 0 | price }} </span>
-            </b>
-          </div>
-          }
-          <div class="card-footer">
-            <b>
-              <i class="fa fa-check" aria-hidden="true"></i> Ödenen Miktar:
-              <span class="pull-right">{{checkDetail()?.total_price || 0 | price }} </span>
-            </b>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal" aria-label="Close">Kapat</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="cashDetail" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title" id="modelTitleId">{{cashDetail()?.type}} Hareketi</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body p-0">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="mb-0">{{cashDetail()?.description}}</h5>
-          </div>
-          <div class="card-body p-0">
-            <strong>
-              <table class="table table-striped mb-0">
-                <tbody>
-                  <tr class="table-success">
-                    <td width="10%">
-                      <i class="fa fa-money" aria-hidden="true"></i>
-                    </td>
-                    <td>Nakit:</td>
-                    <td width="20%">
-                      <span class="pull-right">{{cashDetail()?.cash || 0 | price }} </span>
-                    </td>
-                  </tr>
-                  <tr class="table-warning">
-                    <td width="10%">
-                      <i class="fa fa-credit-card" aria-hidden="true"></i>
-                    </td>
-                    <td>Kart:</td>
-                    <td width="20%">
-                      <span class="pull-right">{{cashDetail()?.card || 0 | price }} </span>
-                    </td>
-                  </tr>
-                  <tr class="table-info">
-                    <td width="10%">
-                      <i class="fa fa-bookmark ml-1" aria-hidden="true"></i>
-                    </td>
-                    <td>Kupon:</td>
-                    <td width="20%">
-                      <span class="pull-right">{{cashDetail()?.coupon || 0 | price }} </span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td width="10%">
-                      <i class="fa fa-check" aria-hidden="true"></i>
-                    </td>
-                    <td>Toplam:</td>
-                    <td width="20%">
-                      <span class="pull-right">{{(cashDetail()?.coupon || 0) + (cashDetail()?.cash || 0) + (cashDetail()?.card
-                        || 0) |
-                        price
-                        }} </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </strong>
-          </div>
-          <div class="card-footer">
-            <i class="fa fa-user" aria-hidden="true"></i> {{cashDetail()?.user}}
-            <span class="pull-right">
-              {{cashDetail()?.timestamp | date:'HH:mm'}}
-            </span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
       </div>
     </div>
   </div>

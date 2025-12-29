@@ -24,6 +24,8 @@ import { PricePipe } from '../../shared/pipes/price.pipe';
 })
 
 export class EndofthedayComponent {
+  private readonly dialogFacade = inject(DialogFacade);
+  private processingDialog?: any;
   readonly isStarted = signal<boolean>(false);
   readonly day = signal<number>(0);
   readonly dateToReport = signal<number>(0);
@@ -91,6 +93,12 @@ export class EndofthedayComponent {
     }, { allowSignalWrites: true });
 
     this.fillData();
+
+    effect(() => {
+      if (this.processingDialog) {
+        this.processingDialog.componentInstance?.message.set(this.progress());
+      }
+    });
   }
 
   getDetail(data: EndDay) {
@@ -154,8 +162,10 @@ export class EndofthedayComponent {
     if (this.isStarted()) {
       this.mainService.getAllBy('checks', {}).then((res) => {
         if (res.docs.length == 0) {
-          // jQuery modal removed - use CDK Dialog instead if needed
-          (window as any).$('#endDayModal').modal({ backdrop: 'static', keyboard: false });
+          this.processingDialog = this.dialogFacade.openProcessingModal({
+            title: 'Gün Sonu Yapılıyor...',
+            message: this.progress()
+          });
           clearInterval(this.conflictService.conflictListener());
           setTimeout(() => {
             this.stepChecks();
@@ -472,8 +482,7 @@ export class EndofthedayComponent {
       }
     }, err => {
       console.log(err);
-      // jQuery modal hide does not need zone.run() wrapper
-      (window as any).$('#endDayModal').modal('hide');
+      this.dialogFacade.closeAll();
       this.messageService.sendAlert('Hata!', 'Sunucudan İzin Alınamadı', 'error');
       setTimeout(() => {
         this.electronService.relaunchProgram();
@@ -498,8 +507,7 @@ export class EndofthedayComponent {
                     })
                     .on('complete', (info: any) => {
                       this.progress.set('Gün Sonu Tamamlanıyor..');
-                      // jQuery modal hide does not need zone.run() wrapper
-                      (window as any).$('#endDayModal').modal('hide');
+                      this.dialogFacade.closeAll();
                       this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program Yeniden Başlatılacak', 'success');
                       setTimeout(() => {
                         this.electronService.relaunchProgram();
@@ -526,8 +534,7 @@ export class EndofthedayComponent {
         }
       }, err => {
         console.log(err);
-        // jQuery modal hide does not need zone.run() wrapper
-        (window as any).$('#endDayModal').modal('hide');
+        this.dialogFacade.closeAll();
         this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program Yeniden Başlatılacak', 'success');
         setTimeout(() => {
           this.electronService.relaunchProgram();

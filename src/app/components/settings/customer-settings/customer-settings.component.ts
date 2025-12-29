@@ -299,10 +299,17 @@ export class CustomerSettingsComponent implements OnInit {
     });
   }
 
-  getDetail(check: Check) {
+  getDetail(check: any) {
     this.checkDetail.set(check);
-    // Modal opening is now handled via CDK Dialog in templates
-    // This method now just sets the check detail signal for display
+    this.dialogFacade.openCheckDetailModal(check).closed.subscribe((result: any) => {
+      if (result) {
+        if (result.action === 'print') {
+          this.rePrintCheck(result.data);
+        } else if (result.action === 'reopen') {
+          this.reOpenCheck(result.data);
+        }
+      }
+    });
   }
 
   cancelCheck(id: string, note: string) {
