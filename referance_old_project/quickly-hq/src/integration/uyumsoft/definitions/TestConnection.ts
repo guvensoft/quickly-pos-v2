@@ -1,4 +1,0 @@
-
-/** TestConnection */
-export interface TestConnection {
-}

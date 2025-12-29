@@ -1,4 +1,0 @@
-
-/** GetSystemDate */
-export interface GetSystemDate {
-}
