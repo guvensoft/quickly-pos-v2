@@ -1,15 +1,21 @@
 /* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars */
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import swal from 'sweetalert';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class MessageService {
     private subject = new Subject<any>();
+    private readonly toastService = inject(ToastService);
 
-    sendMessage(message: string) {
+    sendMessage(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') {
+        // Send via toast service for new UI
+        this.toastService[type](message);
+
+        // Keep subject for legacy compatibility
         this.subject.next({ text: message });
         setTimeout(
             () => {

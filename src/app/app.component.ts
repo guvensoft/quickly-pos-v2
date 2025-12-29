@@ -21,11 +21,12 @@ import { PrintOut, PrintOutStatus } from './core/models/print.model';
 import { MessageComponent } from './components/helpers/message/message.component';
 import { KeyboardComponent } from './components/helpers/keyboard/keyboard.component';
 import { CallerComponent } from './components/helpers/caller/caller.component';
+import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, MessageComponent, KeyboardComponent, CallerComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, MessageComponent, KeyboardComponent, CallerComponent, ToastContainerComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
