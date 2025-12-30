@@ -146,10 +146,10 @@ export class TableModalComponent extends BaseModalComponent {
     const hasFloors = this.floors.length > 0;
 
     this.form = this.fb.group({
-      name: [data?.name || '', Validators.required],
-      capacity: [data?.capacity || 2, [Validators.required, Validators.min(1)]],
+      name: [data?.name || '', (control) => Validators.required(control)],
+      capacity: [data?.capacity || 2, [(control) => Validators.required(control), Validators.min(1)]],
       description: [data?.description || ''],
-      floor_id: [data?.floor_id || '', hasFloors ? Validators.required : []],
+      floor_id: [data?.floor_id || '', hasFloors ? (control) => Validators.required(control) : []],
     });
   }
 

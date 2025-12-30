@@ -98,7 +98,7 @@ export class SubcategoryModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     this.form = this.fb.group({
-      name: [data?.name || '', Validators.required],
+      name: [data?.name || '', (control) => Validators.required(control)],
       description: [data?.description || ''],
     });
   }
