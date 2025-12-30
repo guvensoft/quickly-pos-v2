@@ -427,7 +427,10 @@ export class EndofthedayComponent {
             if (this.appType()?.type == 0) {
               if (this.appType()?.status == 1) {
                 this.electronService.ipcRenderer.send('closeServer');
-                this.mainService.syncToServer().cancel();
+                const sync = this.mainService.syncToServer();
+                if (sync && typeof sync.cancel === 'function') {
+                  sync.cancel();
+                }
               }
             }
             this.progress.set('Veritabanı Yedekleniyor!');
@@ -514,20 +517,6 @@ export class EndofthedayComponent {
                         this.electronService.relaunchProgram();
                       }, 5000);
                     });
-                  // this.mainService.syncToLocal().then(res => {
-                  //   if (res) {
-                  //     delete this.serverSet()._rev;
-                  //     this.mainService.putDoc('settings', this.serverSet()).then(res => {
-                  //       if (res.ok) {
-                  //         $('#endDayModal').modal('hide');
-                  //         this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program 5sn içinde kapatılacak.', 'success');
-                  //         setTimeout(() => {
-                  //           this.electronService.relaunchProgram();
-                  //         }, 5000);
-                  //       }
-                  //     })
-                  //   }
-                  // })
                 }, 3000)
               }, 2000)
             }
@@ -540,27 +529,6 @@ export class EndofthedayComponent {
         setTimeout(() => {
           this.electronService.relaunchProgram();
         }, 5000);
-        // const serverSelectedRevs = res.json();
-        // this.electronService.fileSystem.readFile(this.electronService.appRealPath + '/data/db.dat', 'utf-8', (err, data) => {
-        //   if (!err) {
-        //     let appData = JSON.parse(data);
-        //     appData.map(obj => {
-        //       obj._rev = serverSelectedRevs.find(serverRes => serverRes[1] == obj._id)[2];
-        //     });
-        //     this.mainService.putAll('allData', appData).then(res => {
-        //       this.progress.set('Gün Sonu Tamamlanıyor..');
-        //       this.loadAppData().then(res => {
-        //         if (res) {
-        //           $('#endDayModal').modal('hide');
-        //           this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program 5sn içinde kapatılacak.', 'success');
-        //           setTimeout(() => {
-        //             this.electronService.relaunchProgram();
-        //           }, 5000);
-        //         }
-        //       })
-        //     });
-        //   }
-        // });
       });
     })
   }

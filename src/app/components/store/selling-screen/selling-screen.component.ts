@@ -375,7 +375,7 @@ export class SellingScreenComponent implements OnDestroy {
       }
     }
     setTimeout(() => {
-      (window as any).$('#check-products').scrollTop(999999);
+      this.scrollCheckProductsToBottom();
     }, 200);
   }
 
@@ -411,7 +411,7 @@ export class SellingScreenComponent implements OnDestroy {
     this.selectedQuantity.set(1);
 
     setTimeout(() => {
-      (window as any).$('#check-products').scrollTop(999999);
+      this.scrollCheckProductsToBottom();
     }, 200);
   }
 
@@ -1598,5 +1598,16 @@ export class SellingScreenComponent implements OnDestroy {
 
   fillData() {
     this.selectedCatId.set(undefined);
+  }
+
+  /**
+   * Scrolls the check products list to the bottom
+   * Native DOM implementation replacing jQuery
+   */
+  private scrollCheckProductsToBottom(): void {
+    const element = document.getElementById('check-products');
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+    }
   }
 }

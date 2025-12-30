@@ -62,15 +62,6 @@ export class AppComponent implements OnInit {
   readonly dayStatus = signal<DayInfo | undefined>(undefined);
 
   ngOnInit(): void {
-    // Ensure jQuery is available globally early
-    if (typeof (window as any).$ === 'undefined') {
-      try {
-        const $ = require('jquery');
-        (window as any).$ = (window as any).jQuery = $;
-      } catch (e) {
-        console.warn('jQuery early load failed in AppComponent', e);
-      }
-    }
     this.settingsService.setLocalStorage();
     this.initAppSettings();
     this.initConnectivityAndTime();

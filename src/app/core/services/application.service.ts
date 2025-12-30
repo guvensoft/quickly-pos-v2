@@ -2,9 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from '../../core/services/message.service';
 import { SettingsService } from './settings.service';
-
-// jQuery type declaration for modal operations
-declare let $: any;
+import { DialogFacade } from './dialog.facade';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +11,7 @@ export class ApplicationService {
   private settings = inject(SettingsService);
   private messageService = inject(MessageService);
   private router = inject(Router);
+  private dialogFacade = inject(DialogFacade);
 
   appLockTime!: number;
   appDayStatus!: object;
@@ -75,9 +74,8 @@ export class ApplicationService {
               this.timer = this.appLockTime;
             } else {
               this.timer = this.appLockTime;
-              if ($('body').hasClass('modal-open')) {
-                $('*').modal('hide');
-              }
+              // Close all open modals before navigating
+              this.dialogFacade.closeAll();
               this.router.navigate(['']);
               this.messageService.sendMessage('Zaman aşımına uğrandı.');
             }

@@ -360,24 +360,50 @@ export class MainService {
   }
 
   replicateFrom(): any {
+    if (!this.RemoteDB || !this.RemoteDB.replicate) {
+      console.warn('MainService: RemoteDB not ready, skipping replicateFrom');
+      return { on: () => ({ on: () => ({ on: () => ({}) }) }), cancel: () => { } };
+    }
     return this.RemoteDB.replicate.to(this.LocalDB['allData'], { filter: (doc: any) => !doc._deleted });
   }
 
   syncToServer(): any {
+    if (!this.ServerDB || typeof this.ServerDB.sync !== 'function') {
+      console.warn('MainService: ServerDB is not ready or invalid, skipping syncToServer');
+      return { on: () => ({ on: () => ({ on: () => ({}) }) }), cancel: () => { } }; // Return a dummy with on/cancel to prevent crashes
+    }
+    console.log('MainService: Starting syncToServer');
     return PouchDB.sync(this.LocalDB['allData'], this.ServerDB, { live: true, retry: true, pull: { filter: (doc: any) => !doc._deleted } })
-      .on('change', (sync: any) => this.handleChanges(sync));
+      .on('change', (sync: any) => this.handleChanges(sync))
+      .on('error', (err: any) => {
+        console.error('MainService: syncToServer error:', err);
+        this.lastSyncError.set(err);
+      });
   }
 
   syncToRemote(): any {
     this.remoteSyncRequested = true;
     if (this.remoteSync) return this.remoteSync;
-    if (!this.RemoteDB) return;
+    if (!this.RemoteDB) {
+      console.warn('MainService: RemoteDB not ready, deferred syncToRemote');
+      return;
+    }
     this.syncInProgress.set(true);
     this.remoteSync = PouchDB.sync(this.LocalDB['allData'], this.RemoteDB, { live: true, retry: true, pull: { filter: (doc: any) => !doc._deleted } })
       .on('change', (sync: any) => this.handleChanges(sync))
-      .on('error', (err: any) => { this.lastSyncError.set(err); this.syncInProgress.set(false); })
-      .on('paused', () => this.syncInProgress.set(false))
-      .on('active', () => this.syncInProgress.set(true));
+      .on('error', (err: any) => {
+        console.error('MainService: syncToRemote error:', err);
+        this.lastSyncError.set(err);
+        this.syncInProgress.set(false);
+      })
+      .on('paused', (info: any) => {
+        this.syncInProgress.set(false);
+        if (info) console.log('MainService: syncToRemote paused', info);
+      })
+      .on('active', () => {
+        this.syncInProgress.set(true);
+        console.log('MainService: syncToRemote active');
+      });
     return this.remoteSync;
   }
 
