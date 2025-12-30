@@ -158,12 +158,12 @@ export class UserModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     // Determine if password is required (for new users only)
-    const passwordValidators = data?._id ? [] : [Validators.required];
+    const passwordValidators = data?._id ? [] : [(control) => Validators.required(control)];
 
     this.form = this.fb.group({
-      username: [data?.username || '', Validators.required],
+      username: [data?.username || '', (control) => Validators.required(control)],
       password: [data?.password || '', passwordValidators],
-      name: [data?.name || '', Validators.required],
+      name: [data?.name || '', (control) => Validators.required(control)],
       group_id: [data?.group_id || ''],
       is_active: [data?.is_active !== undefined ? data.is_active : true],
     });
