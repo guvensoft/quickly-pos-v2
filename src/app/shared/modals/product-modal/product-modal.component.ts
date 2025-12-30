@@ -132,9 +132,9 @@ export class ProductModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     this.form = this.fb.group({
-      name: [data?.name || '', Validators.required],
-      price: [data?.price || 0, [Validators.required, Validators.min(0)]],
-      cat_id: [data?.cat_id || '', Validators.required],
+      name: [data?.name || '', (control) => Validators.required(control)],
+      price: [data?.price || 0, [(control) => Validators.required(control), Validators.min(0)]],
+      cat_id: [data?.cat_id || '', (control) => Validators.required(control)],
     });
 
     this.loadCategories();

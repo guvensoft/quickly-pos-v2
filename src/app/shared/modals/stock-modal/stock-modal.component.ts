@@ -158,10 +158,10 @@ export class StockModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     this.form = this.fb.group({
-      name: [data?.name || '', Validators.required],
+      name: [data?.name || '', (control) => Validators.required(control)],
       quantity: [
         data?.quantity || 0,
-        [Validators.required, Validators.min(0.01)]
+        [(control) => Validators.required(control), Validators.min(0.01)]
       ],
       warning_limit: [data?.warning_limit || null],
       price: [data?.price || null, [Validators.min(0)]],
