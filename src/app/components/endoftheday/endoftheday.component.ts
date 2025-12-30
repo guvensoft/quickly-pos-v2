@@ -423,7 +423,7 @@ export class EndofthedayComponent {
           this.fillData();
           this.isStarted.set(false);
           setTimeout(() => {
-            this.mainService.syncToRemote().cancel();
+            this.mainService.cancelRemoteSync();
             if (this.appType()?.type == 0) {
               if (this.appType()?.status == 1) {
                 this.electronService.ipcRenderer.send('closeServer');

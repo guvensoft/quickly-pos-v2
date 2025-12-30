@@ -10,7 +10,6 @@ import { SettingsService } from '../../core/services/settings.service';
   selector: 'app-activation',
   templateUrl: './activation.component.html',
   styleUrls: ['./activation.component.scss'],
-  providers: [SettingsService, MainService]
 })
 
 export class ActivationComponent {

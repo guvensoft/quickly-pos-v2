@@ -371,7 +371,7 @@ export class AppComponent implements OnInit {
   endDayListener(): void {
     console.log('Endday Listener Process Started');
     const signalListener = this.mainService.LocalDB['endday'].changes({ since: 'now', live: true }).on('change', () => {
-      this.mainService.syncToRemote().cancel();
+      this.mainService.cancelRemoteSync();
       console.log('Endday Processing...');
       this.onSync.set(true);
       signalListener.cancel();

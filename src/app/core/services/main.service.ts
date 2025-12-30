@@ -60,6 +60,8 @@ export class MainService {
   private syncInProgress = signal(false);
   private lastSyncError = signal<Error | null>(null);
   readonly remoteDBReady = signal(false);
+  private remoteSync: any = null;
+  private remoteSyncRequested = false;
 
   // Computed signals for derived state
   readonly isDataReady = computed(() => this.dataLoaded() && !this.syncInProgress());
@@ -144,6 +146,9 @@ export class MainService {
     Promise.all([authPromise, serverPromise]).then(() => {
       if (this.RemoteDB) {
         this.remoteDBReady.set(true);
+        if (this.remoteSyncRequested && !this.remoteSync) {
+          this.syncToRemote();
+        }
       }
     }).catch(err => console.error('MainService: Failed to initialize RemoteDB:', err));
   }
@@ -364,13 +369,26 @@ export class MainService {
   }
 
   syncToRemote(): any {
+    this.remoteSyncRequested = true;
+    if (this.remoteSync) return this.remoteSync;
     if (!this.RemoteDB) return;
     this.syncInProgress.set(true);
-    return PouchDB.sync(this.LocalDB['allData'], this.RemoteDB, { live: true, retry: true, pull: { filter: (doc: any) => !doc._deleted } })
+    this.remoteSync = PouchDB.sync(this.LocalDB['allData'], this.RemoteDB, { live: true, retry: true, pull: { filter: (doc: any) => !doc._deleted } })
       .on('change', (sync: any) => this.handleChanges(sync))
       .on('error', (err: any) => { this.lastSyncError.set(err); this.syncInProgress.set(false); })
       .on('paused', () => this.syncInProgress.set(false))
       .on('active', () => this.syncInProgress.set(true));
+    return this.remoteSync;
+  }
+
+  cancelRemoteSync(): void {
+    try {
+      this.remoteSync?.cancel?.();
+    } finally {
+      this.remoteSync = null;
+      this.remoteSyncRequested = false;
+      this.syncInProgress.set(false);
+    }
   }
 
   formatPrice(value: any): string {
