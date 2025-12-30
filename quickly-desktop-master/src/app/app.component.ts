@@ -89,6 +89,8 @@ export class AppComponent implements OnInit {
             default:
               break;
           }
+          // Configure replication targets early to avoid startup races (sync starting before MainService init completes).
+          this.mainService.configureFromSettings(settings, appType);
         } catch (error) {
           this.messageService.sendAlert('Bağlantı Hatası', 'Sunucu Bağlantı Anahtarı Bulunamadı!', 'error');
           this.findServerSettings();

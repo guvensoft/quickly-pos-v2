@@ -73,15 +73,7 @@ export class MainService {
     this.getAllBy('settings', { key: 'ServerSettings' }).then(res => {
       if (res.docs.length > 0) {
         let appType = localStorage.getItem('AppType');
-        switch (appType) {
-          case 'Primary':
-            this.serverInfo = res.docs.find(obj => obj.key == 'ServerSettings' && obj.value.type == 0).value;
-            break;
-          case 'Secondary':
-            this.serverInfo = res.docs.find(obj => obj.key == 'ServerSettings' && obj.value.type == 1).value;
-          default:
-            break;
-        }
+        this.serverInfo = this.findServerInfo(res.docs, appType);
         if (this.serverInfo.type == 0) {
           if (this.serverInfo.status == 1) {
             this.ServerDB = new PouchDB(`http://${this.serverInfo.ip_address}:${this.serverInfo.ip_port}/${this.serverInfo.key}/appServer`);
@@ -91,6 +83,43 @@ export class MainService {
         }
       }
     });
+  }
+
+  private findServerInfo(settingsDocs: any[], appType?: string | null): ServerInfo {
+    const type = appType === 'Secondary' ? 1 : 0;
+    const doc = settingsDocs.find(obj => obj.key === 'ServerSettings' && obj.value?.type === type);
+    return doc?.value;
+  }
+
+  private configureRemoteFromAuthInfo(authInfo: AuthInfo) {
+    this.authInfo = authInfo;
+    this.hostname = 'http://' + this.authInfo.app_remote + ':' + this.authInfo.app_port;
+    this.ajax_opts = { ajax: { headers: { Authorization: 'Basic ' + Buffer.from(this.authInfo.app_id + ':' + this.authInfo.app_token).toString('base64') } } };
+    this.db_prefix = this.authInfo.app_db;
+    this.RemoteDB = new PouchDB(this.hostname + this.db_prefix, this.ajax_opts);
+  }
+
+  /**
+   * Ensures RemoteDB/ServerDB targets are configured from already-loaded settings docs.
+   * This avoids a startup race where sync starts before MainService constructor finishes async initialization.
+   */
+  configureFromSettings(settingsDocs: any[], appType?: string | null) {
+    const auth = settingsDocs.find(s => s.key === 'AuthInfo')?.value;
+    if (auth) {
+      this.configureRemoteFromAuthInfo(auth);
+    }
+
+    const serverInfo = this.findServerInfo(settingsDocs, appType);
+    if (serverInfo) {
+      this.serverInfo = serverInfo;
+      if (this.serverInfo.type === 0) {
+        if (this.serverInfo.status === 1) {
+          this.ServerDB = new PouchDB(`http://${this.serverInfo.ip_address}:${this.serverInfo.ip_port}/${this.serverInfo.key}/appServer`);
+        }
+      } else if (this.serverInfo.type === 1) {
+        this.RemoteDB = new PouchDB(`http://${this.serverInfo.ip_address}:${this.serverInfo.ip_port}/${this.serverInfo.key}/appServer`);
+      }
+    }
   }
 
   getAllData(db: string): Promise<any> {
@@ -389,8 +418,14 @@ export class MainService {
   }
 
   syncToRemote() {
+    if (!this.RemoteDB) {
+      console.warn('syncToRemote: RemoteDB is not configured yet; sync will not start.');
+    }
+    if (!this.serverInfo) {
+      console.warn('syncToRemote: ServerInfo is not configured yet; using default sync options.');
+    }
     let rOpts: PouchDB.Replication.ReplicateOptions = { live: true, retry: true };
-    if (this.serverInfo.type == 1) {
+    if (this.serverInfo && this.serverInfo.type == 1) {
       rOpts = {
         live: true, retry: true, heartbeat: 2500, back_off_function: (delay) => {
           delay = 1000;
