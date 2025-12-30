@@ -56,6 +56,14 @@
         </h2>
       </div>
     </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 10}" (click)="selected.set(10)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-tags"></i>
+          <span>Kasa Kategorileri</span>
+        </h2>
+      </div>
+    </div>
     <div class="card" [ngClass]="{'bg-danger text-white':selected() === 8}" (click)="selected.set(8)">
       <div class="card-body">
         <h2>
@@ -109,6 +117,9 @@
         }
         @if (selected() === 7) {
         <app-printer-settings [key]="selected()"></app-printer-settings>
+        }
+        @if (selected() === 10) {
+        <app-cashbox-settings [key]="selected()"></app-cashbox-settings>
         }
         @if (selected() === 9) {
         <app-application-settings [key]="selected()"></app-application-settings>

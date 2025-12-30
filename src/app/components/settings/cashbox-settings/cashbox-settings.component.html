@@ -1,0 +1,92 @@
+<div class="row">
+  <div class="col-lg-4">
+    <div class="card ntb">
+      <div class="card-header">
+        <h5 class="mt-2 mb-0">
+          <i class="fa fa-tags" aria-hidden="true"></i> Kasa Kategorileri
+        </h5>
+      </div>
+      <div class="card-body inside-height flow">
+        <div class="btn-group btn-group-sm w-100 mb-3" role="group" aria-label="Cashbox category filter">
+          <button type="button" class="btn btn-light" [ngClass]="{'btn-danger text-white': filter() === 'Tümü'}"
+            (click)="filter.set('Tümü')">
+            Tümü
+          </button>
+          <button type="button" class="btn btn-light" [ngClass]="{'btn-success text-white': filter() === 'Gelir'}"
+            (click)="filter.set('Gelir')">
+            Gelir
+          </button>
+          <button type="button" class="btn btn-light" [ngClass]="{'btn-danger text-white': filter() === 'Gider'}"
+            (click)="filter.set('Gider')">
+            Gider
+          </button>
+        </div>
+
+        <div class="list-group">
+          @for (cat of filteredCategories(); track cat.id) {
+          <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+            [ngClass]="{'active': selected()?.id === cat.id}" (click)="selectCategory(cat)">
+            <span>{{cat.name}}</span>
+            <span class="badge" [ngClass]="{'badge-success': cat.type === 'Gelir', 'badge-danger': cat.type === 'Gider'}">
+              {{cat.type}}
+            </span>
+          </button>
+          }
+          @if (filteredCategories().length === 0) {
+          <div class="list-group-item text-muted">Kayıt bulunamadı.</div>
+          }
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-sm btn-primary" (click)="setDefault()">
+          <i class="fa fa-plus"></i> Yeni
+        </button>
+        <small class="text-muted">{{categories().length}} kayıt</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card ntb">
+      <div class="card-header">
+        <h5 class="mt-2 mb-0">
+          <i class="fa fa-edit" aria-hidden="true"></i>
+          @if (onUpdate()) { <span>Kategori Düzenle</span> } @else { <span>Yeni Kategori</span> }
+        </h5>
+      </div>
+      <div class="card-body inside-height flow">
+        <form #categoryForm="ngForm" (ngSubmit)="save(categoryForm)">
+          <div class="form-group">
+            <label>Kategori Adı</label>
+            <input type="text" class="form-control form-control-lg" name="name" [ngModel]="name()"
+              (ngModelChange)="name.set($event)" required>
+          </div>
+
+          <div class="form-group">
+            <label>Tip</label>
+            <select class="form-control form-control-lg" name="type" [ngModel]="type()"
+              (ngModelChange)="type.set($event)" required>
+              <option [ngValue]="'Gelir'">Gelir</option>
+              <option [ngValue]="'Gider'">Gider</option>
+            </select>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-lg btn-success mr-2" [disabled]="!canSubmit()">
+              @if (onUpdate()) { <span>Güncelle</span> } @else { <span>Ekle</span> }
+            </button>
+            @if (onUpdate()) {
+            <button type="button" class="btn btn-lg btn-danger" (click)="confirmDelete()">
+              Sil
+            </button>
+            }
+          </div>
+        </form>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i>
+        Kasa hareketlerine kategori atamak için listeyi buradan yönetin.
+      </div>
+    </div>
+  </div>
+</div>

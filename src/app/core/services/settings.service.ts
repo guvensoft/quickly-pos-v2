@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Subject, ReplaySubject } from 'rxjs';
 import { Settings } from '../models/settings.model';
 import { MainService } from './main.service';
+import { CashboxCategory } from '../models/cashbox.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +20,7 @@ export class SettingsService {
   Printers: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
   ServerSettings: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
   DateSettings: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
+  CashboxCategories: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
 
   constructor() {
     // Constructor'da mainService kullanımı - İş mantığı AYNEN
@@ -51,6 +53,9 @@ export class SettingsService {
 
       const dateSettings = this.Settings.find((setting) => setting.key == 'DateSettings');
       if (dateSettings) this.DateSettings.next(dateSettings);
+
+      const cashboxCategories = this.Settings.find((setting) => setting.key == 'CashboxCategories');
+      if (cashboxCategories) this.CashboxCategories.next(cashboxCategories);
 
       const appType = localStorage.getItem('AppType');
       switch (appType) {
@@ -118,6 +123,58 @@ export class SettingsService {
 
   getPrinters() {
     return this.Printers.asObservable();
+  }
+
+  getCashboxCategories() {
+    return this.CashboxCategories.asObservable();
+  }
+
+  private upsertCashboxCategories(categories: CashboxCategory[]): void {
+    this.mainService.getAllBy('settings', { key: 'CashboxCategories' }).then(res => {
+      if (res && res.docs && res.docs.length > 0 && res.docs[0]?._id) {
+        const doc: any = res.docs[0];
+        doc.value = categories;
+        doc.timestamp = Date.now();
+        this.mainService.updateData('settings', doc._id, doc);
+        this.CashboxCategories.next(doc);
+      } else {
+        const cashboxSettings = new Settings('CashboxCategories', categories, 'Kasa Kategorileri', Date.now());
+        this.mainService.addData('settings', cashboxSettings as any);
+        this.CashboxCategories.next(cashboxSettings);
+      }
+    }).catch(err => {
+      console.error('SettingsService: Error updating CashboxCategories:', err);
+    });
+  }
+
+  addCashboxCategory(category: CashboxCategory): void {
+    this.mainService.getAllBy('settings', { key: 'CashboxCategories' }).then(res => {
+      const existing = (res?.docs?.[0] as any)?.value as CashboxCategory[] | undefined;
+      const next = [...(existing || []), category];
+      this.upsertCashboxCategories(next);
+    }).catch(err => {
+      console.error('SettingsService: Error adding CashboxCategory:', err);
+    });
+  }
+
+  updateCashboxCategory(category: CashboxCategory): void {
+    this.mainService.getAllBy('settings', { key: 'CashboxCategories' }).then(res => {
+      const existing = (res?.docs?.[0] as any)?.value as CashboxCategory[] | undefined;
+      const next = (existing || []).map(c => c.id === category.id ? category : c);
+      this.upsertCashboxCategories(next);
+    }).catch(err => {
+      console.error('SettingsService: Error updating CashboxCategory:', err);
+    });
+  }
+
+  removeCashboxCategory(id: string): void {
+    this.mainService.getAllBy('settings', { key: 'CashboxCategories' }).then(res => {
+      const existing = (res?.docs?.[0] as any)?.value as CashboxCategory[] | undefined;
+      const next = (existing || []).filter(c => c.id !== id);
+      this.upsertCashboxCategories(next);
+    }).catch(err => {
+      console.error('SettingsService: Error removing CashboxCategory:', err);
+    });
   }
 
   addPrinter(printerData: any): void {

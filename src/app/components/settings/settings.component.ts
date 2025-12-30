@@ -10,6 +10,7 @@ import { RecipeSettingsComponent } from './recipe-settings/recipe-settings.compo
 import { ApplicationSettingsComponent } from './application-settings/application-settings.component';
 import { PrinterSettingsComponent } from './printer-settings/printer-settings.component';
 import { RestaurantSettingsComponent } from './restaurant-settings/restaurant-settings.component';
+import { CashboxSettingsComponent } from './cashbox-settings/cashbox-settings.component';
 
 @Component({
   standalone: true,
@@ -22,7 +23,8 @@ import { RestaurantSettingsComponent } from './restaurant-settings/restaurant-se
     RecipeSettingsComponent,
     ApplicationSettingsComponent,
     RestaurantSettingsComponent,
-    PrinterSettingsComponent
+    PrinterSettingsComponent,
+    CashboxSettingsComponent
   ],
   selector: 'app-settings',
   templateUrl: './settings.component.html',
