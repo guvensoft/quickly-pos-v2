@@ -2,7 +2,6 @@ import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
-import { PricePipe } from '../../pipes/price.pipe';
 
 export interface SelectionItem {
   id: any;
@@ -18,7 +17,7 @@ export interface SelectionModalData {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, PricePipe],
+  imports: [CommonModule],
   selector: 'app-selection-modal',
   template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">

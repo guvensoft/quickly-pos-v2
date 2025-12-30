@@ -19,18 +19,18 @@ export interface PromptModalData {
   template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
-        <h5 class="modal-title">{{ data?.title || 'Bilgi Girişi' }}</h5>
+        <h5 class="modal-title">{{ data.title || 'Bilgi Girişi' }}</h5>
         <button type="button" class="close" (click)="cancel()" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body p-3">
-        <p class="text-muted">{{ data?.message || 'Lütfen bilgiyi giriniz.' }}</p>
-        <input #promptInput type="text" class="form-control form-control-lg" [placeholder]="data?.placeholder || ''" [ngModel]="data?.value || ''" autofocus>
+        <p class="text-muted">{{ data.message || 'Lütfen bilgiyi giriniz.' }}</p>
+        <input #promptInput type="text" class="form-control form-control-lg" [placeholder]="data.placeholder || ''" [ngModel]="data.value || ''" autofocus>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-lg" (click)="cancel()">İptal</button>
-        <button type="button" class="btn btn-primary btn-lg" [disabled]="data?.required && !promptInput.value" (click)="close(promptInput.value)">Tamam</button>
+        <button type="button" class="btn btn-primary btn-lg" [disabled]="data.required && !promptInput.value" (click)="close(promptInput.value)">Tamam</button>
       </div>
     </div>
   `,

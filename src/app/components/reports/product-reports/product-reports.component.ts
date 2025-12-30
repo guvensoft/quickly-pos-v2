@@ -7,7 +7,6 @@ import { MainService } from '../../../core/services/main.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { Category } from '../../../core/models/product.model';
 import { PrinterService } from '../../../core/services/printer.service';
-import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ChartType } from 'chart.js';
@@ -15,7 +14,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { DialogFacade } from '../../../core/services/dialog.facade';
 @Component({
   standalone: true,
-  imports: [CommonModule, BaseChartDirective, GeneralPipe, PricePipe],
+  imports: [CommonModule, BaseChartDirective, PricePipe],
   selector: 'app-product-reports',
   templateUrl: './product-reports.component.html',
   styleUrls: ['./product-reports.component.scss'],

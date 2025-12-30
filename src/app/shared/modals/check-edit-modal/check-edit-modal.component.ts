@@ -25,11 +25,11 @@ export interface CheckEditData {
       </div>
       <form #checkEditForm="ngForm" (ngSubmit)="close({ action: 'save', value: checkEditForm.value })">
         <div class="modal-body p-3">
-          @if (!data?.payment_flow) {
+          @if (!data.payment_flow) {
             <div class="form-group mb-3">
               <label class="form-label">Hesap Tutarı</label>
               <div class="input-group">
-                <input type="number" class="form-control form-control-lg" name="total_price" [ngModel]="data?.total_price">
+                <input type="number" class="form-control form-control-lg" name="total_price" [ngModel]="data.total_price">
                 <div class="input-group-append">
                   <span class="input-group-text">TL</span>
                 </div>
@@ -37,7 +37,7 @@ export interface CheckEditData {
             </div>
             <div class="form-group mb-3">
               <label class="form-label">Hesap Tipi</label>
-              <select name="payment_method" class="form-control form-control-lg" [ngModel]="data?.payment_method">
+              <select name="payment_method" class="form-control form-control-lg" [ngModel]="data.payment_method">
                 <option>Nakit</option>
                 <option>Kart</option>
                 <option>Kupon</option>
@@ -46,7 +46,7 @@ export interface CheckEditData {
             </div>
           } @else {
             <p class="text-muted mb-2">Düzenlemek istediğiniz ödemeyi seçin</p>
-            @for (payment of data?.payment_flow; track $index) {
+            @for (payment of data.payment_flow; track $index) {
               <button type="button" class="btn btn-outline-secondary btn-block btn-lg text-left mb-2 d-flex justify-content-between align-items-center"
                 (click)="onEditPayment($index, payment)">
                 <span>{{ payment.method }}</span>
@@ -59,7 +59,7 @@ export interface CheckEditData {
           <button type="button" (click)="close({ action: 'reopen' })" class="btn btn-info btn-lg">
             <i class="fa fa-undo"></i> Hesabı Geri Aç
           </button>
-          @if (!data?.payment_flow) {
+          @if (!data.payment_flow) {
             <button type="submit" class="btn btn-success btn-lg">
               <i class="fa fa-check" aria-hidden="true"></i> Kaydet
             </button>

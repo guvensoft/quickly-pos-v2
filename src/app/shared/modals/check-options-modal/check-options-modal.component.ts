@@ -28,7 +28,7 @@ export interface CheckOptionsData {
             </button>
           </div>
           <div class="col-12 col-md-6 mb-3">
-            <button (click)="close('discount')" [disabled]="!data?.permissions?.discount" class="btn btn-outline-danger btn-block p-4 option-btn d-flex flex-column align-items-center">
+            <button (click)="close('discount')" [disabled]="!data.permissions.discount" class="btn btn-outline-danger btn-block p-4 option-btn d-flex flex-column align-items-center">
               <i class="fa fa-arrow-down fa-3x mb-3"></i>
               <span class="font-weight-bold h5">İndirim Yap</span>
             </button>

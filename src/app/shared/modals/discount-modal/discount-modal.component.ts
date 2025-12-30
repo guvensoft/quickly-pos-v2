@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
-import { PricePipe } from '../../pipes/price.pipe';
 
 export interface DiscountData {
   currentAmount: number;
@@ -12,7 +11,7 @@ export interface DiscountData {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, PricePipe],
+  imports: [CommonModule, FormsModule],
   selector: 'app-discount-modal',
   template: `
     <div class="modal-content">

@@ -26,7 +26,7 @@ export interface PaymentEditData {
           <div class="form-group mb-3">
             <label class="form-label">Ödeme Tutarı</label>
             <div class="input-group">
-              <input type="number" class="form-control form-control-lg" name="amount" [ngModel]="data?.amount">
+              <input type="number" class="form-control form-control-lg" name="amount" [ngModel]="data.amount">
               <div class="input-group-append">
                 <span class="input-group-text">TL</span>
               </div>
@@ -34,7 +34,7 @@ export interface PaymentEditData {
           </div>
           <div class="form-group mb-3">
             <label class="form-label">Ödeme Tipi</label>
-            <select name="method" class="form-control form-control-lg" [ngModel]="data?.method">
+            <select name="method" class="form-control form-control-lg" [ngModel]="data.method">
               <option>Nakit</option>
               <option>Kart</option>
               <option>Kupon</option>

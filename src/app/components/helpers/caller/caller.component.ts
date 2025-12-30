@@ -8,13 +8,12 @@ import { Check, CheckType, CheckStatus, CheckNo } from '../../../core/models/che
 import { SettingsService } from '../../../core/services/settings.service';
 import { Router } from '@angular/router';
 import { NgForm } from '@angular/forms';
-import { NgxMaskPipe } from 'ngx-mask';
 import { Call } from '../../../core/models/caller.model';
 import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, NgxMaskPipe],
+  imports: [CommonModule, FormsModule],
   selector: 'app-caller',
   templateUrl: './caller.component.html',
   styleUrls: ['./caller.component.scss']

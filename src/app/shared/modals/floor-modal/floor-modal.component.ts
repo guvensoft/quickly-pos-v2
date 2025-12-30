@@ -96,10 +96,10 @@ import { Floor } from '../../../core/models/table.model';
     .form-control-lg { font-size: 1.1rem; }
   `]
 })
-export class FloorModalComponent extends BaseModalComponent<Floor> {
+export class FloorModalComponent extends BaseModalComponent<Floor | null> {
     constructor(
         dialogRef: DialogRef<any>,
-        @Inject(DIALOG_DATA) data: Floor
+        @Inject(DIALOG_DATA) data: Floor | null
     ) {
         super(dialogRef, data);
     }

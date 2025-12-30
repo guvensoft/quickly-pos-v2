@@ -18,7 +18,7 @@ export interface NoteData {
   template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
-        <h4 class="modal-title">Not Ekle ( {{ data?.productName || 'Ürün' }} )</h4>
+        <h4 class="modal-title">Not Ekle ( {{ data.productName || 'Ürün' }} )</h4>
         <button type="button" class="close" (click)="cancel()" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -27,11 +27,11 @@ export interface NoteData {
         <div class="modal-body p-3">
           <div class="form-group mb-3">
             <input #noteInput type="text" placeholder="Notunuz..." name="description"
-              class="form-control form-control-lg" [ngModel]="data?.currentNote" autofocus>
+              class="form-control form-control-lg" [ngModel]="data.currentNote" autofocus>
           </div>
-          @if (data?.readyNotes && data?.readyNotes?.length! > 0) {
+          @if (data.readyNotes?.length) {
             <div class="row g-2">
-              @for (note of data?.readyNotes; track note) {
+              @for (note of data.readyNotes ?? []; track note) {
                 <div class="col-lg-4 mb-2">
                   <button type="button" class="btn btn-outline-info btn-lg btn-block" (click)="noteInput.value = note">
                     {{ note }}
@@ -43,7 +43,7 @@ export interface NoteData {
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-warning btn-lg" (click)="close({ action: 'dont_give' })">Verme</button>
-          @if (data?.permissions?.discount) {
+          @if (data.permissions?.discount) {
             <button type="button" class="btn btn-danger btn-lg" (click)="close({ action: 'gift' })">İkram</button>
           }
           <button type="submit" class="btn btn-primary btn-lg">Not Ekle</button>

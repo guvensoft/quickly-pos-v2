@@ -22,7 +22,7 @@ export interface NumpadData {
   template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
-        <h4 class="modal-title">{{ data?.productName }}</h4>
+        <h4 class="modal-title">{{ data.productName }}</h4>
         <button type="button" class="close" (click)="cancel()" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -33,9 +33,9 @@ export interface NumpadData {
             <div class="input-group input-group-lg shadow-sm">
               <input type="text" readonly class="form-control text-right display-font" [value]="numpad()">
               <div class="input-group-append">
-                <span class="input-group-text unit-font">{{ data?.unit || 'Adet' }}</span>
+                <span class="input-group-text unit-font">{{ data.unit || 'Adet' }}</span>
               </div>
-              @if (data?.showTare) {
+              @if (data.showTare) {
                 <div class="input-group-append">
                   <button (click)="tare()" class="btn btn-danger">Dara</button>
                 </div>
@@ -97,7 +97,7 @@ export class NumpadModalComponent extends BaseModalComponent<NumpadData> {
     @Inject(DIALOG_DATA) data: NumpadData
   ) {
     super(dialogRef, data);
-    if (data?.scaler$) {
+    if (data.scaler$) {
       data.scaler$.subscribe((v: number) => {
         if (v !== undefined && v !== null) {
           this.numpad.set(v.toString());

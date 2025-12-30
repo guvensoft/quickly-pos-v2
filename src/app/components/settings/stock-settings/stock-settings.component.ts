@@ -7,12 +7,11 @@ import { MessageService } from '../../../core/services/message.service';
 import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
 import { SignalValidatorService } from '../../../core/services/signal-validator.service';
-import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, GeneralPipe],
+  imports: [CommonModule, FormsModule],
   selector: 'app-stock-settings',
   templateUrl: './stock-settings.component.html',
   styleUrls: ['./stock-settings.component.scss']

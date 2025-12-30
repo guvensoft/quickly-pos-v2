@@ -6,14 +6,13 @@ import { MainService } from '../../../core/services/main.service';
 import { Floor } from '../../../core/models/table.model';
 import { ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
-import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, BaseChartDirective, GeneralPipe, PricePipe, TimeAgoPipe],
+  imports: [CommonModule, BaseChartDirective, PricePipe, TimeAgoPipe],
   selector: 'app-table-reports',
   templateUrl: './table-reports.component.html',
   styleUrls: ['./table-reports.component.scss']

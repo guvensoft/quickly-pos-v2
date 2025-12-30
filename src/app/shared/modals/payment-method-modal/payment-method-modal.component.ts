@@ -21,7 +21,7 @@ export interface PaymentMethodData {
       </div>
       <div class="modal-body p-4">
         <div class="row">
-          @for (method of data?.methods; track method.name) {
+          @for (method of data.methods; track method.name) {
             <div class="col-6 col-md-3 mb-3">
               <button (click)="close(method.name)" 
                 class="btn btn-outline-dark btn-block p-4 payment-btn d-flex flex-column align-items-center justify-content-center"

@@ -16,13 +16,13 @@ export interface PasswordData {
   template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
       <div class="modal-header">
-        <h5 class="modal-title">{{ data?.title || 'Şifre Gerekli' }}</h5>
+        <h5 class="modal-title">{{ data.title || 'Şifre Gerekli' }}</h5>
         <button type="button" class="close" (click)="cancel()" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body p-3">
-        <p class="text-muted">{{ data?.message || 'Lütfen devam etmek için şifreyi giriniz.' }}</p>
+        <p class="text-muted">{{ data.message || 'Lütfen devam etmek için şifreyi giriniz.' }}</p>
         <input #passInput type="password" class="form-control form-control-lg" placeholder="Şifre" autofocus>
       </div>
       <div class="modal-footer">
