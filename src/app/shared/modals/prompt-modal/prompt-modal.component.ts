@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
+import { KeyboardDirective } from '../../directives/keyboard.directive';
 
 export interface PromptModalData {
   title?: string;
@@ -14,7 +15,7 @@ export interface PromptModalData {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, KeyboardDirective],
   selector: 'app-prompt-modal',
   template: `
     <div class="modal-content" (keydown)="onKeyDown($event)">
