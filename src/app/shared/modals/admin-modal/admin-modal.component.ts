@@ -2,6 +2,7 @@ import { Component, Inject, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
+  AbstractControl,
   FormBuilder,
   FormGroup,
   Validators,
@@ -143,7 +144,7 @@ export class AdminModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     this.form = this.fb.group({
-      company_name: [data?.company_name || '', (control) => Validators.required(control)],
+      company_name: [data?.company_name || '', (control: AbstractControl) => Validators.required(control)],
       owner_name: [data?.owner_name || ''],
       phone: [data?.phone || ''],
       address: [data?.address || ''],

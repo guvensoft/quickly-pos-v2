@@ -2,6 +2,7 @@ import { Component, Inject, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
+  AbstractControl,
   FormBuilder,
   FormGroup,
   Validators,
@@ -158,12 +159,12 @@ export class UserModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     // Determine if password is required (for new users only)
-    const passwordValidators = data?._id ? [] : [(control) => Validators.required(control)];
+    const passwordValidators = data?._id ? [] : [(control: AbstractControl) => Validators.required(control)];
 
     this.form = this.fb.group({
-      username: [data?.username || '', (control) => Validators.required(control)],
+      username: [data?.username || '', (control: AbstractControl) => Validators.required(control)],
       password: [data?.password || '', passwordValidators],
-      name: [data?.name || '', (control) => Validators.required(control)],
+      name: [data?.name || '', (control: AbstractControl) => Validators.required(control)],
       group_id: [data?.group_id || ''],
       is_active: [data?.is_active !== undefined ? data.is_active : true],
     });

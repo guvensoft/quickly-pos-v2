@@ -2,6 +2,7 @@ import { Component, Inject, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
+  AbstractControl,
   FormBuilder,
   FormGroup,
   Validators,
@@ -158,10 +159,10 @@ export class StockModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     this.form = this.fb.group({
-      name: [data?.name || '', (control) => Validators.required(control)],
+      name: [data?.name || '', (control: AbstractControl) => Validators.required(control)],
       quantity: [
         data?.quantity || 0,
-        [(control) => Validators.required(control), Validators.min(0.01)]
+        [(control: AbstractControl) => Validators.required(control), Validators.min(0.01)]
       ],
       warning_limit: [data?.warning_limit || null],
       price: [data?.price || null, [Validators.min(0)]],

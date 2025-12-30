@@ -2,6 +2,7 @@ import { Component, Inject, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
+  AbstractControl,
   FormBuilder,
   FormGroup,
   Validators,
@@ -146,10 +147,10 @@ export class TableModalComponent extends BaseModalComponent {
     const hasFloors = this.floors.length > 0;
 
     this.form = this.fb.group({
-      name: [data?.name || '', (control) => Validators.required(control)],
-      capacity: [data?.capacity || 2, [(control) => Validators.required(control), Validators.min(1)]],
+      name: [data?.name || '', (control: AbstractControl) => Validators.required(control)],
+      capacity: [data?.capacity || 2, [(control: AbstractControl) => Validators.required(control), Validators.min(1)]],
       description: [data?.description || ''],
-      floor_id: [data?.floor_id || '', hasFloors ? (control) => Validators.required(control) : []],
+      floor_id: [data?.floor_id || '', hasFloors ? (control: AbstractControl) => Validators.required(control) : []],
     });
   }
 
