@@ -8,6 +8,19 @@ const args = process.argv.slice(1),
 
 type LogLevel = 'log' | 'warn' | 'error';
 
+// Prevent multiple instances from using the same Chromium profile storage (IndexedDB, etc.).
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    }
+  });
+}
+
 let logFilePath: string | null = null;
 function getLogFilePath(): string {
   if (logFilePath) return logFilePath;
