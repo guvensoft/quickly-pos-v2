@@ -143,7 +143,7 @@ export class AdminModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     this.form = this.fb.group({
-      company_name: [data?.company_name || '', Validators.required],
+      company_name: [data?.company_name || '', (control) => Validators.required(control)],
       owner_name: [data?.owner_name || ''],
       phone: [data?.phone || ''],
       address: [data?.address || ''],
