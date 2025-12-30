@@ -1,8 +1,9 @@
+@use "font-awesome/scss/font-awesome" with (
+  $fa-font-path: "font-awesome/fonts"
+);
+
 @import "../node_modules/animate.css/animate.min.css";
 @import url("./assets/themes/dark.scss");
-
-$fa-font-path: "font-awesome/fonts";
-@import "font-awesome/scss/font-awesome";
 
 @font-face {
   font-family: "Quickly";
