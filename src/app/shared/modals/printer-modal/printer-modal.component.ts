@@ -118,7 +118,7 @@ export class PrinterModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     this.form = this.fb.group({
-      name: [data?.name || '', Validators.required],
+      name: [data?.name || '', (control) => Validators.required(control)],
       ip_address: [data?.ip_address || ''],
       port: [data?.port || 9100],
       description: [data?.description || ''],

@@ -148,14 +148,14 @@ export class CustomerModalComponent extends BaseModalComponent {
     super(dialogRef, data);
 
     this.form = this.fb.group({
-      name: [data?.name || '', Validators.required],
+      name: [data?.name || '', (control) => Validators.required(control)],
       surname: [data?.surname || ''],
       phone_number: [
         data?.phone_number || '',
-        [Validators.required, Validators.minLength(10)],
+        [(control) => Validators.required(control), Validators.minLength(10)],
       ],
       address: [data?.address || ''],
-      type: [data?.type || '', Validators.required],
+      type: [data?.type || '', (control) => Validators.required(control)],
     });
   }
 
