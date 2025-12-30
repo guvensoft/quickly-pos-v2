@@ -12,7 +12,7 @@ export class HttpService {
   store_id: string;
 
   constructor(private http: Http, private mainService: MainService) {
-    this.headers = new Headers({ 'Content-Type': 'application/json', 'charset': 'UTF-8' });
+    this.headers = new Headers({ 'Content-Type': 'application/json' });//, 'charset': 'UTF-8'
     this.options = new RequestOptions({ headers: this.headers });
     // this.baseUrl = 'http://localhost:3000'; // 'https://hq.quickly.com.tr';
     this.baseUrl = 'https://hq.quickly.com.tr';

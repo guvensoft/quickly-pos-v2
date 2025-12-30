@@ -29,7 +29,7 @@ export class SetupComponent implements OnInit {
   baseUrl: string;
 
   constructor(private mainService: MainService, private settingsService: SettingsService, private http: Http, private electron: ElectronService, private message: MessageService, private router: Router) {
-    this.headers = new Headers({ 'Content-Type': 'application/json', 'charset': 'UTF-8' });
+    this.headers = new Headers({ 'Content-Type': 'application/json' });//, 'charset': 'UTF-8'
     this.options = new RequestOptions({ headers: this.headers });
     this.baseUrl = 'https://hq.quickly.com.tr';
   }
