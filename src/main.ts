@@ -1,3 +1,14 @@
+// Suppress PouchDB deprecation warnings for db.type()
+// This is a known issue in PouchDB and will be fixed in future versions
+const originalWarn = console.warn;
+console.warn = function (...args: any[]) {
+  const message = args[0]?.toString() || '';
+  if (message.includes('db.type() is deprecated')) {
+    return; // Suppress this specific warning
+  }
+  originalWarn.apply(console, args);
+};
+
 import { enableProdMode, provideZonelessChangeDetection } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { bootstrapApplication } from '@angular/platform-browser';

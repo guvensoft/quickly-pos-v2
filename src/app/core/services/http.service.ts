@@ -20,7 +20,7 @@ export class HttpService {
 
 
     // İş mantığı AYNEN korundu
-    this.baseUrl = 'http:/ / hq.quickly.com.tr';
+    this.baseUrl = 'https://hq.quickly.com.tr';
     // this.baseUrl = 'http://localhost:3000';
     //this.baseUrl = 'http://192.168.0.29:3000';
 

@@ -42,6 +42,7 @@ export class AppComponent implements OnInit {
   private authService = inject(AuthService);
   private conflictService = inject(ConflictService);
   private printerService = inject(PrinterService);
+  private cdr = inject(ChangeDetectorRef);
 
   readonly title = signal('Quickly');
   readonly description = signal('Quickly');
@@ -65,7 +66,6 @@ export class AppComponent implements OnInit {
     this.settingsService.setLocalStorage();
     this.initAppSettings();
     this.initConnectivityAndTime();
-    this.settingsService.getPrinters().subscribe(res => this.printers.set(res.value));
   }
 
   callMe(): void { }
@@ -133,7 +133,18 @@ export class AppComponent implements OnInit {
         console.log(err);
       })
       .finally(() => {
+        // Initialize settings-dependent features after settings are loaded
+        this.settingsService.setLocalStorage();
+        this.settingsService.getPrinters().subscribe(res => {
+          if (res && res.value) {
+            this.printers.set(res.value);
+          }
+        });
+
         this.initAppProcess();
+
+        // Trigger change detection in zoneless mode
+        this.cdr.detectChanges();
       });
   }
 
@@ -165,6 +176,7 @@ export class AppComponent implements OnInit {
                   this.updateLastSeen();
                   this.router.navigate(['']);
                   this.dayCheck();
+                  this.cdr.detectChanges();
                 }
               }).catch(err => {
                 console.log(err);
@@ -181,6 +193,7 @@ export class AppComponent implements OnInit {
                   this.onSync.set(false);
                   this.router.navigate(['']);
                   this.dayCheck();
+                  this.cdr.detectChanges();
                 }
               }).catch(err => {
                 console.log(err);
@@ -198,10 +211,12 @@ export class AppComponent implements OnInit {
         this.setupFinished.set(false);
         this.onSync.set(false);
         this.router.navigate(['/activation']);
+        this.cdr.detectChanges();
         break;
       default:
         this.onSync.set(false);
         this.router.navigate(['/setup']);
+        this.cdr.detectChanges();
         break;
     }
     if (server && server.type == 0) {

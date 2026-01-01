@@ -11,6 +11,10 @@ import { CashboxCategory } from '../models/cashbox.model';
 export class SettingsService {
   private mainService = inject(MainService);
 
+  // Signal-based initialization state
+  private initialized = signal(false);
+  readonly isReady = computed(() => this.initialized());
+
   Settings!: Array<Settings>;
   AppInformation: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
   AppSettings: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
@@ -23,11 +27,20 @@ export class SettingsService {
   CashboxCategories: ReplaySubject<Settings> = new ReplaySubject<Settings>(1);
 
   constructor() {
-    // Constructor'da mainService kullanımı - İş mantığı AYNEN
+    // Initialize settings asynchronously
+    this.initializeSettings();
+  }
+
+  /**
+   * Initialize settings from database
+   * This is called automatically in constructor but can be called again to refresh
+   */
+  private initializeSettings(): void {
     this.mainService.getAllBy('settings', {}).then((res) => {
       if (!res || !res.docs) {
         console.warn('SettingsService: No settings data available');
         this.Settings = [];
+        this.initialized.set(true);
         return;
       }
 
@@ -72,11 +85,15 @@ export class SettingsService {
         default:
           break;
       }
+
+      this.initialized.set(true);
     }).catch(err => {
       console.log('SettingsService: Ayarlar yüklenemedi (İlk kurulum olabilir)', err);
       this.Settings = [];
+      this.initialized.set(true); // Still mark as initialized to prevent blocking
     });
   }
+
 
   // ============================================
   // İş Mantığı - AYNEN KORUNDU
@@ -104,6 +121,12 @@ export class SettingsService {
   }
 
   setLocalStorage(): void {
+    // Only subscribe if settings are initialized
+    if (!this.initialized()) {
+      console.warn('SettingsService: setLocalStorage called before initialization complete');
+      return;
+    }
+
     this.DateSettings.subscribe(res => {
       if (res) {
         localStorage.setItem('DayStatus', JSON.stringify(res.value));

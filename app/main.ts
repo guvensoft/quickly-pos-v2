@@ -150,6 +150,9 @@ function createWindow(): BrowserWindow {
       const reloaderFn = (reloader as any).default || reloader;
       reloaderFn(module);
     });
+
+    // Clear cache and load URL
+    win.webContents.session.clearCache();
     win.loadURL('http://localhost:4200');
   } else {
     // Path when running electron executable
@@ -186,6 +189,23 @@ function createWindow(): BrowserWindow {
   win.webContents.on('did-finish-load', () => {
     if (serve) win?.webContents.openDevTools();
   });
+
+  // Add F5 shortcut to clear cache and reload (development only)
+  if (serve) {
+    win.webContents.on('before-input-event', (event, input) => {
+      if (input.key === 'F5') {
+        event.preventDefault();
+        console.log('F5 pressed - Clearing cache and reloading...');
+        win?.webContents.session.clearCache().then(() => {
+          win?.webContents.session.clearStorageData({
+            storages: ['filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage']
+          }).then(() => {
+            win?.webContents.reloadIgnoringCache();
+          });
+        });
+      }
+    });
+  }
 
   // Emitted when the window is closed.
   win.on('closed', () => {
