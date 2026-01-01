@@ -11,3 +11,7 @@
 [2025-12-30T01:38:23.265Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
 [2025-12-30T01:38:25.275Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
 [2025-12-30T01:38:27.297Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
+[2026-01-01T15:16:44.511Z] [error] Uncaught (in promise) Error: ENOENT: no such file or directory, open 'data/customer.png' {"source":"renderer","url":"file:///Users/guvensoft/Desktop/ads%C4%B1z%20klaso%CC%88r/quickly-pos-v2/dist/browser/setup","line":1,"sourceId":"file:///Users/guvensoft/Desktop/ads%C4%B1z%20klaso%CC%88r/quickly-pos-v2/dist/browser/main.js"}
+[2026-01-01T15:17:29.218Z] [error] (node:41441) electron: Failed to load URL: file:///Users/guvensoft/Desktop/ads%C4%B1z%20klaso%CC%88r/quickly-pos-v2/dist/browser/setup with error: ERR_FILE_NOT_FOUND
+(Use `Electron --trace-warnings ...` to show where the warning was created)
+[2026-01-01T15:18:09.326Z] [error] (node:41441) electron: Failed to load URL: file:///Users/guvensoft/Desktop/ads%C4%B1z%20klaso%CC%88r/quickly-pos-v2/dist/browser/setup with error: ERR_FILE_NOT_FOUND
