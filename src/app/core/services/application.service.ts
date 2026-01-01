@@ -3,6 +3,9 @@ import { Router } from '@angular/router';
 import { MessageService } from '../../core/services/message.service';
 import { SettingsService } from './settings.service';
 import { DialogFacade } from './dialog.facade';
+import { ElectronService } from '../../core/services/electron/electron.service';
+import { MainService } from '../../core/services/main.service';
+import { PrinterService } from '../../core/services/printer.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +15,9 @@ export class ApplicationService {
   private messageService = inject(MessageService);
   private router = inject(Router);
   private dialogFacade = inject(DialogFacade);
+  private electronService = inject(ElectronService);
+  private mainService = inject(MainService);
+  private printerService = inject(PrinterService);
 
   appLockTime!: number;
   appDayStatus!: object;
