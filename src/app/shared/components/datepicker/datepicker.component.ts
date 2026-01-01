@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, forwardRef } from '@angular/core';
+import { Component, input, output, forwardRef, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 
@@ -26,10 +26,10 @@ import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
   ],
   template: `
     <div class="datepicker-wrapper">
-      @if (label) {
+      @if (label()) {
         <label class="datepicker-label">
-          {{ label }}
-          @if (required) {
+          {{ label() }}
+          @if (required()) {
             <span class="text-danger">*</span>
           }
         </label>
@@ -39,19 +39,19 @@ import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
           type="date"
           class="datepicker-input"
           [value]="value"
-          [disabled]="disabled"
-          [min]="minDate"
-          [max]="maxDate"
-          [required]="required"
+          [disabled]="isDisabled()"
+          [min]="minDate()"
+          [max]="maxDate()"
+          [required]="required()"
           (change)="onDateChange($event)"
           (blur)="onTouched()"
         />
-        @if (value && clearable) {
+        @if (value && clearable()) {
           <button
             type="button"
             class="datepicker-clear-btn"
             (click)="clearDate()"
-            [disabled]="disabled"
+            [disabled]="isDisabled()"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -60,8 +60,8 @@ import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
           </button>
         }
       </div>
-      @if (error) {
-        <div class="datepicker-error">{{ error }}</div>
+      @if (error()) {
+        <div class="datepicker-error">{{ error() }}</div>
       }
     </div>
   `,
@@ -148,19 +148,23 @@ import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
   `]
 })
 export class DatepickerComponent implements ControlValueAccessor {
-  @Input() label: string | null = null;
-  @Input() required = false;
-  @Input() clearable = true;
-  @Input() minDate: string | null = null;
-  @Input() maxDate: string | null = null;
-  @Input() error: string | null = null;
-  @Input() disabled = false;
+  readonly label = input<string | null>(null);
+  readonly required = input(false);
+  readonly clearable = input(true);
+  readonly minDate = input<string | null>(null);
+  readonly maxDate = input<string | null>(null);
+  readonly error = input<string | null>(null);
 
-  @Output() dateChange = new EventEmitter<string | null>();
+  // Handle disabled state from both input and form control
+  readonly disabledInput = input(false, { alias: 'disabled' });
+  private readonly formDisabled = signal(false);
+  readonly isDisabled = computed(() => this.disabledInput() || this.formDisabled());
+
+  readonly dateChange = output<string | null>();
 
   value: string = '';
-  onChange: (value: string | null) => void = () => {};
-  onTouched: () => void = () => {};
+  onChange: (value: string | null) => void = () => { };
+  onTouched: () => void = () => { };
 
   writeValue(value: any): void {
     if (value) {
@@ -185,7 +189,7 @@ export class DatepickerComponent implements ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   onDateChange(event: Event): void {

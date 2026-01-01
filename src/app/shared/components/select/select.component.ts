@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, forwardRef } from '@angular/core';
+import { Component, input, output, forwardRef, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor, FormsModule } from '@angular/forms';
 
@@ -33,10 +33,10 @@ export interface SelectOption {
   ],
   template: `
     <div class="select-wrapper">
-      @if (label) {
+      @if (label()) {
         <label class="select-label">
-          {{ label }}
-          @if (required) {
+          {{ label() }}
+          @if (required()) {
             <span class="text-danger">*</span>
           }
         </label>
@@ -45,15 +45,15 @@ export interface SelectOption {
         <select
           class="select-input"
           [value]="value"
-          [disabled]="disabled"
-          [required]="required"
+          [disabled]="isDisabled()"
+          [required]="required()"
           (change)="onSelectionChange($event)"
           (blur)="onTouched()"
         >
-          @if (placeholder) {
-            <option value="" disabled selected>{{ placeholder }}</option>
+          @if (placeholder()) {
+            <option value="" disabled selected>{{ placeholder() }}</option>
           }
-          @for (option of options; track option.value) {
+          @for (option of options(); track option.value) {
             <option [value]="option.value" [disabled]="option.disabled">
               {{ option.label }}
             </option>
@@ -63,8 +63,8 @@ export interface SelectOption {
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
-      @if (error) {
-        <div class="select-error">{{ error }}</div>
+      @if (error()) {
+        <div class="select-error">{{ error() }}</div>
       }
     </div>
   `,
@@ -148,18 +148,22 @@ export interface SelectOption {
   `]
 })
 export class SelectComponent implements ControlValueAccessor {
-  @Input() label: string | null = null;
-  @Input() placeholder: string | null = null;
-  @Input() options: SelectOption[] = [];
-  @Input() required = false;
-  @Input() error: string | null = null;
-  @Input() disabled = false;
+  readonly label = input<string | null>(null);
+  readonly placeholder = input<string | null>(null);
+  readonly options = input<SelectOption[]>([]);
+  readonly required = input(false);
+  readonly error = input<string | null>(null);
 
-  @Output() selectionChange = new EventEmitter<string | number | null>();
+  // Disabled logic
+  readonly disabledInput = input(false, { alias: 'disabled' });
+  private readonly formDisabled = signal(false);
+  readonly isDisabled = computed(() => this.disabledInput() || this.formDisabled());
+
+  readonly selectionChange = output<string | number | null>();
 
   value: string | number = '';
-  onChange: (value: string | number | null) => void = () => {};
-  onTouched: () => void = () => {};
+  onChange: (value: string | number | null) => void = () => { };
+  onTouched: () => void = () => { };
 
   writeValue(value: any): void {
     this.value = value ?? '';
@@ -174,7 +178,7 @@ export class SelectComponent implements ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   onSelectionChange(event: Event): void {

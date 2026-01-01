@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { Directive, ElementRef, HostListener, Input } from '@angular/core';
+import { Directive, ElementRef, HostListener, input } from '@angular/core';
 
 @Directive({
     selector: '[oneShot]',
@@ -7,12 +7,12 @@ import { Directive, ElementRef, HostListener, Input } from '@angular/core';
 })
 export class ButtonDirective {
 
-    @Input('oneShot') isActive: any = true;
+    readonly isActive = input<any>(true, { alias: 'oneShot' });
 
     constructor(private element: ElementRef) { }
 
     @HostListener('click') onClick() {
-        if (this.isActive !== false && this.isActive !== 'false') {
+        if (this.isActive() !== false && this.isActive() !== 'false') {
             this.element.nativeElement.disabled = true;
         }
     }

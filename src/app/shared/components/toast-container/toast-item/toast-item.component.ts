@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Toast } from '../../../../core/services/toast.service';
 
@@ -11,9 +11,9 @@ import { Toast } from '../../../../core/services/toast.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="toast" [ngClass]="'toast-' + toast.type" [@slideIn]>
+    <div class="toast" [ngClass]="'toast-' + toast().type">
       <div class="toast-content">
-        <div class="toast-message">{{ toast.message }}</div>
+        <div class="toast-message">{{ toast().message }}</div>
       </div>
       <button class="toast-close" type="button" (click)="onClose()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -112,10 +112,10 @@ import { Toast } from '../../../../core/services/toast.service';
   `]
 })
 export class ToastItemComponent {
-  @Input() toast!: Toast;
-  @Output() dismissed = new EventEmitter<string>();
+  readonly toast = input.required<Toast>();
+  readonly dismissed = output<string>();
 
   onClose(): void {
-    this.dismissed.emit(this.toast.id);
+    this.dismissed.emit(this.toast().id);
   }
 }

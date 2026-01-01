@@ -1,16 +1,16 @@
-import { Directive, Input } from '@angular/core';
+import { Directive, input } from '@angular/core';
 
 @Directive({
     selector: 'canvas[baseChart]',
     standalone: true,
 })
 export class BaseChartDirective {
-    @Input() data?: unknown;
-    @Input() datasets?: unknown;
-    @Input() labels?: unknown;
-    @Input() options?: unknown;
-    @Input() legend?: unknown;
-    @Input() colors?: unknown;
-    @Input() chartType?: unknown;
-    @Input() type?: unknown;
+    readonly data = input<unknown>();
+    readonly datasets = input<unknown>();
+    readonly labels = input<unknown>();
+    readonly options = input<unknown>();
+    readonly legend = input<unknown>();
+    readonly colors = input<unknown>();
+    readonly chartType = input<unknown>();
+    readonly type = input<unknown>();
 }
