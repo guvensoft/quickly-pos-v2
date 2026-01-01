@@ -83,7 +83,7 @@ export class PaymentScreenComponent implements OnDestroy {
   readonly userId = signal<string | undefined>(undefined);
   readonly userName = signal<string | undefined>(undefined);
   readonly day = signal<number>(0);
-  readonly permissions = signal<any>({});
+  readonly permissions = signal<Record<string, any>>({});
 
   readonly printers = this.databaseService.receipts;
   readonly customers = this.databaseService.customers;
@@ -131,7 +131,7 @@ export class PaymentScreenComponent implements OnDestroy {
 
     // AppSettings subscription wrapped in effect
     effect(() => {
-      this.settingsService.getAppSettings().subscribe((res: any) => {
+      this.settingsService.getAppSettings().subscribe((res) => {
         if (res && res.value) {
           this.askForPrint.set(res.value.ask_print_check === 'Sor');
         }
@@ -209,7 +209,7 @@ export class PaymentScreenComponent implements OnDestroy {
             this.productsWillPay.set(willPay);
           }
         } else if (isAnyGreat) {
-          const sortedProducts = [...willPay].sort((a: any, b: any) => b.price - a.price);
+          const sortedProducts = [...willPay].sort((a: CheckProduct, b: CheckProduct) => b.price - a.price);
           const greatOne = sortedProducts[0];
           if (greatOne) {
             const greatOneCopy = { ...greatOne };
@@ -222,8 +222,8 @@ export class PaymentScreenComponent implements OnDestroy {
           newPayment = new PaymentStatus(this.userName() || '', method, (activePayPrice - this.discountAmount()), this.discountAmount(), Date.now(), []);
           let priceCount = activePayPrice;
           let willRemove = 0;
-          const sorted = [...willPay].sort((a: any, b: any) => b.price - a.price);
-          sorted.forEach((product: any, index: number) => {
+          const sorted = [...willPay].sort((a: CheckProduct, b: CheckProduct) => b.price - a.price);
+          sorted.forEach((product: CheckProduct, index: number) => {
             if (priceCount > 0) {
               if (priceCount >= product.price) {
                 newPayment.payed_products.push({ ...product });
@@ -316,7 +316,7 @@ export class PaymentScreenComponent implements OnDestroy {
     );
 
     if (this.askForPrint()) {
-      this.messageService.sendConfirm('Fiş Yazdırılsın mı ?').then((isOK: any) => {
+      this.messageService.sendConfirm('Fiş Yazdırılsın mı ?').then((isOK: boolean) => {
         if (isOK) {
           this.printerService.printCheck(this.printers()[0], this.table(), checkWillClose);
         }
@@ -382,7 +382,7 @@ export class PaymentScreenComponent implements OnDestroy {
       status: 0
     };
 
-    this.mainService.addData('credits', creditData as any).then((res: any) => {
+    this.mainService.addData('credits', creditData).then((res) => {
       if (res.ok) {
         if (c.type === 1) {
           this.mainService.updateData('tables', c.table_id, { status: 1 });
@@ -469,7 +469,7 @@ export class PaymentScreenComponent implements OnDestroy {
     this.numpad.set(this.payedPrice().toString());
   }
 
-  pushKey(key: any) {
+  pushKey(key: string | number) {
     if (key === "✔") {
       this.payedPrice.set(parseFloat(this.numpad()) || 0);
       this.numpad.set('');
@@ -478,7 +478,7 @@ export class PaymentScreenComponent implements OnDestroy {
         this.numpad.set('');
         this.isFirstTime.set(false);
       }
-      this.numpad.update(prev => prev + key);
+      this.numpad.update(prev => prev + key.toString());
     }
   }
 
@@ -523,17 +523,18 @@ export class PaymentScreenComponent implements OnDestroy {
       }
     } else {
       const sellingReports = reports.filter(r => r.type === "Store");
-      check.payment_flow?.forEach((obj: any) => {
-        const reportWillChange = sellingReports.find((report: any) => report.connection_id == obj.method);
+      check.payment_flow?.forEach((obj: PaymentStatus) => {
+        const reportWillChange = sellingReports.find((report) => report.connection_id == obj.method);
         if (reportWillChange) {
           const updated = { ...reportWillChange };
           updated.count++;
           updated.weekly_count[this.day()]++;
           updated.amount += obj.amount;
-          updated.weekly[this.day()] += obj.amount;
-          updated.monthly[new Date().getMonth()] += obj.amount;
+          if (updated.weekly && updated.weekly[this.day()] !== undefined) {
+            updated.weekly[this.day()] += obj.amount;
+          }
           updated.timestamp = Date.now();
-          this.mainService.updateData('reports', updated._id, updated);
+          this.mainService.updateData('reports', updated._id!, updated);
         }
       });
     }

@@ -1130,7 +1130,7 @@ export class SellingScreenComponent implements OnDestroy {
       this.mainService.getAllBy('reports', { connection_id: obj.id }).then((res) => {
         if (res.docs.length > 0) {
           const report = res.docs[0];
-          this.mainService.changeData('reports', report._id!, (doc) => {
+          this.mainService.changeData('reports', report._id!, (doc: ReportDocument) => {
             if (doc.count !== undefined) doc.count += obj.amount;
             if (doc.amount !== undefined) doc.amount += obj.price;
             doc.timestamp = Date.now();
@@ -1145,20 +1145,20 @@ export class SellingScreenComponent implements OnDestroy {
           });
         }
       });
-      this.mainService.getAllBy('recipes', { product_id: obj.product }).then((result: any) => {
+      this.mainService.getAllBy('recipes', { product_id: obj.id }).then((result) => {
         if (result.docs.length > 0) {
           const pRecipe: Array<Ingredient> = result.docs[0].recipe;
-          pRecipe.forEach((stock: any) => {
-            const downStock = stock.amount * obj.count;
-            this.mainService.changeData('stocks', stock.stock_id, (doc: any) => {
+          pRecipe.forEach((stock: Ingredient) => {
+            const downStock = stock.amount * obj.amount;
+            this.mainService.changeData('stocks', stock.stock_id, (doc: StockDocument) => {
               doc.left_total -= downStock;
               doc.quantity = doc.total > 0 ? doc.left_total / doc.total : 0;
               if (doc.left_total < doc.warning_limit) {
                 if (doc.db_name) {
                   if (doc.left_total <= 0) {
-                    this.logService.createLog(logType.STOCK_CHECKPOINT, doc._id, `${doc.name} adlı stok tükendi!`);
+                    this.logService.createLog(logType.STOCK_CHECKPOINT, doc._id!, `${doc.name} adlı stok tükendi!`);
                   } else {
-                    this.logService.createLog(logType.STOCK_CHECKPOINT, doc._id, `${doc.name} adlı stok bitmek üzere! - Kalan: '${doc.left_total + ' ' + doc.unit}'`);
+                    this.logService.createLog(logType.STOCK_CHECKPOINT, doc._id!, `${doc.name} adlı stok bitmek üzere! - Kalan: '${doc.left_total + ' ' + doc.unit}'`);
                   }
                 }
               }
@@ -1191,7 +1191,7 @@ export class SellingScreenComponent implements OnDestroy {
       if (currentCheck.products.some((obj: any) => obj.status == 1)) {
         currentCheck.products = currentCheck.products.filter((obj: any) => obj.status !== 1);
         this.mainService.addData('checks', currentCheck).then((res: any) => {
-          this.mainService.updateData('tables', this.table()._id, { status: 2, timestamp: Date.now() }).then(() => {
+          this.mainService.updateData('tables', this.table()._id!, { status: 2, timestamp: Date.now() }).then(() => {
             setTimeout(() => {
               const qrdata = `https://quickly.cafe/${slug}/${res.id}`;
               this.printerService.printQRCode(printer, qrdata, this.table().name, ownerName);
@@ -1200,7 +1200,7 @@ export class SellingScreenComponent implements OnDestroy {
         });
       } else {
         this.mainService.addData('checks', currentCheck).then((res: any) => {
-          this.mainService.updateData('tables', this.table()._id, { status: 2, timestamp: Date.now() }).then(() => {
+          this.mainService.updateData('tables', this.table()._id!, { status: 2, timestamp: Date.now() }).then(() => {
             setTimeout(() => {
               const qrdata = `https://quickly.cafe//${slug}/${res.id}`;
               this.printerService.printQRCode(printer, qrdata, this.table().name, ownerName);
@@ -1343,7 +1343,7 @@ export class SellingScreenComponent implements OnDestroy {
                         payedDiscounts += obj.discount;
                         this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r) => {
                           const currentDay = this.day();
-                          this.mainService.changeData('reports', (r.docs[0])._id!, (doc) => {
+                          this.mainService.changeData('reports', (r.docs[0])._id!, (doc: ReportDocument) => {
                             if (doc.count !== undefined) doc.count++;
                             if (doc.weekly_count && doc.weekly_count[currentDay] !== undefined) doc.weekly_count[currentDay]++;
                             if (doc.amount !== undefined) doc.amount += obj.amount;
@@ -1360,16 +1360,16 @@ export class SellingScreenComponent implements OnDestroy {
                       const checksForPayed = new ClosedCheck(currentCheck.table_id, currentCheck.discount, payedDiscounts, ownerName, currentCheck.note, currentCheck.status, [], Date.now(), currentCheck.type, 'Parçalı', currentCheck.payment_flow, undefined, currentCheck.occupation);
                       this.mainService.addData('closed_checks', checksForPayed);
                     }
-                    this.mainService.removeData('checks', currentCheck._id).then((res: any) => {
+                    this.mainService.removeData('checks', currentCheck._id!).then((res: any) => {
                       if (res.ok) {
-                        this.mainService.updateData('tables', currentCheck.table_id, { status: 1 }).then((res: any) => {
+                        this.mainService.updateData('tables', currentCheck.table_id!, { status: 1 }).then((res: any) => {
                           this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
                         });
                         this.router.navigate(['/store']);
                       }
                     });
                   } else {
-                    this.mainService.updateData('checks', currentCheck._id, currentCheck).then((res: any) => {
+                    this.mainService.updateData('checks', currentCheck._id!, currentCheck).then((res: any) => {
                       if (res.ok) {
                         this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
                         currentCheck._rev = res.rev;
@@ -1402,7 +1402,7 @@ export class SellingScreenComponent implements OnDestroy {
                     payedDiscounts += obj.discount;
                     this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r) => {
                       const currentDay = this.day();
-                      this.mainService.changeData('reports', (r.docs[0])._id!, (doc) => {
+                      this.mainService.changeData('reports', (r.docs[0])._id!, (doc: ReportDocument) => {
                         if (doc.count !== undefined) doc.count++;
                         if (doc.weekly_count && doc.weekly_count[currentDay] !== undefined) doc.weekly_count[currentDay]++;
                         if (doc.amount !== undefined) doc.amount += obj.amount;
@@ -1419,16 +1419,16 @@ export class SellingScreenComponent implements OnDestroy {
                   const checksForPayed = new ClosedCheck(currentCheck.table_id, currentCheck.discount, payedDiscounts, ownerName, currentCheck.note, currentCheck.status, [], Date.now(), currentCheck.type, 'Parçalı', currentCheck.payment_flow, undefined, currentCheck.occupation);
                   this.mainService.addData('closed_checks', checksForPayed);
                 }
-                this.mainService.removeData('checks', currentCheck._id).then((r: any) => {
+                this.mainService.removeData('checks', currentCheck._id!).then((r: any) => {
                   if (r.ok) {
-                    this.mainService.updateData('tables', currentCheck.table_id, { status: 1 }).then((res: any) => {
+                    this.mainService.updateData('tables', currentCheck.table_id!, { status: 1 }).then((res: any) => {
                       this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
                     });
                     this.router.navigate(['/store']);
                   }
                 });
               } else {
-                this.mainService.updateData('checks', currentCheck._id, currentCheck).then((r: any) => {
+                this.mainService.updateData('checks', currentCheck._id!, currentCheck).then((r: any) => {
                   if (r.ok) {
                     this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
                     currentCheck._rev = r.rev;
@@ -1462,9 +1462,9 @@ export class SellingScreenComponent implements OnDestroy {
           if (res.ok) {
             this.message.sendMessage(`Hesap ${selectedTab.name} Masasına Aktarıldı.`);
             if (currentCheck.type == CheckType.NORMAL) {
-              this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentTable.name} Hesabı ${selectedTab.name} masasına taşındı.`);
+              this.logService.createLog(logType.CHECK_MOVED, currentCheck._id!, `${currentTable.name} Hesabı ${selectedTab.name} masasına taşındı.`);
             } else {
-              this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentCheck.note} Hesabı ${selectedTab.name} masasına taşındı.`);
+              this.logService.createLog(logType.CHECK_MOVED, currentCheck._id!, `${currentCheck.note} Hesabı ${selectedTab.name} masasına taşındı.`);
             }
             this.router.navigate(['/store']);
           }
@@ -1479,10 +1479,10 @@ export class SellingScreenComponent implements OnDestroy {
               otherCheck.products = otherCheck.products.concat(currentCheck.products);
               otherCheck.total_price += currentCheck.total_price;
               if (currentCheck.type == CheckType.NORMAL) {
-                this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentTable.name} Masası ${selectedTab.name} ile Birleştirildi.`);
+                this.logService.createLog(logType.CHECK_MOVED, currentCheck._id!, `${currentTable.name} Masası ${selectedTab.name} ile Birleştirildi.`);
               } else {
                 otherCheck.note = `${currentCheck.note} Hesabı İle Birleştirildi`;
-                this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentCheck.note} Hesabı ${selectedTab.name} Masasına Aktarıldı.`);
+                this.logService.createLog(logType.CHECK_MOVED, currentCheck._id!, `${currentCheck.note} Hesabı ${selectedTab.name} Masasına Aktarıldı.`);
               }
               if (currentCheck.payment_flow) {
                 if (otherCheck.payment_flow) {
@@ -1498,7 +1498,7 @@ export class SellingScreenComponent implements OnDestroy {
                   if (currentCheck.type == CheckType.NORMAL) {
                     this.mainService.updateData('tables', currentCheck.table_id, { status: 1 });
                   }
-                  this.mainService.removeData('checks', currentCheck._id).then((r: any) => {
+                  this.mainService.removeData('checks', currentCheck._id!).then((r: any) => {
                     if (r.ok) {
                       this.message.sendMessage(`Hesap ${selectedTab.name} Masası ile Birleştirildi.`);
                       this.router.navigate(['/store']);
@@ -1531,7 +1531,7 @@ export class SellingScreenComponent implements OnDestroy {
 
     if (currentCheck.type == CheckType.NORMAL) {
       if (currentCheck.status !== CheckStatus.PASSIVE) {
-        this.mainService.changeData('checks', currentCheck._id, (doc: any) => {
+        this.mainService.changeData('checks', currentCheck._id!, (doc: any) => {
           doc.discountPercent = value;
           return doc;
         });

@@ -48,7 +48,7 @@ export class StoreComponent implements OnDestroy {
   readonly filterText = signal<string>('');
   readonly owner = signal<string>('');
   readonly ownerId = signal<string>('');
-  readonly closedDelivery = signal<any[]>([]);
+  readonly closedDelivery = signal<Check[]>([]);
 
   // Computed views (Reactive!)
   readonly tableViews = computed(() => {
@@ -77,16 +77,16 @@ export class StoreComponent implements OnDestroy {
     return this.orders()
       .filter(o => o.status === OrderStatus.WAITING || o.status === OrderStatus.PREPARING)
       .filter(o => o.type !== OrderType.EMPLOOYEE)
-      .filter(({ check }: any) => viewChecks.some(obj => obj._id === check))
-      .sort((a: any, b: any) => b.timestamp - a.timestamp);
+      .filter(({ check }) => viewChecks.some(obj => obj._id === check))
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   });
 
   readonly receiptsView = computed(() => {
     const viewChecks = this.checksView();
     return this.receipts()
       .filter(r => r.status === ReceiptStatus.WAITING || r.status === ReceiptStatus.READY)
-      .filter(({ check }: any) => viewChecks.some(obj => obj._id === check))
-      .sort((a: any, b: any) => b.timestamp - a.timestamp);
+      .filter(({ check }) => viewChecks.some(obj => obj._id === check))
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   });
 
   readonly waitingOrders = computed(() => this.ordersView().length);
@@ -117,11 +117,11 @@ export class StoreComponent implements OnDestroy {
 
   async fetchClosedDelivery() {
     const res = await this.mainService.getAllBy('closed_checks', { type: CheckType.ORDER });
-    const delivery = res.docs.sort((a: any, b: any) => b.timestamp - a.timestamp);
+    const delivery = (res.docs as Check[]).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     // Combine with current delivery checks
     const deliveryChecks = this.checks().filter(obj => obj.type === CheckType.ORDER);
     deliveryChecks.forEach(check => {
-      delivery.unshift(check as any);
+      delivery.unshift(check);
     });
     this.closedDelivery.set(delivery);
   }
@@ -173,7 +173,7 @@ export class StoreComponent implements OnDestroy {
     const approveTime = Date.now();
     const CountData: Array<CountData> = [];
     this.mainService.changeData('checks', order.check, (check: Check) => {
-      order.items.forEach((orderItem: any) => {
+      order.items.forEach((orderItem) => {
         const mappedProduct = this.products().find(product => product._id === orderItem.product_id || product.name === orderItem.name);
         if (mappedProduct) {
           const newProduct = new CheckProduct(mappedProduct._id!, mappedProduct.cat_id, mappedProduct.name + (orderItem.type ? ' ' + orderItem.type : ''), orderItem.price, orderItem.note, 2, this.ownerId(), approveTime, mappedProduct.tax_value, mappedProduct.barcode);
@@ -259,7 +259,7 @@ export class StoreComponent implements OnDestroy {
     return table?.name ?? "";
   }
 
-  countProductsData = (counDataArray: Array<CountData>, id: string, price: number, manuelCount?: number): Array<CountData> => {
+  countProductsData(counDataArray: Array<CountData>, id: string, price: number, manuelCount?: number): Array<CountData> {
     const countObj: CountData = { product: id, count: manuelCount ?? 1, total: price };
     const index = counDataArray.findIndex(p => p.product === id);
     if (index > -1) {
@@ -273,36 +273,45 @@ export class StoreComponent implements OnDestroy {
 
   updateProductReport = async (count_data: Array<CountData>): Promise<boolean> => {
     try {
-      const StoreDayInfo: DayInfo = (await (this.mainService.LocalDB['allData'] as any).find({ selector: { key: 'DateSettings' } })).docs[0].value;
+      const allDB = this.mainService.LocalDB['allData'];
+      const dateSettingsRes = await allDB.find({ selector: { key: 'DateSettings' } });
+      const StoreDayInfo: DayInfo = dateSettingsRes.docs[0].value;
       const Month = new Date(StoreDayInfo.time).getMonth();
 
-      count_data.forEach(async (obj: CountData) => {
-        const ProductReport: Report = (await (this.mainService.LocalDB['allData'] as any).find({ selector: { db_name: 'reports', connection_id: obj.product } })).docs[0];
-        const ProductRecipe: any = (await (this.mainService.LocalDB['allData'] as any).find({ selector: { db_name: 'recipes', product_id: obj.product } })).docs[0];
+      for (const obj of count_data) {
+        const reportRes = await allDB.find({ selector: { db_name: 'reports', connection_id: obj.product } });
+        const recipeRes = await allDB.find({ selector: { db_name: 'recipes', product_id: obj.product } });
+
+        const ProductReport = reportRes.docs[0] as unknown as Report;
+        const ProductRecipe = recipeRes.docs[0] as any;
+
         if (ProductReport) {
-          (this.mainService.LocalDB['allData'] as any).upsert(ProductReport._id, (doc: Report) => {
-            doc.count += obj.count;
-            doc.amount += obj.total;
-            doc.weekly[StoreDayInfo.day] += obj.total;
-            doc.weekly_count[StoreDayInfo.day] += obj.count;
-            doc.monthly[Month] += obj.total;
-            doc.weekly_count[Month] += obj.count;
-            return doc;
+          await allDB.upsert(ProductReport._id!, (doc: any) => {
+            const rDoc = doc as Report;
+            rDoc.count += obj.count;
+            rDoc.amount += obj.total;
+            rDoc.weekly[StoreDayInfo.day] += obj.total;
+            rDoc.weekly_count[StoreDayInfo.day] += obj.count;
+            rDoc.monthly[Month] += obj.total;
+            rDoc.weekly_count[Month] += obj.count;
+            return rDoc;
           });
         }
         if (ProductRecipe && ProductRecipe.recipe) {
-          ProductRecipe.recipe.forEach((ingredient: any) => {
+          for (const ingredient of ProductRecipe.recipe) {
             const downStock = ingredient.amount * obj.count;
-            (this.mainService.LocalDB['allData'] as any).upsert(ingredient.stock_id, (doc: Stock) => {
-              doc.left_total -= downStock;
-              doc.quantity = doc.left_total / doc.total;
-              return doc;
+            await allDB.upsert(ingredient.stock_id, (doc: any) => {
+              const sDoc = doc as Stock;
+              sDoc.left_total -= downStock;
+              sDoc.quantity = sDoc.total > 0 ? sDoc.left_total / sDoc.total : 0;
+              return sDoc;
             });
-          });
+          }
         }
-      });
+      }
       return true;
     } catch (error) {
+      console.error('Error updating product report:', error);
       return false;
     }
   }

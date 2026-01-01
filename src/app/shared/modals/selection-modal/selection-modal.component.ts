@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { BaseModalComponent } from '../base-modal.component';
 
-export interface SelectionItem {
-  id: any;
+export interface SelectionItem<T = any> {
+  id: string | number;
   label: string;
   subLabel?: string;
-  data?: any;
+  data?: T;
 }
 
 export interface SelectionModalData {

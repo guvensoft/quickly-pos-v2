@@ -1,4 +1,5 @@
 import { Component, Inject, signal, computed } from '@angular/core';
+import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
@@ -12,7 +13,7 @@ export interface NumpadData {
   unit: string;
   showTare?: boolean;
   onTare?: (val: number) => void;
-  scaler$?: any;
+  scaler$?: Observable<number>;
 }
 
 @Component({
