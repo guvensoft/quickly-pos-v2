@@ -13,6 +13,7 @@ import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { TruncatePipe } from '../../../shared/pipes/truncate.pipe';
 import { BaseChartDirective } from 'ng2-charts';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -25,6 +26,7 @@ export class DayDetailComponent {
   private readonly electronService = inject(ElectronService);
   private readonly printerService = inject(PrinterService);
   private readonly settingsService = inject(SettingsService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   // Input signals (already modern)
   detailData = input.required<EndDay>({ alias: 'data' });
@@ -50,10 +52,6 @@ export class DayDetailComponent {
   readonly tablesTable = signal<Array<Report>>([]);
   readonly logsTable = signal<Array<Log>>([]);
 
-  // Detail record signals (2)
-  readonly checkDetail = signal<ClosedCheck | undefined>(undefined);
-  readonly cashDetail = signal<Cashbox | undefined>(undefined);
-
   // Activity signals (3)
   readonly activityData = signal<any>(undefined);
   readonly activityLabels = signal<any>(undefined);
@@ -64,27 +62,29 @@ export class DayDetailComponent {
         tension: 0.5,
       }
     },
-    legend: { labels: { fontColor: 'rgb(255, 255, 255)' } },
+    plugins: {
+      legend: { labels: { fontColor: 'rgb(255, 255, 255)' } }
+    },
     scales: {
-      xAxes: [{
+      x: {
         ticks: {
           beginAtZero: true,
-          fontColor: 'rgba(255,255,255)'
+          color: 'rgba(255,255,255)'
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }],
-      yAxes: [{
+      },
+      y: {
         ticks: {
-          fontColor: 'rgba(255,255,255)'
+          color: 'rgba(255,255,255)'
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }]
+      }
     },
   });
 
@@ -115,7 +115,14 @@ export class DayDetailComponent {
     this.pieLabels.set([]);
     this.cashboxTable.set([]);
     this.checksTable.set([]);
-    this.fillData();
+
+    // Load data after inputs are initialized
+    effect(() => {
+      // Access detailData to trigger effect when it changes
+      if (this.detailData()) {
+        this.fillData();
+      }
+    });
   }
 
   filterOldData(section: any, filter: any) {
@@ -216,13 +223,18 @@ export class DayDetailComponent {
   }
 
   showCheckDetail(check: any) {
-    this.checkDetail.set(check);
-    (window as any).$('#checkDetail').modal('show');
+    this.dialogFacade.openCheckDetailModal({ ...check, readOnly: true }).closed.subscribe((result: any) => {
+      if (result?.action === 'print') {
+        const printerList = this.printers();
+        if (printerList && printerList.length > 0) {
+          this.printerService.printCheck(printerList[0], {}, result.data);
+        }
+      }
+    });
   }
 
   showCashDetail(cash: any) {
-    this.cashDetail.set(cash);
-    (window as any).$('#cashDetail').modal('show');
+    this.dialogFacade.openCashDetailModal(cash);
   }
 
   fillData() {
@@ -230,26 +242,34 @@ export class DayDetailComponent {
     this.pieColors.set([{ backgroundColor: ['#5cb85c', '#f0ad4e', '#5bc0de', '#d9534f'] }]);
     const newLabels = ['Nakit', 'Kart', 'Kupon', 'İkram'];
     this.pieLabels.set(newLabels);
-    this.pieData.set([data.cash_total, data.card_total, data.coupon_total, data.free_total]);
+    this.pieData.set([{ data: [data.cash_total, data.card_total, data.coupon_total, data.free_total], label: 'Ödeme Yöntemleri' }]);
     this.detailDay.set(new Date(data.timestamp).getDay());
-    this.electronService.readBackupData(data.data_file).then((result: Array<BackupData>) => {
-      if (result && Array.isArray(result) && result.length >= 4) {
-        this.oldBackupData.set(result);
-        this.oldChecks.set(this.oldBackupData()[0]);
-        this.oldCashbox.set(this.oldBackupData()[1]);
-        this.oldReports.set(this.oldBackupData()[2]);
-        this.oldLogs.set(this.oldBackupData()[3]);
-        this.syncStatus.set(true);
-      } else {
-        console.warn('Invalid backup data structure');
+
+    // Silent fail for missing backup files
+    try {
+      this.electronService.readBackupData(data.data_file).then((result: Array<BackupData>) => {
+        if (result && Array.isArray(result) && result.length >= 4) {
+          this.oldBackupData.set(result);
+          this.oldChecks.set(this.oldBackupData()[0]);
+          this.oldCashbox.set(this.oldBackupData()[1]);
+          this.oldReports.set(this.oldBackupData()[2]);
+          this.oldLogs.set(this.oldBackupData()[3]);
+          this.syncStatus.set(true);
+        } else {
+          this.oldBackupData.set([]);
+          this.syncStatus.set(false);
+        }
+      }).catch(() => {
+        // Silently fail for missing backup files - ENOENT errors are expected
+        // for archived or deleted backups from old end-of-day records
         this.oldBackupData.set([]);
         this.syncStatus.set(false);
-      }
-    }).catch(err => {
-      console.error('Error reading backup data:', err);
+      });
+    } catch (err) {
+      // Fallback for synchronous errors
       this.oldBackupData.set([]);
       this.syncStatus.set(false);
-    });
+    }
   }
 
   chartClicked(e: any): void {

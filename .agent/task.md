@@ -1,0 +1,10 @@
+- [ ] Research e‑Adisyon XML/XSD and GİB API requirements
+- [ ] Design Quick‑POS service layer for e‑Adisyon creation, signing, and submission
+- [ ] Implement `e-adisyon.service.ts` (XML builder, XAdES signing, UUID handling)
+- [ ] Extend `main.service.ts` with CRUD helpers for `checks` to include e‑Adisyon fields
+- [ ] Add UI components: `e-adisyon-preview.component.ts/html` and integration in selling flow
+- [ ] Write unit tests for XML generation and signature
+- [ ] Write integration test for full e‑Adisyon submission (mock GİB endpoint)
+- [ ] Update replication/conflict resolution for e‑Adisyon documents
+- [ ] Update documentation and README with integration guide
+- [ ] Perform manual end‑to‑end test (create check → generate e‑Adisyon → submit → verify UUID/ETTN)

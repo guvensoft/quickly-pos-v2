@@ -26,7 +26,7 @@
             <h5 class="mt-2">Genel Ayarlar</h5>
           </div>
           <div class="col-lg-4 pr-2 pl-0">
-            <button data-toggle="modal" data-target="#adminModal" class="btn btn-danger btn-block">Uygulama
+            <button (click)="openAdminLogin()" class="btn btn-danger btn-block">Uygulama
               Konsolu</button>
           </div>
         </div>
@@ -226,8 +226,7 @@
             <h5 class="mt-2">Yazıcı Ayarları</h5>
           </div>
           <div class="col-lg-4 pr-2 pl-0">
-            <button class="btn btn-danger btn-md btn-block" (click)="setDefault()" data-toggle="modal"
-              data-target="#printerModal">
+            <button class="btn btn-danger btn-md btn-block" (click)="openPrinterAddModal()">
               <i class="fa fa-plus"></i> Yazıcı Ekle
             </button>
           </div>
@@ -243,7 +242,8 @@
               <div class="card-body p-0 flow">
                 <div class="list-group">
                   @for (item of printers(); track item.name) {
-                  <button (click)="getPrinterDetail(item)" type="button" class="list-group-item list-group-item-action">
+                  <button (click)="getPrinterDetail(item)" type="button" class="list-group-item list-group-item-action"
+                    [class.active]="choosenPrinter()?.name === item.name">
                     {{item.name}} ({{item.type}} Yazıcı)
                   </button>
                   }
@@ -347,151 +347,5 @@
 
   <div class="tab-pane" id="account" role="tabpanel">
     <!-- Account settings section removed as it was commented out in original -->
-  </div>
-</div>
-
-<div class="modal fade" id="adminModal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title" id="modelTitleId">Uygulama Konsolu</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <input #adminPass type="password" placeholder="Şifre Giriniz" class="form-control form-control-lg">
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-        <button type="button" (click)="makeAdmin(adminPass.value); adminPass.value = '';"
-          class="btn btn-primary btn-lg">Giriş Yap</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<div class="modal fade" id="printerModal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title" id="modelTitleId">Yazıcı Ekle</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <form #printerForm="ngForm" (ngSubmit)="addPrinter(printerForm)">
-        <div class="modal-body">
-          @if (printerProcess() === undefined) {
-          <section id="selection">
-            <p class="text-muted">Lütfen eklemek istediğiniz yazıcı tipini seçiniz.</p>
-            <div class="row">
-              <div class="col-lg-6 pr-2">
-                <button type="button" (click)="getPrinters('USB')" class="btn btn-primary btn-lg btn-block">
-                  <i class="fa fa-usb" aria-hidden="true"></i> USB</button>
-              </div>
-              <div class="col-lg-6 pl-2">
-                <button type="button" (click)="getPrinters('LAN')" class="btn btn-primary btn-lg btn-block">
-                  <i class="fa fa-sitemap" aria-hidden="true"></i> LAN</button>
-              </div>
-            </div>
-            <div class="row mt-2">
-              <div class="col-lg-6 pr-2">
-                <button type="button" (click)="getPrinters('SERIAL')" class="btn btn-primary btn-lg btn-block">
-                  <i class="fa fa-plug" aria-hidden="true"></i> SERIAL</button>
-              </div>
-              <div class="col-lg-6 pl-2">
-                <button type="button" (click)="getPrinters('BLUETOOTH')" class="btn btn-primary btn-lg btn-block">
-                  <i class="fa fa-bluetooth" aria-hidden="true"></i> BLUETOOTH</button>
-              </div>
-            </div>
-          </section>
-          } @else {
-          <section id="form">
-            @if (printersFound() !== undefined && selectedPrinter() === undefined) {
-            <section id="usbPrinters">
-              <p class="text-muted">Kurulum yapmak istediğiniz yazıcıyı seçiniz.</p>
-              <div class="row">
-                @for (item of printersFound(); track item.portNumbers[0]) {
-                <div class="col">
-                  <div class="card p-3 card-primary text-white">
-                    <div class="card-body">
-                      <h4 class="card-title">
-                        <i class="fa fa-print" aria-hidden="true"></i> USB Yazıcı
-                      </h4>
-                      <p class="card-text">Bulunduğu Port: {{item.portNumbers[0]}}</p>
-                      <div class="row">
-                        <div class="col-lg-6 pr-1">
-                          <button type="button" (click)="printTest(item)" class="btn btn-md btn-secondary btn-block">
-                            <i class="fa fa-print" aria-hidden="true"></i> Sınama Yazdır
-                          </button>
-                        </div>
-                        <div class="col-lg-6 pl-1">
-                          <button type="button" (click)="selectedPrinter.set(item)"
-                            class="btn btn-md btn-success btn-block">
-                            <i class="fa fa-check" aria-hidden="true"></i> Yazıcıyı Seç
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                }
-              </div>
-            </section>
-            }
-            @if (selectedPrinter() !== undefined) {
-            <section id="printerFormHolder">
-              <h4 class="font-weight-bold mb-3">{{printerProcess()}} Yazıcı
-                @if (printerProcess() === 'USB') {
-                <span class="pull-right text-muted">Bulunduğu Port: {{selectedPrinter().portNumbers[0]}}</span>
-                }
-              </h4>
-              <div class="form-group">
-                <div class="input-group">
-                  <div class="input-group-prepend">
-                    <div class="input-group-text">Yazıcı Adı</div>
-                  </div>
-                  <input type="text" name="name" class="form-control form-control-lg" ngModel>
-                </div>
-                <div class="input-group">
-                  <div class="input-group-prepend">
-                    <div class="input-group-text">Açıklama</div>
-                  </div>
-                  <input type="text" name="note" class="form-control form-control-lg" ngModel>
-                </div>
-                @if (printerProcess() === 'LAN') {
-                <div class="input-group">
-                  <div class="input-group-prepend">
-                    <div class="input-group-text">IP Adresi</div>
-                  </div>
-                  <input type="text" name="port_number" class="form-control form-control-lg" ngModel>
-                </div>
-                }
-                <div class="input-group">
-                  <div class="input-group-prepend">
-                    <div class="input-group-text">Tür</div>
-                  </div>
-                  <select name="mission" class="form-control form-control-lg" ngModel>
-                    <option value="Adisyon">Hesap Yazıcısı</option>
-                    <option value="Sipariş">Sipariş Yazıcısı</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-            }
-          </section>
-          }
-        </div>
-        @if (selectedPrinter() !== undefined) {
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-modal="modal"
-            (click)="setDefault()">İptal</button>
-          <button type="submit" class="btn btn-danger btn-lg">Kaydet</button>
-        </div>
-        }
-      </form>
-    </div>
   </div>
 </div>

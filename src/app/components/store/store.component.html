@@ -18,8 +18,8 @@
               <li class="nav-item">
                 <a class="nav-link" [class.active]="section() === 'Hesaplar'" (click)="changeSection('Hesaplar')">
                   <i class="fa fa-sticky-note" aria-hidden="true"></i> Hesaplar
-                  @if (checks().length > 0) {
-                  <span class="badge bg-danger">{{checks().length}}</span>
+                  @if (checksView().length > 0) {
+                  <span class="badge bg-danger">{{checksView().length}}</span>
                   }
                 </a>
               </li>

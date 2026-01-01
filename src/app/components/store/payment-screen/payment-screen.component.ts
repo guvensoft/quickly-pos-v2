@@ -12,6 +12,7 @@ import { SettingsService } from '../../../core/services/settings.service';
 import { DatabaseService } from '../../../core/services/database.service';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -29,6 +30,7 @@ export class PaymentScreenComponent implements OnDestroy {
   private readonly printerService = inject(PrinterService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly id = signal<string | undefined>(undefined);
   readonly check_type = signal<'Normal' | 'Fast' | 'Order'>('Normal');
@@ -186,7 +188,8 @@ export class PaymentScreenComponent implements OnDestroy {
     } else {
       this.onClosing.set(true);
       let newPayment: PaymentStatus = undefined!;
-      const willPay = [...this.productsWillPay()];
+      const selectedBeforePayment = [...this.productsWillPay()];
+      const willPay = [...selectedBeforePayment];
       let activePayPrice = this.payedPrice();
       if (this.discount()) {
         activePayPrice += this.discountAmount();
@@ -250,18 +253,32 @@ export class PaymentScreenComponent implements OnDestroy {
         const checkToUpdate = { ...c };
         if (!checkToUpdate.payment_flow) checkToUpdate.payment_flow = [];
         checkToUpdate.payment_flow.push(newPayment);
-        checkToUpdate.discount += newPayment.amount;
+        checkToUpdate.discount = (checkToUpdate.discount || 0) + (newPayment.amount || 0);
+
+        // Remove fully paid products from the open check so they don't appear as unpaid on the table.
+        // Remaining (partially paid) products stay in the check with their updated price.
+        const remainingSelected = this.productsWillPay();
+        const fullyPaidProducts = selectedBeforePayment.filter(p => !remainingSelected.includes(p));
+        if (fullyPaidProducts.length > 0) {
+          checkToUpdate.products = (checkToUpdate.products || []).filter(p => !fullyPaidProducts.includes(p));
+        }
+        checkToUpdate.total_price = (checkToUpdate.products || [])
+          .filter(p => p.status === 2)
+          .reduce((sum, p) => sum + (p.price || 0), 0);
 
         if (this.changePrice() >= 0) {
-          this.setPayment();
           this.messageService.sendMessage(`Ürünler ${method} olarak ödendi`);
+          // Tüm hesap ödendiyse (changePrice >= 0), hesabı kapat
+          this.mainService.updateData('checks', c._id!, checkToUpdate).then(() => {
+            this.closeCheck(method, checkToUpdate);
+          });
         } else {
           this.messageService.sendMessage(`Ürünlerin ${newPayment.amount} TL'si ${method} olarak ödendi`);
           this.discount.set(undefined);
           this.discountAmount.set(0);
+          this.mainService.updateData('checks', c._id!, checkToUpdate);
         }
 
-        this.mainService.updateData('checks', c._id!, checkToUpdate);
         this.logService.createLog(logType.CHECK_PAYED, c._id!, `${this.table()} Hesabından ${newPayment.amount} TL tutarında ${method} ödeme alındı.`);
         this.payedPrice.set(0);
         this.isFirstTime.set(true);
@@ -269,33 +286,34 @@ export class PaymentScreenComponent implements OnDestroy {
     }
   }
 
-  closeCheck(method: string) {
-    const c = this.check();
+  closeCheck(method: string, checkOverride?: Check) {
+    const c = checkOverride ?? this.check();
     if (!c) return;
 
-    let total_discounts = 0;
-    let checkWillClose: ClosedCheck;
     this.onClosing.set(false);
 
-    const willPayProds = [...this.productsWillPay()];
+    const paymentFlow = c.payment_flow ?? [];
+    const paymentMethod = paymentFlow.length > 1 ? 'Parçalı' : (paymentFlow[0]?.method ?? method);
+    const totalDiscounts = paymentFlow.reduce((acc, obj) => acc + (obj.discount || 0), 0);
+    const totalPaid = paymentFlow.reduce((acc, obj) => acc + (obj.amount || 0), 0);
+    const paidProducts = paymentFlow.flatMap(p => p.payed_products ?? []);
+    const allProducts = [...(c.products ?? []), ...paidProducts];
 
-    if (c.payment_flow !== undefined && c.payment_flow.length > 0) {
-      const realMethod = method;
-      method = 'Parçalı';
-      const lastPayment = new PaymentStatus(this.userName() || '', realMethod, this.currentAmount(), this.discountAmount(), Date.now(), willPayProds);
-
-      const checkUpdate = { ...c };
-      checkUpdate.payment_flow!.push(lastPayment);
-      checkUpdate.discount += this.priceWillPay();
-
-      total_discounts = checkUpdate.payment_flow!.reduce((acc, obj) => acc + (obj.discount || 0), 0);
-      const total_price = checkUpdate.payment_flow!.reduce((acc, obj) => acc + (obj.amount || 0), 0);
-
-      checkWillClose = new ClosedCheck(c.table_id, total_price, total_discounts, this.userName() || '', c.note, c.status, c.products, Date.now(), c.type, method, checkUpdate.payment_flow, undefined, c.occupation);
-    } else {
-      total_discounts = this.discountAmount();
-      checkWillClose = new ClosedCheck(c.table_id, this.currentAmount(), total_discounts, this.userName() || '', c.note, c.status, willPayProds, Date.now(), c.type, method, undefined, undefined, c.occupation);
-    }
+    const checkWillClose = new ClosedCheck(
+      c.table_id,
+      totalPaid,
+      totalDiscounts,
+      this.userName() || '',
+      c.note,
+      c.status,
+      allProducts,
+      Date.now(),
+      c.type,
+      paymentMethod,
+      paymentFlow,
+      undefined,
+      c.occupation
+    );
 
     if (this.askForPrint()) {
       this.messageService.sendConfirm('Fiş Yazdırılsın mı ?').then((isOK: any) => {
@@ -313,14 +331,27 @@ export class PaymentScreenComponent implements OnDestroy {
           if (c.type === 1) {
             this.mainService.updateData('tables', c.table_id, { status: 1 });
           }
-          this.logService.createLog(logType.CHECK_CLOSED, res.id, `${this.table()} Hesabı ${this.currentAmount()} TL tutarında ödeme alınarak kapatıldı.`);
-          this.messageService.sendMessage(`Hesap '${method}' olarak kapatıldı`);
-          this.updateSellingReport(method);
+          this.logService.createLog(logType.CHECK_CLOSED, res.id, `${this.table()} Hesabı ${totalPaid} TL tutarında ödeme alınarak kapatıldı.`);
+          this.messageService.sendMessage(`Hesap '${paymentMethod}' olarak kapatıldı`);
+          this.updateSellingReport(c, paymentMethod, totalPaid);
           if (c.type === 1) {
-            this.updateTableReport(c, method);
+            this.updateTableReport(c, paymentMethod, totalPaid);
           }
           this.router.navigate(['/store']);
         });
+      }
+    });
+  }
+
+  openCreditModal() {
+    const c = this.check();
+    if (!c) return;
+
+    this.dialogFacade.openCreditModal({
+      customers: this.customers() || []
+    }).closed.subscribe((result: { customer_id: string, note: string } | undefined) => {
+      if (result) {
+        this.createCredit(result.customer_id, result.note);
       }
     });
   }
@@ -329,16 +360,19 @@ export class PaymentScreenComponent implements OnDestroy {
     const c = this.check();
     if (!c) return;
 
-    if (c.payment_flow !== undefined) {
-      let paymentMethod;
-      (c.payment_flow.length > 1) ? paymentMethod = 'Parçalı' : (c.payment_flow.length === 1 ? paymentMethod = c.payment_flow[0].method : paymentMethod = 'Belirsiz');
-      const checkWillClose = new ClosedCheck(c.table_id, c.discount, 0, this.userName() || '', '', c.status, c.products, Date.now(), c.type, paymentMethod, c.payment_flow, undefined, c.occupation);
-      this.updateSellingReport(paymentMethod);
-      if (c.type === 1) {
-        this.updateTableReport(c, paymentMethod);
-      }
-      this.mainService.addData('closed_checks', checkWillClose);
+    const paymentFlow = c.payment_flow ?? [];
+    const paymentMethod = paymentFlow.length > 1 ? 'Parçalı' : (paymentFlow[0]?.method ?? 'Belirsiz');
+    const totalPaid = paymentFlow.reduce((acc, obj) => acc + (obj.amount || 0), 0);
+    const totalDiscounts = paymentFlow.reduce((acc, obj) => acc + (obj.discount || 0), 0);
+    const paidProducts = paymentFlow.flatMap(p => p.payed_products ?? []);
+    const allProducts = [...(c.products ?? []), ...paidProducts];
+
+    const checkWillClose = new ClosedCheck(c.table_id, totalPaid, totalDiscounts, this.userName() || '', '', c.status || 0, allProducts, Date.now(), c.type || 1, paymentMethod, paymentFlow, undefined, c.occupation);
+    this.updateSellingReport(c, paymentMethod, totalPaid);
+    if (c.type === 1) {
+      this.updateTableReport(c, paymentMethod, totalPaid);
     }
+    this.mainService.addData('closed_checks', checkWillClose);
 
     const creditData = {
       customer_id: customer,
@@ -355,10 +389,25 @@ export class PaymentScreenComponent implements OnDestroy {
         }
         this.mainService.removeData('checks', c._id!).then((result: any) => {
           if (result.ok) {
-            (window as any).$ ? (window as any).$('#otherOptions').modal('hide') : null;
             this.router.navigate(['/store']);
           }
-        })
+        });
+      }
+    });
+  }
+
+  openDiscountModal() {
+    this.dialogFacade.openDiscountModal({
+      currentAmount: this.currentAmount(),
+      discounts: this.discounts()
+    }).closed.subscribe((result: { type: 'amount' | 'percent', value: number } | undefined) => {
+      if (result) {
+        if (result.type === 'percent') {
+          this.setDiscount(result.value);
+        } else {
+          const percent = (result.value * 100) / this.priceWillPay();
+          this.setDiscount(percent);
+        }
       }
     });
   }
@@ -373,18 +422,22 @@ export class PaymentScreenComponent implements OnDestroy {
     } else {
       this.discountAmount.set((this.priceWillPay() * discount) / 100);
     }
+  }
 
-    if (this.discountInput()) {
-      this.discountInput()!.nativeElement.value = 0;
-    }
-    (window as any).$ ? (window as any).$('#discount').modal('hide') : null;
+  openDivisionModal() {
+    this.dialogFacade.openDivisionModal({
+      totalAmount: this.priceWillPay()
+    }).closed.subscribe((val: number | undefined) => {
+      if (val) {
+        this.divideWillPay(val);
+      }
+    });
   }
 
   divideWillPay(division: number) {
     if (division <= 0) return;
     this.payedPrice.set(this.priceWillPay() / division);
     this.numpad.set(this.payedPrice().toFixed(2).toString());
-    (window as any).$ ? (window as any).$('#calculator').modal('hide') : null;
   }
 
   togglePayed() {
@@ -453,7 +506,7 @@ export class PaymentScreenComponent implements OnDestroy {
     this.discount.set(undefined);
   }
 
-  updateSellingReport(method: string) {
+  updateSellingReport(check: Check, method: string, amount: number) {
     const reports = this.databaseService.reports();
     if (method !== 'Parçalı') {
       const doc = reports.find(r => r.connection_id === method);
@@ -462,18 +515,15 @@ export class PaymentScreenComponent implements OnDestroy {
         updated.count++;
         updated.weekly_count[this.day()]++;
         updated.monthly_count[new Date().getMonth()]++;
-        updated.amount += this.currentAmount();
-        updated.weekly[this.day()] += this.currentAmount();
-        updated.monthly[new Date().getMonth()] += this.currentAmount();
+        updated.amount += amount;
+        updated.weekly[this.day()] += amount;
+        updated.monthly[new Date().getMonth()] += amount;
         updated.timestamp = Date.now();
         this.mainService.updateData('reports', doc._id, updated);
       }
     } else {
       const sellingReports = reports.filter(r => r.type === "Store");
-      const c = this.check();
-      if (!c) return;
-
-      c.payment_flow?.forEach((obj: any) => {
+      check.payment_flow?.forEach((obj: any) => {
         const reportWillChange = sellingReports.find((report: any) => report.connection_id == obj.method);
         if (reportWillChange) {
           const updated = { ...reportWillChange };
@@ -489,7 +539,7 @@ export class PaymentScreenComponent implements OnDestroy {
     }
   }
 
-  updateTableReport(check: Check, method: string) {
+  updateTableReport(check: Check, method: string, amount: number) {
     const reports = this.databaseService.reports();
     const doc = reports.find(r => r.connection_id === check.table_id);
     if (!doc) return;
@@ -497,11 +547,11 @@ export class PaymentScreenComponent implements OnDestroy {
     const updated = { ...doc };
     if (method !== 'Parçalı') {
       updated.count++;
-      updated.amount += this.currentAmount();
+      updated.amount += amount;
       updated.timestamp = Date.now();
-      updated.weekly[this.day()] += this.currentAmount();
+      updated.weekly[this.day()] += amount;
       updated.weekly_count[this.day()]++;
-      updated.monthly[new Date().getMonth()] += this.currentAmount();
+      updated.monthly[new Date().getMonth()] += amount;
       updated.monthly_count[new Date().getMonth()]++;
     } else {
       updated.count++;

@@ -13,6 +13,10 @@ export class KeyboardDirective {
         this.onAir = false;
     }
 
+    @HostListener('focus') onFocus() {
+        this.keyboardService.triggerKeyboard('Open', this.element);
+    }
+
     @HostListener('click') onClick(event?: Event) {
         this.keyboardService.triggerKeyboard('Open', this.element);
     }

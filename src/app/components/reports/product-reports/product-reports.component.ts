@@ -7,14 +7,14 @@ import { MainService } from '../../../core/services/main.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { Category } from '../../../core/models/product.model';
 import { PrinterService } from '../../../core/services/printer.service';
-import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 @Component({
   standalone: true,
-  imports: [CommonModule, BaseChartDirective, GeneralPipe, PricePipe],
+  imports: [CommonModule, BaseChartDirective, PricePipe],
   selector: 'app-product-reports',
   templateUrl: './product-reports.component.html',
   styleUrls: ['./product-reports.component.scss'],
@@ -23,6 +23,7 @@ export class ProductReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly settingsService = inject(SettingsService);
   private readonly printerService = inject(PrinterService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly categoriesList = signal<Category[]>([]);
   readonly selectedCat = signal<string | undefined>(undefined);
@@ -38,16 +39,18 @@ export class ProductReportsComponent implements OnInit {
 
   ChartOptions: any = {
     responsive: false,
-    legend: {
-      labels: {
-        fontColor: 'rgb(255, 255, 255)',
-        fontStyle: 'bolder'
-      }
-    },
-    tooltips: {
-      callbacks: {
-        label: function (value: any) {
-          return ' ' + Number(value.yLabel).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+    plugins: {
+      legend: {
+        labels: {
+          color: 'rgb(255, 255, 255)',
+          font: { weight: 'bold' }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context: any) {
+            return ' ' + Number(context.parsed.y).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+          }
         }
       }
     },
@@ -57,29 +60,29 @@ export class ProductReportsComponent implements OnInit {
       }
     },
     scales: {
-      xAxes: [{
+      x: {
         ticks: {
           beginAtZero: true,
-          fontColor: 'rgba(255,255,255)'
+          color: 'rgba(255,255,255)'
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }],
-      yAxes: [{
+      },
+      y: {
         ticks: {
-          fontColor: 'rgba(255,255,255)',
+          color: 'rgba(255,255,255)',
           callback: function (value: any, index: any, values: any) {
             return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
           }
 
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }]
+      }
     },
   };
   ChartLegend: boolean = true;
@@ -133,14 +136,21 @@ export class ProductReportsComponent implements OnInit {
   }
 
   getItemReport(report: Report) {
-    this.DetailLoaded.set(false);
     this.ItemReport.set(report);
     this.mainService.getData('reports', report._id!).then(res => {
       res.weekly = this.normalWeekOrder(res.weekly || []);
       res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
-      this.DetailData.set([{ data: res.weekly, label: 'Satış Tutarı' }]);
-      this.DetailLoaded.set(true);
-      (window as any).$('#reportDetail').modal('show');
+
+      this.mainService.getData('products', report.connection_id).then(product => {
+        this.dialogFacade.openChartModal({
+          title: product.name || 'Ürün Raporu',
+          datasets: [{ data: res.weekly, label: 'Satış Tutarı' }],
+          labels: this.ChartLabels(),
+          options: this.ChartOptions,
+          legend: this.ChartLegend,
+          type: this.ChartType
+        });
+      });
     });
   }
 
@@ -175,7 +185,7 @@ export class ProductReportsComponent implements OnInit {
       this.mainService.getAllBy('products', { cat_id: selected }).then(res => {
         const products_ids = res.docs.map((obj: any) => obj._id);
         this.productList.set(this.productList().filter(obj => products_ids.includes(obj.connection_id)));
-      })
+      });
     }
   }
 
@@ -184,7 +194,7 @@ export class ProductReportsComponent implements OnInit {
     this.mainService.getAllBy('products', { cat_id: cat_id }).then(res => {
       const products_ids = res.docs.map((obj: any) => obj._id);
       this.productList.set(this.generalList().filter((obj: any) => products_ids.includes(obj.connection_id)));
-    })
+    });
   }
 
   printReport() {
@@ -235,7 +245,7 @@ export class ProductReportsComponent implements OnInit {
           this.ChartData.update(data => [...data, schema]);
           if (chartL.length - 1 == index) {
             this.ChartLoaded.set(true);
-          };
+          }
         });
       });
     });
@@ -243,7 +253,7 @@ export class ProductReportsComponent implements OnInit {
       const categories = res.docs as Category[];
       categories.sort((a: any, b: any) => b.order - a.order);
       this.categoriesList.set(categories);
-    })
+    });
     this.mainService.getAllBy('logs', {}).then(res => {
       const logs = (res.docs.filter((obj: any) => obj.type >= logType.PRODUCT_CREATED && obj.type <= logType.PRODUCT_CHECKPOINT).sort((a: any, b: any) => b.timestamp - a.timestamp)) as Log[];
       this.productLogs.set(logs);

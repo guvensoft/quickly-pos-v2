@@ -44,7 +44,7 @@ export class LoginComponent {
 
   logIn() {
     this.message.set("İşleniyor");
-    this.mainService.getAllBy('users', { pincode: { $eq: this.pinInput() } }).then((result) => {
+    this.mainService.getAllBy('users', { pincode: { $eq: Number(this.pinInput()) } }).then((result) => {
       if (result.docs && result.docs.length > 0) {
         const loggedInUser = result.docs[0];
         this.user.set(loggedInUser);

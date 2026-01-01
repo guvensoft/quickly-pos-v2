@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Recipe } from '../../../core/models/product.model';
 import { MainService } from '../../../core/services/main.service';
@@ -15,6 +15,9 @@ export class RecipeSettingsComponent implements OnInit {
   private readonly mainService = inject(MainService);
 
   readonly recipes = signal<Array<Recipe>>([]);
+
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
 
   ngOnInit() {
     this.fillData();

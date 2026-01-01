@@ -21,11 +21,12 @@ import { PrintOut, PrintOutStatus } from './core/models/print.model';
 import { MessageComponent } from './components/helpers/message/message.component';
 import { KeyboardComponent } from './components/helpers/keyboard/keyboard.component';
 import { CallerComponent } from './components/helpers/caller/caller.component';
+import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, MessageComponent, KeyboardComponent, CallerComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, MessageComponent, KeyboardComponent, CallerComponent, ToastContainerComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
@@ -62,18 +63,7 @@ export class AppComponent implements OnInit {
   readonly dayStatus = signal<DayInfo | undefined>(undefined);
 
   ngOnInit(): void {
-    // Ensure jQuery is available globally early
-    if (typeof (window as any).$ === 'undefined') {
-      try {
-        const $ = require('jquery');
-        (window as any).$ = (window as any).jQuery = $;
-      } catch (e) {
-        console.warn('jQuery early load failed in AppComponent', e);
-      }
-    }
-
-    // Defer SettingsService calls to avoid circular dependency issues
-    // These will be called after settings are loaded in initAppSettings
+    this.settingsService.setLocalStorage();
     this.initAppSettings();
     this.initConnectivityAndTime();
   }
@@ -387,7 +377,7 @@ export class AppComponent implements OnInit {
   endDayListener(): void {
     console.log('Endday Listener Process Started');
     const signalListener = this.mainService.LocalDB['endday'].changes({ since: 'now', live: true }).on('change', () => {
-      this.mainService.syncToRemote().cancel();
+      this.mainService.cancelRemoteSync();
       console.log('Endday Processing...');
       this.onSync.set(true);
       signalListener.cancel();

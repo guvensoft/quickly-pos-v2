@@ -6,19 +6,21 @@ import { MainService } from '../../../core/services/main.service';
 import { Floor } from '../../../core/models/table.model';
 import { ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
-import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, BaseChartDirective, GeneralPipe, PricePipe, TimeAgoPipe],
+  imports: [CommonModule, BaseChartDirective, PricePipe, TimeAgoPipe],
   selector: 'app-table-reports',
   templateUrl: './table-reports.component.html',
   styleUrls: ['./table-reports.component.scss']
 })
 export class TableReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
+  private readonly dialogFacade = inject(DialogFacade);
+
 
   readonly tablesList = signal<Report[]>([]);
   readonly generalList = signal<Report[]>([]);
@@ -29,16 +31,18 @@ export class TableReportsComponent implements OnInit {
 
   ChartOptions: any = {
     responsive: false,
-    legend: {
-      labels: {
-        fontColor: 'rgb(255, 255, 255)',
-        fontStyle: 'bolder'
-      }
-    },
-    tooltips: {
-      callbacks: {
-        label: function (value: any) {
-          return ' ' + Number(value.yLabel).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+    plugins: {
+      legend: {
+        labels: {
+          color: 'rgb(255, 255, 255)',
+          font: { weight: 'bold' }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context: any) {
+            return ' ' + Number(context.parsed.y).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+          }
         }
       }
     },
@@ -48,29 +52,29 @@ export class TableReportsComponent implements OnInit {
       }
     },
     scales: {
-      xAxes: [{
+      x: {
         ticks: {
           beginAtZero: true,
-          fontColor: 'rgba(255,255,255)'
+          color: 'rgba(255,255,255)'
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }],
-      yAxes: [{
+      },
+      y: {
         ticks: {
-          fontColor: 'rgba(255,255,255)',
+          color: 'rgba(255,255,255)',
           callback: function (value: any, index: any, values: any) {
             return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
           }
 
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }]
+      }
     },
   };
   readonly ChartData = signal<any[]>([]);
@@ -123,14 +127,21 @@ export class TableReportsComponent implements OnInit {
   }
 
   getItemReport(report: Report) {
-    this.DetailLoaded.set(false);
     this.ItemReport.set(report);
     this.mainService.getData('reports', report._id!).then(res => {
       res.weekly = this.normalWeekOrder(res.weekly || []);
       res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
-      this.DetailData.set([{ data: res.weekly, label: 'Hesap Tutarı' }]);
-      this.DetailLoaded.set(true);
-      (window as any).$('#reportDetail').modal('show');
+
+      this.mainService.getData('tables', report.connection_id).then(table => {
+        this.dialogFacade.openChartModal({
+          title: table.name || 'Masa Raporu',
+          datasets: [{ data: res.weekly, label: 'Hesap Tutarı' }],
+          labels: this.ChartLabels(),
+          options: this.ChartOptions,
+          legend: this.ChartLegend(),
+          type: this.ChartType
+        });
+      });
     });
   }
 
@@ -165,7 +176,7 @@ export class TableReportsComponent implements OnInit {
       this.mainService.getAllBy('tables', { floor_id: selected }).then(res => {
         const floors_ids = res.docs.map((obj: any) => obj._id);
         this.tablesList.set(this.tablesList().filter((obj: any) => floors_ids.includes(obj.connection_id)));
-      })
+      });
     }
   }
 
@@ -174,7 +185,7 @@ export class TableReportsComponent implements OnInit {
     this.mainService.getAllBy('tables', { floor_id: cat_id }).then(res => {
       const floors_ids = res.docs.map((obj: any) => obj._id);
       this.tablesList.set(this.generalList().filter((obj: any) => floors_ids.includes(obj.connection_id)));
-    })
+    });
   }
 
   getLogs() {
@@ -206,13 +217,13 @@ export class TableReportsComponent implements OnInit {
           this.ChartData.update(data => [...data, schema]);
           if (chartTable.length - 1 == index) {
             this.ChartLoaded.set(true);
-          };
+          }
         });
       });
     });
     this.mainService.getAllBy('floors', {}).then(res => {
       this.floorsList.set(res.docs as unknown as Floor[]);
-    })
+    });
   }
 
 }

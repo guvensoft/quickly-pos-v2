@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
@@ -8,6 +8,7 @@ import { MessageService } from '../../../core/services/message.service';
 import { LogService, logType } from '../../../core/services/log.service';
 import { MainService } from '../../../core/services/main.service';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -20,12 +21,16 @@ export class RestaurantSettingsComponent implements OnInit {
   private readonly mainService = inject(MainService);
   private readonly messageService = inject(MessageService);
   private readonly logService = inject(LogService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly floors = signal<Array<Floor>>([]);
   readonly tables = signal<Array<Table>>([]);
   readonly onUpdate = signal<boolean>(false);
   readonly selectedTable = signal<string | undefined>(undefined);
   readonly selectedFloor = signal<string | undefined>(undefined);
+
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
 
   areaForm = viewChild<NgForm>('areaForm');
   areaDetailForm = viewChild<NgForm>('areaDetailForm');
@@ -75,16 +80,18 @@ export class RestaurantSettingsComponent implements OnInit {
   ngOnInit() {
   }
 
-  setDefault() {
+  setDefaultFloor() {
     this.onUpdate.set(false);
-    this.selectedTable.set(undefined);
     this.selectedFloor.set(undefined);
     if (this.areaForm()) {
       this.areaForm()!.reset();
     }
-    if (this.tableForm()) {
-      this.tableForm()!.reset();
-    }
+
+    this.dialogFacade.openFloorModal().closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitFloorForm(formData, null);
+      }
+    });
   }
 
   getTablesByFloor(id: string | null | undefined) {
@@ -118,21 +125,21 @@ export class RestaurantSettingsComponent implements OnInit {
     }
   }
 
-  addFloor(areaForm: NgForm) {
-    const form = areaForm.value;
-    if (!form.name) {
+  private submitFloorForm(formData: any, floorId: string | null) {
+    if (!formData.name) {
       this.messageService.sendMessage('Bölüm Adı Belirtmelisiniz');
-      return false;
+      return;
     }
-    const areaSpecs = new FloorSpecs(form.air, form.cigarate, form.reservation, form.music, form.events);
-    const schema = new Floor(form.name, form.description, 1, Date.now(), form.special, areaSpecs);
-    this.mainService.addData('floors', schema as any).then(() => {
-      this.fillData();
-      this.messageService.sendMessage('Bölüm Oluşturuldu!');
-      areaForm.reset();
-    });
-    (window as any).$('#areaModal').modal('hide');
-    return true;
+
+    if (floorId === null) {
+      // Add new floor
+      const areaSpecs = new FloorSpecs(formData.air, formData.cigarate, formData.reservation, formData.music, formData.events);
+      const schema = new Floor(formData.name, formData.description, 1, Date.now(), formData.special, areaSpecs);
+      this.mainService.addData('floors', schema as any).then(() => {
+        this.fillData();
+        this.messageService.sendMessage('Bölüm Oluşturuldu!');
+      });
+    }
   }
 
   updateFloor(areaDetailForm: NgForm) {
@@ -175,53 +182,72 @@ export class RestaurantSettingsComponent implements OnInit {
     }
   }
 
-  addTable(tableForm: NgForm) {
-    const form = tableForm.value;
-    if (!form.name) {
-      this.messageService.sendMessage('Masa Adı Belirtmelisiniz');
-      return false;
-    } else if (!form.floor_id) {
-      this.messageService.sendMessage('Kategori Seçmelisiniz');
-      return false;
+  setDefaultTable() {
+    this.onUpdate.set(false);
+    this.selectedTable.set(undefined);
+    if (this.tableForm()) {
+      this.tableForm()!.reset();
     }
-    const schema = new Table(form.name, form.floor_id, form.capacity, form.description, 1, Date.now(), [], form._id, form._rev);
-    if (form._id == undefined) {
+
+    // Open table modal for adding new table
+    const currentFloors = this.floors();
+    this.dialogFacade.openTableModal(undefined, currentFloors).closed.subscribe((formData: any) => {
+      if (formData) {
+        this.submitTableForm(formData, null);
+      }
+    });
+  }
+
+  updateTable(id: string | undefined) {
+    if (!id) return;
+
+    // Fetch table data and open modal for editing
+    this.mainService.getData('tables', id).then((tableData: any) => {
+      // Remove customers array from data to avoid passing unnecessary data
+      const cleanData = { ...tableData };
+      delete cleanData.customers;
+
+      const currentFloors = this.floors();
+      this.dialogFacade.openTableModal(cleanData, currentFloors).closed.subscribe((formData: any) => {
+        if (formData) {
+          this.submitTableForm(formData, id);
+        }
+      });
+    });
+  }
+
+  private submitTableForm(formData: any, tableId: string | null) {
+    if (!formData.name) {
+      this.messageService.sendMessage('Masa Adı Belirtmelisiniz');
+      return;
+    } else if (!formData.floor_id) {
+      this.messageService.sendMessage('Bölüm Seçmelisiniz');
+      return;
+    }
+
+    const schema = new Table(formData.name, formData.floor_id, formData.capacity, formData.description, 1, Date.now(), [], formData._id, formData._rev);
+
+    if (tableId === null) {
+      // Add new table
       this.mainService.addData('tables', schema).then((response) => {
         if (response && response.id) {
-          this.mainService.addData('reports', new Report('Table', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), form.name, Date.now())).then(res => {
+          this.mainService.addData('reports', new Report('Table', response.id, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], new Date().getMonth(), new Date().getFullYear(), formData.name, Date.now())).then(res => {
             if (res && res.id) {
-              this.logService.createLog(logType.TABLE_CREATED, res.id, `${form.name} adlı Masa oluşturuldu.`);
+              this.logService.createLog(logType.TABLE_CREATED, res.id, `${formData.name} adlı Masa oluşturuldu.`);
             }
           });
         }
         this.fillData();
         this.messageService.sendMessage('Masa Oluşturuldu.');
-        tableForm.reset();
-      })
+      });
     } else {
-      this.mainService.updateData('tables', form._id, schema).then(() => {
-        this.logService.createLog(logType.TABLE_UPDATED, form._id, `${form.name} adlı Masa Güncellendi.`);
+      // Update existing table
+      this.mainService.updateData('tables', tableId, schema).then(() => {
+        this.logService.createLog(logType.TABLE_UPDATED, tableId, `${formData.name} adlı Masa Güncellendi.`);
         this.fillData();
         this.messageService.sendMessage('Masa Güncellendi.');
-        tableForm.reset();
       });
     }
-    (window as any).$('#tableModal').modal('hide');
-    return true;
-  }
-
-  updateTable(id: string | undefined) {
-    if (!id) return;
-    this.onUpdate.set(true);
-    this.selectedTable.set(id);
-    this.mainService.getData('tables', id).then((result: Table) => {
-      const tableData = { ...result };
-      delete (tableData as any).customers;
-      if (this.tableForm()) {
-        this.tableForm()!.form.patchValue(tableData);
-      }
-      (window as any).$('#tableModal').modal('show');
-    });
   }
 
   removeTable() {
@@ -230,7 +256,8 @@ export class RestaurantSettingsComponent implements OnInit {
     if (isOk && currentTableId) {
       this.mainService.removeData('tables', currentTableId).then((result) => {
         if (result && result.id) {
-          const tableName = this.tableForm()?.value?.name || 'Masa';
+          const tableObj = this.selectedTableObj();
+          const tableName = tableObj ? tableObj.name : 'Masa';
           this.logService.createLog(logType.TABLE_DELETED, result.id, `${tableName} adlı Masa Silindi.`);
           this.mainService.getAllBy('reports', { connection_id: result.id }).then((res) => {
             if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
@@ -240,12 +267,8 @@ export class RestaurantSettingsComponent implements OnInit {
         }
         this.fillData();
         this.messageService.sendMessage('Masa Silindi.');
-        (window as any).$('#tableModal').modal('hide');
       });
-    } else {
-      return false;
     }
-    return true;
   }
 
   filterTables(value: string) {

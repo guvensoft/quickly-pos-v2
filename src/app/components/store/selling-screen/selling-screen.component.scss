@@ -1,100 +1,74 @@
-.sellButton,
-.sendButton {
-  font-family: 'Quickly', sans-serif;
-  margin-bottom: 4px;
-  margin-top: 0;
-  padding: 10px 0;
+.sellButton {
+  font-family: Quickly;
+  margin-bottom: 3.8px;
+  margin-top: 0px;
+  padding-top: 10.5px;
+  padding-bottom: 10.5px;
+  padding-right: 0px;
+  padding-left: 0px;
   color: #000;
-  transition: all 0.2s ease-in-out;
-  border-radius: 8px;
-  border: none;
+  text-decoration: wavy;
 
   i {
-    font-size: 7vh;
-    transition: transform 0.2s;
+    font-size: 7.4vh;
   }
+}
 
-  &:not([disabled]) {
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.sellButton[disabled] {
+  opacity: 0.6;
+  color: rgba(0, 0, 0, 0.5);
+}
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+.sendButton {
+  font-family: Quickly;
+  margin-bottom: 3.8px;
+  margin-top: 0px;
+  padding-top: 10.5px;
+  padding-bottom: 10.5px;
+  padding-right: 0px;
+  padding-left: 0px;
+  color: #000;
+  text-decoration: wavy;
 
-      i {
-        transform: scale(1.1);
-      }
-    }
-
-    &:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
+  i {
+    font-size: 7.4vh;
   }
+}
 
-  &[disabled] {
-    opacity: 0.6;
-    cursor: not-allowed;
-    filter: grayscale(0.8);
-  }
+.sendButton[disabled] {
+  opacity: 0.6;
+  color: rgba(0, 0, 0, 0.5);
+}
 
+.sendButton {
   p {
-    font-size: 0.9em;
-    margin: 0 !important;
-    font-weight: 600;
+    font-size: smaller;
+    margin: 0px !important;
   }
 }
 
 .btn-specs {
-  padding: 20px;
-  font-weight: 700;
-  font-size: 1.5rem;
+  padding: 25px;
+  float: left;
+  font-weight: bolder;
+  font-size: 30px;
   text-transform: capitalize;
-  border-radius: 12px;
-  transition: transform 0.1s;
-
-  &:active {
-    transform: scale(0.98);
-  }
 
   .spec-price {
-    font-size: 1rem;
-    color: #5a3d1b;
-    margin-left: 8px;
-    background: rgba(255, 255, 255, 0.3);
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-}
-
-.scroll-container {
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.4);
-    }
+    font-size: 20px;
+    color: #8a5f25;
+    margin-left: 5px;
   }
 }
 
 .payment-flow {
   height: 35vh;
-  overflow-y: auto;
+  overflow: hidden;
+  overflow-y: scroll;
   overflow-x: hidden;
-  @extend .scroll-container;
 
   p {
-    font-weight: bold;
+    font-weight: bolder;
   }
 }
 
@@ -106,38 +80,35 @@
   input {
     height: 100%;
     font-size: 30px;
-    font-weight: 800;
+    font-weight: bolder;
   }
 }
 
-#productHolder,
-.tFlow {
-  overflow-y: auto;
-  @extend .scroll-container;
+#productHolder {
+  overflow-y: scroll;
+  // background-color: #ebebeb;
 }
 
-#productHolder {
-  padding: 5px;
+.normal {
+  width: auto !important;
 }
 
 .tFlow {
   height: 60vh;
+  overflow-y: scroll;
   overflow-x: hidden;
 }
 
 .modal-big {
-  max-width: 95vw;
+  max-width: 1300px;
 }
 
 .payedLayer {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  border-top: 1px solid white;
+}
 
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
+.payedLayer:hover {
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
 .payed-things {
@@ -145,67 +116,39 @@
 }
 
 .numpad {
-  font-size: 2rem;
-  font-weight: 800;
-}
-
-.proCard,
-.catCard,
-.tableCard {
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-    z-index: 10;
-  }
-
-  &:active {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
+  font-size: 30px;
+  font-weight: bolder;
 }
 
 .proCard {
   p.card-text {
-    width: 100%;
+    width: 95%;
 
     .price {
       float: left;
-      font-weight: bold;
-      color: #28a745;
+      width: 37%;
     }
 
     .category {
-      float: right;
-      font-size: 0.75rem;
-      opacity: 0.8;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 2px 6px;
-      border-radius: 4px;
+      position: relative;
+      left: 10px;
+      font-size: 8px;
+      text-align: right;
+      font-weight: bold;
     }
   }
 }
 
 .catButton {
-  padding: 8px !important;
-  font-weight: 700;
+  padding-top: 3px !important;
+  font-weight: bold;
   white-space: pre-line;
-  font-size: 1.1rem;
-  height: auto;
-  min-height: 50px;
-  text-align: left;
-  display: flex;
-  align-items: center;
+  font-size: 1.3vw;
+  height: 47.65px;
+  text-align: start;
 }
 
 .humanIcon {
-  font-size: 1.25rem !important;
-  padding: 0 8px !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 20px !important;
+  padding: 0 2 0 2 !important;
 }

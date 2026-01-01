@@ -1,14 +1,16 @@
-import { Component, OnInit, inject, signal, viewChild, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, computed, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Printer } from '../../../core/models/settings.model';
 import { ElectronService } from '../../../core/services/electron/electron.service';
+import { MainService } from '../../../core/services/main.service';
 import { MessageService } from '../../../core/services/message.service';
 import { PrinterService } from '../../../core/services/printer.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { SignalValidatorService } from '../../../core/services/signal-validator.service';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -24,6 +26,8 @@ export class ApplicationSettingsComponent implements OnInit {
   private readonly electronService = inject(ElectronService);
   private readonly message = inject(MessageService);
   private readonly validatorService = inject(SignalValidatorService);
+  private readonly mainService = inject(MainService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly restInfo = signal<any>(undefined);
   readonly restMap = signal<string | null>(null);
@@ -35,6 +39,9 @@ export class ApplicationSettingsComponent implements OnInit {
   readonly selectedPrinter = signal<any>(undefined);
   readonly choosenPrinter = signal<any>(undefined);
   readonly currentSection = signal<string>('AppSettings');
+
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
 
   // Server settings validation signals
   readonly serverUrl = signal<string>('');
@@ -86,10 +93,6 @@ export class ApplicationSettingsComponent implements OnInit {
 
   constructor() {
     this.fillData();
-  }
-
-  ngOnInit() {
-    this.currentSection.set('AppSettings');
 
     // Set up reactive effect for AppSettings changes
     effect(() => {
@@ -161,6 +164,10 @@ export class ApplicationSettingsComponent implements OnInit {
     });
   }
 
+  ngOnInit() {
+    this.currentSection.set('AppSettings');
+  }
+
   private isValidUrl(url: string): boolean {
     try {
       new URL(url);
@@ -178,7 +185,7 @@ export class ApplicationSettingsComponent implements OnInit {
     this.settings.setAppSettings('AppSettings', Form.value);
     this.message.sendMessage('Ayarlar Kaydediliyor.. Program Yeniden Başlatılıyor.');
     setTimeout(() => {
-      this.electronService.reloadProgram();
+      window.location.reload();
     }, 1500)
   }
 
@@ -186,7 +193,7 @@ export class ApplicationSettingsComponent implements OnInit {
     this.settings.setAppSettings('RestaurantInfo', Form.value);
     this.message.sendMessage('Ayarlar Kaydediliyor.. Program Yeniden Başlatılıyor.');
     setTimeout(() => {
-      this.electronService.reloadProgram();
+      window.location.reload();
     }, 1500)
   }
 
@@ -205,7 +212,7 @@ export class ApplicationSettingsComponent implements OnInit {
     this.message.sendMessage('Sunucu Ayarları Kaydediliyor.. Makina Yeniden Başlatılıyor.');
     setTimeout(() => {
       this.electronService.ipcRenderer.send('closeServer');
-      this.electronService.relaunchProgram();
+      window.location.reload();
     }, 1500)
   }
 
@@ -224,109 +231,49 @@ export class ApplicationSettingsComponent implements OnInit {
     }
   }
 
-  addPrinter(Form: NgForm) {
-    const form = Form.value;
-    let address;
-    if (form.port_number == undefined) {
-      if (this.selectedPrinter() && this.selectedPrinter().portNumbers && this.selectedPrinter().portNumbers.length > 0) {
-        address = this.selectedPrinter().portNumbers[0];
-      }
-    }
-    if (form.name) {
-      if (this.printerProcess() == 'LAN') {
-        if (form.port_number) {
-          address = form.port_number;
-        } else {
-          this.message.sendMessage('IP Adresi Girmek Zorundasınız.');
-          return false;
-        }
-      }
-      const printer = new Printer(form.name, this.printerProcess()!, form.note, address, form.mission);
-      const currentPrinters = this.printers();
-      if (currentPrinters && Array.isArray(currentPrinters)) {
-        const printersData = currentPrinters.filter(obj => obj.name == form.name);
-        if (printersData.length == 0) {
+  openPrinterAddModal() {
+    this.dialogFacade.openPrinterAddModal().closed.subscribe((printer: any) => {
+      if (printer) {
+        const currentPrinters = this.printers();
+        const printersData = currentPrinters.filter(obj => obj.name === printer.name);
+        if (printersData.length === 0) {
           this.settings.addPrinter(printer);
-          (window as any).$('#printerModal').modal('hide');
           this.message.sendMessage('Yazıcı Oluşturuldu.');
           this.fillData();
         } else {
           this.message.sendMessage('Farklı Bir İsim Girmek Zorundasınız');
         }
-      } else {
-        this.settings.addPrinter(printer);
-        (window as any).$('#printerModal').modal('hide');
-        this.message.sendMessage('Yazıcı Oluşturuldu.');
-        this.fillData();
       }
-    } else {
-      this.message.sendMessage('Yazıcı Adı Girmek Zorundasınız.');
-      return false;
-    }
-    return true;
-  }
-
-  updatePrinter(Form: NgForm) {
-    const form = Form.value;
-    this.settings.updatePrinter(form, this.choosenPrinter());
-    this.choosenPrinter.set(undefined);
-    this.message.sendMessage('Yazıcı Düzenlendi.');
-    this.fillData();
-  }
-
-  removePrinter(Printer: any) {
-    this.settings.removePrinter(Printer);
-    this.message.sendMessage('Yazıcı Kaldırıldı..');
-    this.choosenPrinter.set(undefined);
-    this.fillData();
-  }
-
-  getPrinters(Type: string) {
-    switch (Type) {
-      case 'USB':
-        const usbPrinters = this.printerService.getUSBPrinters();
-        if (usbPrinters && Array.isArray(usbPrinters) && usbPrinters.length > 0) {
-          this.printerProcess.set('USB');
-          this.printersFound.set(usbPrinters);
-        } else {
-          this.message.sendMessage('USB portlarında takılı yazıcı bulunamadı..');
-          return false;
-        }
-        break;
-      case 'LAN':
-        this.printerProcess.set('LAN');
-        this.printersFound.set([]);
-        this.selectedPrinter.set({});
-        break;
-      case 'SERIAL':
-        this.printerProcess.set('SERIAL');
-        const serialPrinters = this.printerService.getSerialPrinters('/dev/ttyS0');
-        this.printersFound.set(serialPrinters || []);
-        this.selectedPrinter.set({});
-        break;
-      case 'BLUETOOTH':
-        this.printerProcess.set('BLUETOOTH');
-        this.printersFound.set([]);
-        this.selectedPrinter.set({});
-        break;
-      default:
-        break;
-    }
-    return true;
+    });
   }
 
   printTest(Device: any) {
     this.printerService.printTest(Device);
   }
 
-  makeAdmin(pass: any) {
-    if (pass === 'asdtd155+1' || pass === "1551903") {
-      this.router.navigate(['/admin']);
-      this.electronService.openDevTools();
-    } else {
-      alert('Yanlış Şifre');
-    }
-    (window as any).$('#adminModal').modal('hide');
+  openAdminLogin() {
+    this.dialogFacade.openPasswordModal({
+      title: 'Uygulama Konsolu',
+      message: 'Lütfen yetkili şifresini giriniz.'
+    }).closed.subscribe(pass => {
+      if (pass) {
+        if (pass === 'asdtd155+1' || pass === "1551903") {
+          this.router.navigate(['/admin']);
+          this.electronService.openDevTools();
+        } else {
+          alert('Yanlış Şifre');
+        }
+      }
+    });
+  }
+
+  setDefaultAdmin() {
+    this.dialogFacade.openAdminModal(this.appSettings()).closed.subscribe((formData: any) => {
+      if (formData) {
+        // Admin modal is mainly for viewing/validating settings
+        // Business logic handled via makeAdmin password validation
+      }
+    });
   }
 
   setDefault() {
@@ -341,7 +288,64 @@ export class ApplicationSettingsComponent implements OnInit {
     this.portError.set(null);
   }
 
+  removePrinter(printer: any) {
+    if (confirm('Bu yazıcıyı silmek istediğinize emin misiniz?')) {
+      this.settings.removePrinter(printer);
+      this.message.sendMessage('Yazıcı Silindi.');
+      this.choosenPrinter.set(undefined);
+    }
+  }
+
+  updatePrinter(form: NgForm) {
+    if (form.invalid) return;
+    const newPrinter = { ...this.choosenPrinter(), ...form.value };
+    this.settings.updatePrinter(newPrinter, this.choosenPrinter());
+    this.message.sendMessage('Yazıcı Güncellendi.');
+    this.choosenPrinter.set(newPrinter);
+  }
+
   fillData() {
-    // Printers are now loaded via effect() in ngOnInit()
+    // Reload all settings from database and emit through SettingsService subjects
+    this.mainService.getAllBy('settings', {}).then((res) => {
+      if (!res || !res.docs) {
+        return;
+      }
+
+      const settings = res.docs;
+
+      // Find and emit AppSettings
+      const appSettings = settings.find((setting: any) => setting.key === 'AppSettings');
+      if (appSettings) {
+        this.settings.AppSettings.next(appSettings);
+      }
+
+      // Find and emit RestaurantInfo
+      const restaurantInfo = settings.find((setting: any) => setting.key === 'RestaurantInfo');
+      if (restaurantInfo) {
+        this.settings.RestaurantInfo.next(restaurantInfo);
+      }
+
+      // Find and emit ServerSettings based on AppType
+      const appType = localStorage.getItem('AppType');
+      if (appType === 'Primary') {
+        const serverSettings = settings.find((setting: any) => setting.key === 'ServerSettings' && setting.value.type === 0);
+        if (serverSettings) {
+          this.settings.ServerSettings.next(serverSettings);
+        }
+      } else if (appType === 'Secondary') {
+        const serverSettings = settings.find((setting: any) => setting.key === 'ServerSettings' && setting.value.type === 1);
+        if (serverSettings) {
+          this.settings.ServerSettings.next(serverSettings);
+        }
+      }
+
+      // Find and emit Printers
+      const printers = settings.find((setting: any) => setting.key === 'Printers');
+      if (printers) {
+        this.settings.Printers.next(printers);
+      }
+    }).catch(err => {
+      console.error('ApplicationSettingsComponent: Error loading settings:', err);
+    });
   }
 }

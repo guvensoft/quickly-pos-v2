@@ -59,8 +59,8 @@
                   <div class="card-header pr-2">
                     <b>Ödenecek Ürünler</b>
                     @if (productsWillPay().length > 0) {
-                    <i data-toggle="modal" data-target="#calculator" class="fa fa-calculator pull-right"
-                      style="font-size: 1.5em;" aria-hidden="true"></i>
+                    <i (click)="openDivisionModal()" class="fa fa-calculator pull-right clickable-icon"
+                      style="font-size: 1.5em; cursor: pointer;" aria-hidden="true"></i>
                     }
                   </div>
                   <div class="card-body p-2 check-flow dark-bg">
@@ -245,16 +245,15 @@
                 </p>
                 <div class="btn-group btn-group-justify btn-block">
                   <button [disabled]="productsWillPay().length === 0 || !permissions()?.discount" type="button"
-                    data-toggle="modal" data-target="#discount"
-                    class="btn btn-secondary btn-block btn-lg"><strong>İndirim Yap</strong>
+                    (click)="openDiscountModal()" class="btn btn-secondary btn-block btn-lg"><strong>İndirim
+                      Yap</strong>
                     <span class="float-right">
                       <i class="fa fa-chevron-down" aria-hidden="true"></i>
                     </span>
                   </button>
                   <button
                     [disabled]="(check()?.products?.length ?? 0) !== 0 || productsWillPay().length === 0 || !permissions()?.discount"
-                    type="button" data-toggle="modal" data-target="#otherOptions"
-                    class="btn btn-info btn-lg mt-0"><strong>İşlemler</strong>
+                    type="button" (click)="openCreditModal()" class="btn btn-info btn-lg mt-0"><strong>İşlemler</strong>
                   </button>
                 </div>
               </div>
@@ -274,133 +273,6 @@
             }
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="discount" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-md" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">İndirim Yap</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col">
-            <div class="input-group">
-              <input #discountInput type="number" min="1" placeholder="İndirim Tutarı Giriniz"
-                class="form-control form-control-lg">
-              <div class="input-group-append normal">
-                <div class="input-group-text">
-                  <i class="fa fa-turkish-lira fa-2x" aria-hidden="true"></i>
-                </div>
-              </div>
-              <span class="input-group-append">
-                <button class="btn btn-primary btn-lg" [disabled]="+discountInput.value >= currentAmount()"
-                  (click)="setDiscount((+discountInput.value*100)/priceWillPay())" type="button">
-                  <i class="fa fa-arrow-down" aria-hidden="true"></i> İndirim Yap
-                </button>
-              </span>
-            </div>
-          </div>
-        </div>
-        <div class="row mt-4 pr-2 pl-2">
-          @for (item of discounts(); track item) {
-          <div class="col-lg-4 mb-2 pr-1 pl-1">
-            <button type="button" (click)="setDiscount(item)"
-              class="btn btn-primary btn-block btn-lg btn-discount">{{item}}
-              %</button>
-          </div>
-          }
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="calculator" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-md" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">Ödeme Bölme</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col">
-            <div class="input-group">
-              <div class="input-group-append normal">
-                <div class="input-group-text">
-                  Bölünecek Tutar:
-                </div>
-              </div>
-              <div class="input-group-append normal">
-                <div class="input-group-text">
-                  <h2 style="font-weight: bold; width: 100%;" class="m-0 text-right">{{priceWillPay() | price }}</h2>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="row mt-4">
-          <div class="col-lg-12 pr-3 pl-3">
-            <h4>Bölüm Sayısı:</h4>
-          </div>
-        </div>
-        <div class="row mt-4 pr-2 pl-2">
-          @for (item of [2,3,4,5]; track item) {
-          <div class="col-lg-3 mb-2 pr-1 pl-1">
-            <button type="button" (click)="divideWillPay(item)"
-              class="btn btn-outline-warning btn-block btn-lg btn-discount">{{item}}</button>
-          </div>
-          }
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<div class="modal fade" id="otherOptions" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-md" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">Alacaklı Kapat</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <select #customerInput class="form-control form-control-lg">
-            @for (customer of customers(); track customer._id) {
-            <option [value]="customer._id">{{customer.name}} {{customer.surname}}</option>
-            }
-          </select>
-        </div>
-        <div class="form-group mb-0">
-          <input #creditNote type="text" placeholder="Cari Hesap Notu" class="form-control form-control-lg">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-        <button class="btn btn-primary btn-lg"
-          [disabled]="creditNote.value === '' || creditNote.value === ' ' || customerInput.value === '' || customerInput.value === ' '"
-          (click)="createCredit(customerInput.value,creditNote.value)" type="button">
-          <i class="fa fa-arrow-down" aria-hidden="true"></i> Cari Kapat
-        </button>
       </div>
     </div>
   </div>

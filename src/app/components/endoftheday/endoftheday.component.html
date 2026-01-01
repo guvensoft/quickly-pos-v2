@@ -44,7 +44,8 @@
             @for (item of endDayData(); track item._id; let i = $index) {
             <tr (click)="getDetail(item)">
               <td>{{i+1}}</td>
-              <td>{{item.timestamp | date:'dd/M/y'}} <span class="pull-right">{{item.timestamp | date:'HH:mm'}} - {{item.data_file.split('.')[0] | date:'HH:mm'}} </span></td>
+              <td>{{item.timestamp | date:'dd/M/y'}} <span class="pull-right">{{item.timestamp | date:'HH:mm'}} -
+                  {{item.data_file.split('.')[0] | date:'HH:mm'}} </span></td>
               @if (permissions().end) {
               <td>{{item.total_income | price }}</td>
               }
@@ -59,23 +60,9 @@
     </div>
   </div>
   <div class="col-lg-2" [hidden]="selectedEndDay() !== undefined || appType()?.type === '1'">
-    <button [disabled]="isStarted()" (click)="startDay()" class="btn btn-lg btn-success btn-block pt-5 pb-5">Gün Başı</button>
-    <button [disabled]="!isStarted()" (click)="endDay()" class="btn btn-lg btn-danger btn-block pt-5 pb-5">Gün Sonu</button>
-  </div>
-</div>
-
-<div class="modal fade" id="endDayModal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">Gün Sonu Yapılıyor...</h4>
-      </div>
-      <div class="modal-body text-center p-5 text-info">
-        <i class="fa fa-refresh fa-5x fa-spin" style="font-size:50vh" aria-hidden="true"></i>
-      </div>
-      <div class="modal-footer">
-        {{progress()}}
-      </div>
-    </div>
+    <button [disabled]="isStarted()" (click)="startDay()" class="btn btn-lg btn-success btn-block pt-5 pb-5">Gün
+      Başı</button>
+    <button [disabled]="!isStarted()" (click)="endDay()" class="btn btn-lg btn-danger btn-block pt-5 pb-5">Gün
+      Sonu</button>
   </div>
 </div>

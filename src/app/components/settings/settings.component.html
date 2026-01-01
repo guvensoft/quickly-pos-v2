@@ -56,6 +56,14 @@
         </h2>
       </div>
     </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 10}" (click)="selected.set(10)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-tags"></i>
+          <span>Kasa Kategorileri</span>
+        </h2>
+      </div>
+    </div>
     <div class="card" [ngClass]="{'bg-danger text-white':selected() === 8}" (click)="selected.set(8)">
       <div class="card-body">
         <h2>
@@ -90,28 +98,31 @@
         </div>
         }
         @if (selected() === 1) {
-        <app-user-settings></app-user-settings>
+        <app-user-settings [key]="selected()"></app-user-settings>
         }
         @if (selected() === 2) {
-        <app-menu-settings></app-menu-settings>
+        <app-menu-settings [key]="selected()"></app-menu-settings>
         }
         @if (selected() === 3) {
-        <app-restaurant-settings></app-restaurant-settings>
+        <app-restaurant-settings [key]="selected()"></app-restaurant-settings>
         }
         @if (selected() === 4) {
-        <app-stock-settings></app-stock-settings>
+        <app-stock-settings [key]="selected()"></app-stock-settings>
         }
         @if (selected() === 5) {
-        <app-recipe-settings></app-recipe-settings>
+        <app-recipe-settings [key]="selected()"></app-recipe-settings>
         }
         @if (selected() === 6) {
-        <app-customer-settings></app-customer-settings>
+        <app-customer-settings [key]="selected()"></app-customer-settings>
         }
         @if (selected() === 7) {
-        <app-printer-settings></app-printer-settings>
+        <app-printer-settings [key]="selected()"></app-printer-settings>
+        }
+        @if (selected() === 10) {
+        <app-cashbox-settings [key]="selected()"></app-cashbox-settings>
         }
         @if (selected() === 9) {
-        <app-application-settings></app-application-settings>
+        <app-application-settings [key]="selected()"></app-application-settings>
         }
       </div>
     </div>

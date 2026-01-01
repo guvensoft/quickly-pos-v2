@@ -51,3 +51,7 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# local app logs
+quickly-pos.log
+quickly-pos.log

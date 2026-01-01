@@ -1,0 +1,102 @@
+# Quickly POS Development Rules with AI Live Log Bridge
+
+## Terminal Command Rules
+
+Always run terminal commands using the `ai` wrapper to enable live log monitoring.
+
+### Format: `ai <command>`
+
+**Examples:**
+- `ai npm test` - Run tests with logging
+- `ai npm start` - Start development server
+- `ai npm run build` - Build project
+- `ai npm run electron:serve-tsc` - Serve main process
+- `ai npm run ng:serve` - Serve Angular renderer
+- `ai docker-compose up` - Run Docker containers
+
+## Quickly POS Specific Commands
+
+```bash
+# Build main process with logging
+ai npm run electron:serve-tsc
+
+# Build renderer with logging
+ai npm run ng:serve
+
+# Run tests with logging
+ai npm test
+
+# Build for production
+ai npm run build
+
+# Run end-to-end tests
+ai npm run e2e
+```
+
+## When Debugging, Use These Commands
+
+```bash
+# View recent terminal output
+ai view_logs
+
+# View only errors and crashes
+ai get_crash_context
+
+# Automatically detect and fix all errors
+ai auto_fix_errors
+
+# View browser console logs and network activity
+ai view_browser_logs
+
+# View only browser errors
+ai get_browser_errors
+
+# View last 200 lines
+ai --last 200
+
+# Watch logs in real-time
+ai live
+```
+
+## Browser Debugging
+
+1. Open Quickly POS on localhost (e.g., `http://localhost:4200`)
+2. Ask me: "What's happening in the browser?"
+3. I will automatically see:
+   - Console logs (log, warn, error)
+   - JavaScript exceptions with stack traces
+   - Network requests and failures
+   - Response data and timing
+
+## Development Workflow
+
+When developing:
+
+1. **Terminal visibility**: Run commands with `ai` prefix so I can see output
+2. **Browser visibility**: I automatically monitor localhost for console/network errors
+3. **Error detection**: I can instantly spot and fix test failures, build errors, runtime errors
+4. **Ask me**: "What's wrong?", "Auto fix this", "What's in the logs?"
+
+## Important Notes
+
+- Commands without `ai` prefix still work, but I won't see the output
+- I only monitor localhost (security feature - prevents cross-site tracking)
+- All API keys, tokens, and passwords are automatically redacted
+- Each command gets a unique session ID for clean organization
+
+## Project Structure Context
+
+- **Main Process**: `app/main.ts` - Electron main process
+- **Renderer**: `src/app/` - Angular components
+- **Tests**: `*.spec.ts` files
+- **E2E Tests**: `e2e/main.spec.ts`
+- **Build Output**: `dist/` folder
+
+## Quickly POS Stack
+
+- **Framework**: Angular 17
+- **Build Tool**: Angular CLI
+- **Desktop**: Electron
+- **Language**: TypeScript
+- **Testing**: Vitest/Playwright
+- **UI**: SCSS, HTML components

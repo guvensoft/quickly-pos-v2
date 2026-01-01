@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, NgZone, ChangeDetectorRef, inject, OnDestroy, signal, computed, effect, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ChangeDetectorRef, inject, OnDestroy, signal, computed, effect, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonDirective } from '../../../shared/directives/button.directive';
 import { RouterModule } from '@angular/router';
@@ -22,6 +22,7 @@ import { Subscription } from 'rxjs';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -44,7 +45,8 @@ export class SellingScreenComponent implements OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly scalerService = inject(ScalerService);
   private readonly logService = inject(LogService);
-  private readonly zone = inject(NgZone);
+  private readonly dialogFacade = inject(DialogFacade);
+
 
   readonly id = signal<string | undefined>(undefined);
   readonly type = signal<string | undefined>(undefined);
@@ -122,15 +124,11 @@ export class SellingScreenComponent implements OnDestroy {
   readonly productSpecs = signal<any[]>([]);
   readonly printers = signal<any[]>([]);
   readonly scalerValue = signal<number>(0);
-  readonly productStock = signal<any>(undefined);
-  readonly productWithSpecs = signal<any>(undefined);
-  readonly numpad = signal<any>('');
-  readonly isFirstTime = signal<boolean>(true);
-  readonly numboard: Array<any> = [
-    ['1', '2', '3'],
-    ['4', '5', '6'],
-    ['7', '8', '9'],
-    ['.', '0', '◂']
+  readonly cancelReasons: Array<string> = [
+    'Zayi',
+    'Stokta Yok',
+    'Yanlış Sipariş',
+    'Müşteri İstemedi',
   ];
   readonly discounts: Array<number> = [5, 10, 15, 20, 25, 40];
   readonly paymentMethods: Array<any> = [
@@ -139,16 +137,9 @@ export class SellingScreenComponent implements OnDestroy {
     new PaymentMethod('Kupon', 'İndirim Kuponu veya Yemek Çeki', '#5bc0de', 'fa-bookmark', 3, 1),
     new PaymentMethod('İkram', 'İkram Hesap', '#c9302c', 'fa-handshake-o', 4, 1)
   ];
-  readonly cancelReasons: Array<string> = [
-    'Zayi',
-    'Stokta Yok',
-    'Yanlış Sipariş',
-    'Müşteri İstemedi',
-  ];
   readonly day = signal<number>(new Date().getDay());
   readonly askForPrint = signal<boolean>(false);
   readonly askForCheckPrint = signal<boolean>(false);
-  readonly tareNumber = signal<any>(0);
   readonly onProductChange = signal<boolean>(false);
   readonly selectedQuantity = signal<number>(1);
   readonly takeaway = signal<boolean>(false);
@@ -184,7 +175,7 @@ export class SellingScreenComponent implements OnDestroy {
             this.check.set(new Check(currentId!, 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.NORMAL, CheckNo()));
             this.getCheck({ table_id: currentId }).finally(() => {
               if (this.check().status == CheckStatus.PASSIVE) {
-                (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                this.openOccupancyModal();
               }
             });
             break;
@@ -195,7 +186,7 @@ export class SellingScreenComponent implements OnDestroy {
               this.check.set(new Check('Hızlı Satış', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.FAST, CheckNo()));
               this.getCheck({ _id: currentId }).finally(() => {
                 if (this.check().status == CheckStatus.PASSIVE) {
-                  (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                  this.openOccupancyModal();
                 }
               });
             }
@@ -204,26 +195,11 @@ export class SellingScreenComponent implements OnDestroy {
             this.check.set(new Check('Paket Servis', 0, 0, ownerName, '', CheckStatus.PASSIVE, [], Date.now(), CheckType.ORDER, CheckNo()));
             this.getCheck({ _id: currentId }).finally(() => {
               if (this.check().status == CheckStatus.PASSIVE) {
-                (window as any).$('#occupationModal').modal({ backdrop: 'static', keyboard: false });
+                this.openOccupancyModal();
               }
             });
             break;
         }
-      });
-    }, { allowSignalWrites: true });
-
-    // DateSettings subscription wrapped in effect
-    effect(() => {
-      this.settingsService.DateSettings.subscribe((res: any) => {
-        this.day.set(res.value.day);
-      });
-    }, { allowSignalWrites: true });
-
-    // AppSettings subscription wrapped in effect
-    effect(() => {
-      this.settingsService.AppSettings.subscribe((res: any) => {
-        const takeawayValue = res.value.takeaway;
-        this.takeaway.set(takeawayValue !== 'Kapalı');
       });
     }, { allowSignalWrites: true });
 
@@ -249,9 +225,21 @@ export class SellingScreenComponent implements OnDestroy {
       console.error('Error parsing selectedFloor:', error);
     }
 
+    // DateSettings subscription
+    this.settingsService.DateSettings.subscribe((res: any) => {
+      this.day.set(res.value.day);
+    });
+
+    // AppSettings subscription
+    this.settingsService.AppSettings.subscribe((res: any) => {
+      const takeawayValue = res.value.takeaway;
+      this.takeaway.set(takeawayValue !== 'Kapalı');
+      this.askForPrint.set(res.value.ask_print_order === 'Sor');
+      this.askForCheckPrint.set(res.value.ask_print_check === 'Sor');
+    });
+
     // DB change listener subscription wrapped in effect
     effect(() => {
-      this.fillData();
       const ch = this.mainService.LocalDB['checks'].changes({ since: 'now', live: true }).on('change', (change: any) => {
         if (change.id == this.check_id()) {
           if (!change.deleted) {
@@ -268,27 +256,6 @@ export class SellingScreenComponent implements OnDestroy {
         }
       });
       this.changes.set(ch);
-
-      this.zone.runOutsideAngular(() => {
-        const $ = (window as any).$;
-        if ($ && typeof $ === 'function') {
-          const productSpecsModal = $('#productSpecs');
-          if (productSpecsModal.length) {
-            productSpecsModal.on('hide.bs.modal', () => {
-              if (this.scalerListener && typeof this.scalerListener.unsubscribe === 'function') {
-                this.scalerListener.unsubscribe();
-              }
-            });
-          }
-
-          const specsModal = $('#specsModal');
-          if (specsModal.length) {
-            specsModal.on('hide.bs.modal', () => {
-              this.selectedQuantity.set(1);
-            });
-          }
-        }
-      });
       this.cdr.detectChanges();
     }, { allowSignalWrites: true });
   }
@@ -302,20 +269,6 @@ export class SellingScreenComponent implements OnDestroy {
     // Unsubscribe scaler listener to prevent memory leak
     if (this.scalerListener && typeof this.scalerListener.unsubscribe === 'function') {
       this.scalerListener.unsubscribe();
-    }
-
-    // Clean up jQuery modal event listeners
-    const $ = (window as any).$;
-    if ($ && typeof $ === 'function') {
-      const productSpecsModal = $('#productSpecs');
-      if (productSpecsModal.length) {
-        productSpecsModal.off('hide.bs.modal');
-      }
-
-      const specsModal = $('#specsModal');
-      if (specsModal.length) {
-        specsModal.off('hide.bs.modal');
-      }
     }
 
     const currentCheck = this.check();
@@ -359,29 +312,26 @@ export class SellingScreenComponent implements OnDestroy {
   }
 
 
-  tareScaler() {
-    this.tareNumber.set(this.numpad());
-  }
-
   addToCheck(product: Product) {
     if (product.type == ProductType.MANUEL) {
-      this.isFirstTime.set(true);
-      this.productWithSpecs.set(product);
       this.mainService.getAllBy('recipes', { product_id: product._id! }).then((res: any) => {
         const ps = res.docs[0].recipe[0];
-        this.productStock.set(ps);
-        this.numpad.set(ps.amount);
-        this.scalerListener = this.scalerService.listenScalerEvent().subscribe((weight: number) => {
-          if (weight && weight !== 0) {
-            let val = weight * ps.amount;
-            if (this.tareNumber() !== 0) {
-              val = val - this.tareNumber();
-            }
-            this.numpad.set(val);
+        this.dialogFacade.openNumpadModal({
+          productName: product.name,
+          productPrice: product.price,
+          stockAmount: ps.amount,
+          unit: this.productUnit()?.nativeElement.innerHTML ?? 'Adet',
+          showTare: true,
+          scaler$: this.scalerService.listenScalerEvent(),
+          onTare: (val: number) => {
+            // Logic for tare if needed, maybe just clear or set offset
           }
-        })
+        }).closed.subscribe(val => {
+          if (val) {
+            this.handleNumpadResult(val, product, ps);
+          }
+        });
       });
-      (window as any).$('#productSpecs').modal('show');
     } else {
       if (this.productFilterInput()) {
         this.productFilterInput()!.nativeElement.value = '';
@@ -419,58 +369,50 @@ export class SellingScreenComponent implements OnDestroy {
       }
 
       if (product.specifies && product.specifies.length > 0) {
-        this.getSpecies(newProduct);
-        (window as any).$('#specsModal').modal({ backdrop: 'static', keyboard: false });
+        this.openSelectionModal('specs', newProduct, product.specifies);
       } else {
         this.selectedQuantity.set(1);
       }
     }
     setTimeout(() => {
-      (window as any).$('#check-products').scrollTop(999999);
+      this.scrollCheckProductsToBottom();
     }, 200);
   }
 
-  numpadToCheck() {
-    const amount = this.numpad();
-    const productWS = this.productWithSpecs();
-    const pStock = this.productStock();
-    const newAmount = (amount * productWS.price) / pStock.amount;
-    const unitText = this.productUnit()?.nativeElement.innerHTML ?? 'Adet';
-    const newNote = `${amount} ${unitText}`;
-    const newProduct = new CheckProduct(productWS._id, productWS.cat_id, productWS.name, newAmount, newNote, 1, this.ownerId(), Date.now(), productWS.tax_value, productWS.barcode);
+  handleNumpadResult(val: number, product: Product, ps: any) {
+    if (this.productFilterInput()) {
+      this.productFilterInput()!.nativeElement.value = '';
+    }
+    this.filterText.set('');
+
+    const newProduct = new CheckProduct(
+      product._id!,
+      product.cat_id,
+      product.name,
+      (val * product.price) / ps.amount,
+      '',
+      val / ps.amount,
+      this.ownerId(),
+      Date.now(),
+      product.tax_value,
+      product.barcode
+    );
 
     const currentCheck = { ...this.check() };
     currentCheck.total_price = (currentCheck.total_price || 0) + newProduct.price;
-    const countFor = newAmount / productWS.price;
-
-    if (unitText === 'Adet') {
-      for (let index = 0; index < countFor; index++) {
-        const repeatingProduct = new CheckProduct(productWS._id, productWS.cat_id, productWS.name, productWS.price, '', 1, this.ownerId(), Date.now(), productWS.tax_value, productWS.barcode);
-        currentCheck.products.push(repeatingProduct);
-        this.newOrders.update(orders => [...orders, repeatingProduct]);
-      }
-    } else {
-      currentCheck.products.push(newProduct);
-      this.newOrders.update(orders => [...orders, newProduct]);
-    }
+    currentCheck.products.push({ ...newProduct });
+    this.newOrders.update(orders => [...orders, { ...newProduct }]);
 
     this.check.set(currentCheck);
-    this.countProductsData(productWS._id, newAmount, countFor);
-    this.tareNumber.set(0);
-    this.numpad.set(0);
-    (window as any).$('#productSpecs').modal('hide');
-  }
+    this.selectedIndex.set(currentCheck.products.length - 1);
+    this.selectedProduct.set(currentCheck.products[this.selectedIndex()!]);
 
-  pushKey(key: any) {
-    if (key === "◂") {
-      this.numpad.set('');
-    } else {
-      if (this.isFirstTime()) {
-        this.numpad.set('');
-        this.isFirstTime.set(false);
-      }
-      this.numpad.update(curr => (curr || '') + key);
-    }
+    this.countProductsData(product._id!, newProduct.price, val / ps.amount);
+    this.selectedQuantity.set(1);
+
+    setTimeout(() => {
+      this.scrollCheckProductsToBottom();
+    }, 200);
   }
 
   confirmCheck() {
@@ -512,7 +454,7 @@ export class SellingScreenComponent implements OnDestroy {
             }
           }).catch((err: any) => {
             console.error(err);
-          })
+          });
         }
       });
     } else {
@@ -531,7 +473,7 @@ export class SellingScreenComponent implements OnDestroy {
               product_id: order.id
             }
             newOrder.items.push(orderItem);
-          })
+          });
           this.mainService.addData('orders', newOrder).then((res: any) => {
             if (currentCheck.type == CheckType.NORMAL) {
               this.logService.createLog(logType.CHECK_CREATED, res.id, `${this.table().name} Masasına '${this.owner()}' tarafından hesap açıldı`);
@@ -540,7 +482,7 @@ export class SellingScreenComponent implements OnDestroy {
             }
           }).catch((err: any) => {
             console.error(err);
-          })
+          });
         }
       });
     }
@@ -570,12 +512,12 @@ export class SellingScreenComponent implements OnDestroy {
         if (currentCheck.note == '' || currentCheck.note == undefined) {
           this.message.sendConfirm('Hızlı Hesap oluşturmanız için hesaba not eklemek zorundasınız.').then((isOk: any) => {
             if (isOk) {
-              (window as any).$('#checkNote').modal('show');
+              this.openCheckNoteModal();
               return false;
             } else {
               return false;
             }
-          })
+          });
         } else {
           if (this.askForPrint()) {
             this.message.sendConfirm('Fiş Yazdırılsın mı ?').then((isOk: any) => {
@@ -668,7 +610,11 @@ export class SellingScreenComponent implements OnDestroy {
         total_discounts += general_discount;
       }
     }
-    (window as any).$('#closeCheck').modal('hide');
+    // Active element'e blur() uygula (aria-hidden uyarısını engelle)
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement && activeElement.blur) {
+      activeElement.blur();
+    }
     const checkWillClose = new ClosedCheck(currentCheck.table_id, (currentCheck.total_price + (currentCheck.discount || 0)) - general_discount, total_discounts, this.owner(), currentCheck.note, CheckStatus.OCCUPIED, currentCheck.products, currentCheck.timestamp, currentCheck.type, method, currentCheck.payment_flow, undefined, currentCheck.occupation);
     if (currentCheck.type == CheckType.ORDER) {
       checkWillClose.products.map((obj: any) => obj.status = 2);
@@ -717,6 +663,16 @@ export class SellingScreenComponent implements OnDestroy {
       });
     }
     this.message.sendMessage(`Hesap ${currentCheck.total_price} TL tutarında ödeme alınarak kapatıldı`);
+  }
+
+  goPaymentMethodSelection() {
+    this.dialogFacade.openPaymentMethodModal({
+      methods: this.paymentMethods
+    }).closed.subscribe(method => {
+      if (method) {
+        this.closeCheck(method);
+      }
+    });
   }
 
   updateSellingReport(method: string) {
@@ -805,8 +761,51 @@ export class SellingScreenComponent implements OnDestroy {
     }
   }
 
+  openOccupancyModal() {
+    this.dialogFacade.openOccupancyModal({
+      occupation: this.check().occupation
+    }).closed.subscribe(val => {
+      if (val) {
+        const current = this.check();
+        current.occupation = val;
+        this.check.set({ ...current });
+      }
+    });
+  }
+
   getSpecies(product: any) {
-    this.productSpecs.set(this.products().find((obj: any) => obj._id == product.id)?.specifies || []);
+    const species = this.products().find((obj: any) => obj._id == product.id)?.specifies || [];
+    if (species.length > 0) {
+      this.openSelectionModal('specs', product, species);
+    }
+  }
+
+  openSelectionModal(type: 'specs' | 'printer' | 'qr_printer', context: any, items: any[]) {
+    let title = 'Seçim Yapınız';
+    let selectionItems: any[] = [];
+
+    switch (type) {
+      case 'specs':
+        title = context.name;
+        selectionItems = items.map(s => ({ id: s.spec_name, label: s.spec_name, subLabel: this.mainService.formatPrice(s.spec_price), data: s }));
+        break;
+      case 'printer':
+        title = 'Yazıcı Seç';
+        selectionItems = items.filter(p => p.mission === 'Adisyon').map(p => ({ id: p.name, label: p.name, data: p }));
+        break;
+      case 'qr_printer':
+        title = 'QR Yazıcı Seç';
+        selectionItems = items.filter(p => p.mission === 'Adisyon').map(p => ({ id: p.name, label: p.name, data: p }));
+        break;
+    }
+
+    this.dialogFacade.openSelectionModal({ title, items: selectionItems }).closed.subscribe(result => {
+      if (result) {
+        if (type === 'specs') this.changeSpecs(result.data);
+        if (type === 'printer') this.printCheck(result.data);
+        if (type === 'qr_printer') this.qrCode(result.data);
+      }
+    });
   }
 
 
@@ -830,79 +829,106 @@ export class SellingScreenComponent implements OnDestroy {
       selected.price = (spec.spec_price * this.selectedQuantity());
     }
     this.recalculateTotal();
-    (window as any).$('#specsModal').modal('hide');
+    this.selectedQuantity.set(1);
   }
 
-  addNote(form: NgForm) {
+  openNoteModal() {
     const selected = this.selectedProduct();
-    const idx = this.selectedIndex();
-    if (selected != undefined && idx != undefined) {
-      const note = form.value.description;
-      if (note == '' || note == null || note == ' ') {
-        this.message.sendMessage('Not Alanı Boş Bırakılamaz');
-      } else {
-        const currentCheck = { ...this.check() };
-        currentCheck.products[idx].note = note;
-        this.check.set(currentCheck);
-        form.reset();
-        (window as any).$('#noteModal').modal('hide');
+    if (!selected) return;
+
+    const product = this.products().find(p => p._id === selected.id);
+    const readyNotes = product?.notes ? product.notes.split(',') : [];
+
+    this.dialogFacade.openNoteModal({
+      productName: selected.name,
+      currentNote: selected.note,
+      readyNotes,
+      permissions: this.permissions()
+    }).closed.subscribe(result => {
+      if (result) {
+        switch (result.action) {
+          case 'note':
+            this.handleNoteResult(result.value);
+            break;
+          case 'gift':
+            this.makeGift();
+            break;
+          case 'dont_give':
+            this.dontGive();
+            break;
+        }
       }
-    }
+    });
   }
 
-  addReadyNotes(note: string) {
-    // this.check.products[this.selectedIndex].note += note + ', ';
-    if (this.noteInput()) {
-      this.noteInput()!.nativeElement.value += note + ', ';
-      this.noteInput()!.nativeElement.dispatchEvent(new Event('input'));
-    }
-  }
-
-  makeGift() {
-    const selected = this.selectedProduct();
+  private handleNoteResult(note: string) {
     const idx = this.selectedIndex();
-    if (selected != undefined && idx != undefined) {
+    if (idx !== undefined) {
+      const currentCheck = { ...this.check() };
+      currentCheck.products[idx].note = note;
+      this.check.set(currentCheck);
+    }
+  }
+
+  private makeGift() {
+    const idx = this.selectedIndex();
+    if (idx !== undefined) {
       const currentCheck = { ...this.check() };
       currentCheck.products[idx].name += ' (İkram)';
       currentCheck.total_price -= currentCheck.products[idx].price;
       currentCheck.products[idx].price = 0;
       this.check.set(currentCheck);
-      (window as any).$('#noteModal').modal('hide');
     }
   }
 
-  dontGive() {
-    const selected = this.selectedProduct();
+  private dontGive() {
     const idx = this.selectedIndex();
-    if (selected != undefined && idx != undefined) {
+    if (idx !== undefined) {
       const currentCheck = { ...this.check() };
       currentCheck.products[idx].note = 'Verme';
       this.check.set(currentCheck);
-      (window as any).$('#noteModal').modal('hide');
     }
   }
 
-  addCheckNote(form: NgForm) {
-    const note = form.value.description;
-    if (note == '' || note == null || note == ' ') {
-      this.message.sendMessage('Not Alanı Boş Bırakılamaz!');
-    } else {
-      const currentCheck = { ...this.check() };
-      currentCheck.note = note;
-      if (currentCheck.status !== CheckStatus.PASSIVE) {
-        this.mainService.updateData('checks', this.check_id(), { note: note }).then((res: any) => {
-          currentCheck._rev = res.rev;
-          this.check.set(currentCheck);
-        });
-      } else {
-        this.check.set(currentCheck);
+  openCheckNoteModal() {
+    this.dialogFacade.openPromptModal({
+      title: 'Hesaba Not Ekle',
+      message: 'Hesap için geçerli olacak notu giriniz.',
+      placeholder: 'Notunuz...',
+      required: true,
+      value: this.check().note
+    }).closed.subscribe(note => {
+      if (note) {
+        this.handleCheckNoteResult(note);
       }
-      form.reset();
-      (window as any).$('#checkNote').modal('hide');
+    });
+  }
+
+  private handleCheckNoteResult(note: string) {
+    const currentCheck = { ...this.check() };
+    currentCheck.note = note;
+    if (currentCheck.status !== CheckStatus.PASSIVE) {
+      this.mainService.updateData('checks', this.check_id(), { note: note }).then((res: any) => {
+        currentCheck._rev = res.rev;
+        this.check.set(currentCheck);
+      });
+    } else {
+      this.check.set(currentCheck);
     }
   }
 
-  cancelProduct(reason: string) {
+  openCancelProductModal() {
+    this.dialogFacade.openSelectionModal({
+      title: 'İptal Nedeni',
+      items: this.cancelReasons.map(r => ({ id: r, label: r, data: r }))
+    }).closed.subscribe(result => {
+      if (result) {
+        this.executeCancelProduct(result.data);
+      }
+    });
+  }
+
+  private executeCancelProduct(reason: string) {
     if (this.selectedProduct() !== undefined) {
       const currentCheck = { ...this.check() };
       const idx = this.selectedIndex()!;
@@ -937,7 +963,6 @@ export class SellingScreenComponent implements OnDestroy {
             this.message.sendMessage('Ürün İptal Edildi');
             this.selectedProduct.set(undefined);
             this.selectedIndex.set(undefined);
-            (window as any).$('#cancelProduct').modal('hide');
             productAfterCancel.forEach((element: any) => {
               currentCheck.products.push(element);
             });
@@ -945,7 +970,6 @@ export class SellingScreenComponent implements OnDestroy {
           }
         });
       } else {
-        (window as any).$('#cancelProduct').modal('hide');
         const canceledTotalPrice = currentCheck.products.length > 0
           ? currentCheck.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
           : 0;
@@ -953,7 +977,7 @@ export class SellingScreenComponent implements OnDestroy {
         checkToCancel.description = 'Bütün Ürünler İptal Edildi';
         this.mainService.addData('closed_checks', checkToCancel).then((res: any) => {
           this.message.sendMessage('Hesap İptal Edildi');
-          this.logService.createLog(logType.CHECK_CANCELED, currentCheck._id, `${this.table().name}'de kalan bütün ürünler iptal edildi. Hesap Kapatıldı.`)
+          this.logService.createLog(logType.CHECK_CANCELED, currentCheck._id, `${this.table().name}'de kalan bütün ürünler iptal edildi. Hesap Kapatıldı.`);
         });
         this.mainService.removeData('checks', currentCheck._id);
         if (currentCheck.type == CheckType.NORMAL) {
@@ -962,6 +986,23 @@ export class SellingScreenComponent implements OnDestroy {
         this.router.navigate(['/store']);
       }
     }
+  }
+
+  openCheckOptions() {
+    this.dialogFacade.openCheckOptionsModal({
+      permissions: this.permissions()
+    }).closed.subscribe((result: any) => {
+      if (result) {
+        switch (result) {
+          case 'add_note':
+            this.openCheckNoteModal();
+            break;
+          case 'discount':
+            this.openDiscountModal();
+            break;
+        }
+      }
+    });
   }
 
   //// 28900848 Protocol DAD
@@ -1125,8 +1166,11 @@ export class SellingScreenComponent implements OnDestroy {
   }
 
 
+  openQRPrintersSelection() {
+    this.openSelectionModal('qr_printer', null, this.printers());
+  }
+
   qrCode(printer: any) {
-    (window as any).$('#qrPrintersModal').modal('hide');
     if (!printer) {
       printer = this.printers()[0];
     }
@@ -1146,18 +1190,18 @@ export class SellingScreenComponent implements OnDestroy {
             setTimeout(() => {
               const qrdata = `https://quickly.cafe/${slug}/${res.id}`;
               this.printerService.printQRCode(printer, qrdata, this.table().name, ownerName);
-            }, 100)
+            }, 100);
           });
-        })
+        });
       } else {
         this.mainService.addData('checks', currentCheck).then((res: any) => {
           this.mainService.updateData('tables', this.table()._id, { status: 2, timestamp: Date.now() }).then(() => {
             setTimeout(() => {
               const qrdata = `https://quickly.cafe//${slug}/${res.id}`;
               this.printerService.printQRCode(printer, qrdata, this.table().name, ownerName);
-            }, 100)
+            }, 100);
           });
-        })
+        });
       }
     }
     this.router.navigate(['/store']);
@@ -1201,8 +1245,11 @@ export class SellingScreenComponent implements OnDestroy {
     }
   }
 
+  openPrintersSelection() {
+    this.openSelectionModal('printer', null, this.printers());
+  }
+
   printCheck(selectedPrinter: any) {
-    (window as any).$('#printersModal').modal('hide');
     const currentCheck = { ...this.check() };
     const currentTable = this.table();
 
@@ -1245,11 +1292,27 @@ export class SellingScreenComponent implements OnDestroy {
     this.selectedSubCatId.set(id);
   }
 
-  selectTable(id: string) {
-    this.selectedTableId.set(id);
+  openTableMoveModal(onProduct: boolean) {
+    this.onProductChange.set(onProduct);
+    this.dialogFacade.openTableSelectionModal({
+      title: onProduct ? 'Ürün Taşı - Masa Seç' : 'Masa Değiştir - Masa Seç',
+      tables: this.tables().filter(t => t._id !== this.id() && t.status !== 3),
+      floors: this.floors(),
+      currentTableId: this.id(),
+      actionText: onProduct ? 'Ürünü Taşı' : 'Masayı Değiştir'
+    }).closed.subscribe((tableId: any) => {
+      if (tableId) {
+        this.selectedTableId.set(tableId);
+        if (onProduct) {
+          this.splitProduct();
+        } else {
+          this.splitTable();
+        }
+      }
+    });
   }
 
-  splitProduct() {
+  private splitProduct() {
     const selectedProd = this.selectedProduct();
     const selectedTab = this.selectedTable() as any;
     const currentCheck = { ...this.check() };
@@ -1292,7 +1355,6 @@ export class SellingScreenComponent implements OnDestroy {
                     }
                     this.mainService.removeData('checks', currentCheck._id).then((res: any) => {
                       if (res.ok) {
-                        (window as any).$('#splitTable').modal('hide');
                         this.mainService.updateData('tables', currentCheck.table_id, { status: 1 }).then((res: any) => {
                           this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
                         });
@@ -1306,14 +1368,13 @@ export class SellingScreenComponent implements OnDestroy {
                         currentCheck._rev = res.rev;
                         this.check.set(currentCheck);
                         this.setDefault();
-                        (window as any).$('#splitTable').modal('hide');
                       }
                     });
                   }
                 }
-              })
+              });
             }
-          })
+          });
         }
       });
     } else {
@@ -1351,7 +1412,6 @@ export class SellingScreenComponent implements OnDestroy {
                 }
                 this.mainService.removeData('checks', currentCheck._id).then((r: any) => {
                   if (r.ok) {
-                    (window as any).$('#splitTable').modal('hide');
                     this.mainService.updateData('tables', currentCheck.table_id, { status: 1 }).then((res: any) => {
                       this.message.sendMessage(`Ürün ${selectedTab.name} Masasına Aktarıldı`);
                     });
@@ -1365,12 +1425,11 @@ export class SellingScreenComponent implements OnDestroy {
                     currentCheck._rev = r.rev;
                     this.check.set(currentCheck);
                     this.setDefault();
-                    (window as any).$('#splitTable').modal('hide');
                   }
                 });
               }
             }
-            this.logService.createLog(logType.ORDER_MOVED, selectedProd.id, `${selectedProd.name} siparişi ${this.table().name} masasından ${selectedTab.name} masasına aktarıldı`)
+            this.logService.createLog(logType.ORDER_MOVED, selectedProd.id, `${selectedProd.name} siparişi ${this.table().name} masasından ${selectedTab.name} masasına aktarıldı`);
           });
         }
       });
@@ -1392,16 +1451,15 @@ export class SellingScreenComponent implements OnDestroy {
         this.mainService.updateData('tables', selectedTab._id, { status: 2, timestamp: Date.now() });
         this.mainService.updateData('checks', this.check_id(), { table_id: selectedTab._id!, type: 1 }).then((res: any) => {
           if (res.ok) {
-            this.message.sendMessage(`Hesap ${selectedTab.name} Masasına Aktarıldı.`)
+            this.message.sendMessage(`Hesap ${selectedTab.name} Masasına Aktarıldı.`);
             if (currentCheck.type == CheckType.NORMAL) {
               this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentTable.name} Hesabı ${selectedTab.name} masasına taşındı.`);
             } else {
               this.logService.createLog(logType.CHECK_MOVED, currentCheck._id, `${currentCheck.note} Hesabı ${selectedTab.name} masasına taşındı.`);
             }
-            (window as any).$('#splitTable').modal('hide');
             this.router.navigate(['/store']);
           }
-        })
+        });
       }
     } else {
       this.message.sendConfirm(`Bütün Ürünler, ${selectedTab.name} Masasına Aktarılacak.`).then(isOk => {
@@ -1434,7 +1492,6 @@ export class SellingScreenComponent implements OnDestroy {
                   this.mainService.removeData('checks', currentCheck._id).then((r: any) => {
                     if (r.ok) {
                       this.message.sendMessage(`Hesap ${selectedTab.name} Masası ile Birleştirildi.`);
-                      (window as any).$('#splitTable').modal('hide');
                       this.router.navigate(['/store']);
                     }
                   });
@@ -1447,12 +1504,22 @@ export class SellingScreenComponent implements OnDestroy {
     }
   }
 
+  openDiscountModal() {
+    this.dialogFacade.openSelectionModal({
+      title: 'İndirim Yap (%)',
+      items: this.discounts.map(d => ({ id: d, label: `% ${d}` }))
+    }).closed.subscribe((result: any) => {
+      if (result) {
+        this.setDiscount(result.id);
+      }
+    });
+  }
+
   setDiscount(value: any) {
     const currentCheck = { ...this.check() };
     currentCheck.discountPercent = value;
     this.check.set(currentCheck);
 
-    (window as any).$('#checkDiscount').modal('hide');
     if (currentCheck.type == CheckType.NORMAL) {
       if (currentCheck.status !== CheckStatus.PASSIVE) {
         this.mainService.changeData('checks', currentCheck._id, (doc: any) => {
@@ -1531,9 +1598,16 @@ export class SellingScreenComponent implements OnDestroy {
 
   fillData() {
     this.selectedCatId.set(undefined);
-    this.settingsService.AppSettings.subscribe((res: any) => {
-      this.askForPrint.set(res.value.ask_print_order === 'Sor');
-      this.askForCheckPrint.set(res.value.ask_print_check === 'Sor');
-    });
+  }
+
+  /**
+   * Scrolls the check products list to the bottom
+   * Native DOM implementation replacing jQuery
+   */
+  private scrollCheckProductsToBottom(): void {
+    const element = document.getElementById('check-products');
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+    }
   }
 }

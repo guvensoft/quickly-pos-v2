@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -9,6 +9,9 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./printer-settings.component.scss']
 })
 export class PrinterSettingsComponent implements OnInit {
+
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
 
   constructor() { }
 

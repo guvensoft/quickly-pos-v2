@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ElectronService } from '../../core/services/electron/electron.service';
 import { SettingsService } from '../../core/services/settings.service';
@@ -10,6 +10,7 @@ import { RecipeSettingsComponent } from './recipe-settings/recipe-settings.compo
 import { ApplicationSettingsComponent } from './application-settings/application-settings.component';
 import { PrinterSettingsComponent } from './printer-settings/printer-settings.component';
 import { RestaurantSettingsComponent } from './restaurant-settings/restaurant-settings.component';
+import { CashboxSettingsComponent } from './cashbox-settings/cashbox-settings.component';
 
 @Component({
   standalone: true,
@@ -22,7 +23,8 @@ import { RestaurantSettingsComponent } from './restaurant-settings/restaurant-se
     RecipeSettingsComponent,
     ApplicationSettingsComponent,
     RestaurantSettingsComponent,
-    PrinterSettingsComponent
+    PrinterSettingsComponent,
+    CashboxSettingsComponent
   ],
   selector: 'app-settings',
   templateUrl: './settings.component.html',
@@ -33,18 +35,19 @@ export class SettingsComponent {
   private readonly settingsService = inject(SettingsService);
 
   readonly storeInfo = signal<any>(undefined);
-  readonly selected = signal<number>(0);
+  readonly selected = signal<number | undefined>(undefined);
   readonly logo = signal<string>('');
 
   constructor() {
     // Initialize logo path after DI is ready
-    this.logo.set(this.electron.appRealPath + '/data/customer.png');
+    const basePath = this.electron.appRealPath.endsWith('/')
+      ? this.electron.appRealPath
+      : this.electron.appRealPath + '/';
+    this.logo.set(basePath + 'data/customer.png');
 
-    // Set up reactive effect for RestaurantInfo changes
-    effect(() => {
-      this.settingsService.RestaurantInfo.subscribe(res => {
-        this.storeInfo.set(res.value);
-      });
-    }, { allowSignalWrites: true });
+    // Subscribe to RestaurantInfo outside of effect to avoid subscription issues
+    this.settingsService.RestaurantInfo.subscribe(res => {
+      this.storeInfo.set(res.value);
+    });
   }
 }

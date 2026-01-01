@@ -33,20 +33,20 @@
           <div class="col-xl-4 col-lg-5">
             <div class="row">
               <div class="col-lg-4 pr-1 pl-1">
-                <button data-toggle="modal" (click)="onProductChange.set(false)" data-target="#splitTable"
+                <button (click)="openTableMoveModal(false)"
                   [disabled]="tablesView().length === 0 || (check().products?.length ?? 0) === 0 || (check().status ?? 0) === 0"
                   class="btn btn-danger btn-block btn-sm">
                   <strong>Masa Değiştir</strong>
                 </button>
               </div>
               <div class="col-lg-4 pr-1 pl-1">
-                <button data-toggle="modal" data-target="#checkOptions"
-                  [disabled]="(check().products?.length ?? 0) === 0" class="btn btn-danger btn-block btn-sm">
+                <button (click)="openCheckOptions()" [disabled]="(check().products?.length ?? 0) === 0"
+                  class="btn btn-danger btn-block btn-sm">
                   <strong>Hesap İşlemleri</strong>
                 </button>
               </div>
               <div class="col-lg-4 pr-1 pl-1">
-                <button data-toggle="modal" data-target="#qrPrintersModal"
+                <button (click)="openQRPrintersSelection()"
                   class="btn btn-secondary text-info border-info btn-block btn-sm "
                   [disabled]="tablesView().length === 0 || check().type === 2">
                   <i class="fa fa-qrcode"></i>
@@ -58,7 +58,7 @@
         </div>
       </div>
       <div class="card-body pt-2">
-        <div class="row">
+        <div class="row align-items-start">
           <div class="col-xl-8 col-lg-7">
             <div class="row">
               @if (selectedCatId() === undefined) {
@@ -305,8 +305,7 @@
                     class="btn btn-danger btn-lg btn-block"><strong>Ödeme Al</strong></button>
                   <button
                     [disabled]="(check().products?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
-                    class="btn btn-lg btn-primary" data-toggle="modal"
-                    data-target="#closeCheck"><strong>Kapat</strong></button>
+                    (click)="goPaymentMethodSelection()" class="btn btn-lg btn-primary"><strong>Kapat</strong></button>
                   }
 
                   @if (check().type === 1 && check().payment_flow && check().total_price === 0) {
@@ -323,558 +322,66 @@
                   @if (check().status !== 2) {
                   <button
                     [disabled]="(check().products?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
-                    class="btn btn-lg btn-primary" data-toggle="modal"
-                    data-target="#closeCheck"><strong>Kapat</strong></button>
+                    (click)="goPaymentMethodSelection()" class="btn btn-lg btn-primary"><strong>Kapat</strong></button>
                   }
                   }
                 </div>
               </div>
             </div>
-            <div class="col-xl-1 col-lg-1 pr-0 pl-1">
-              <button (click)="sendCheck()" [oneShot]="check().type === 1"
-                [disabled]="(check().products?.length ?? 0) === 0 || newOrders().length === 0"
-                class="btn btn-success btn-block sendButton">
-                <div>
-                  <i class="fa fa-paper-plane fa-5x"></i>
-                  <p>Gönder</p>
-                </div>
-              </button>
-              <button data-toggle="modal" (click)="getSpecies(selectedProduct())"
-                [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 1"
-                data-target="#noteModal" class="btn btn-warning btn-block sendButton">
-                <div>
-                  <i class="fa fa-sticky-note fa-5x"></i>
-                  <p>Not Ekle</p>
-                </div>
-              </button>
-              <button (click)="undoChanges()" [disabled]="newOrders().length === 0"
-                class="btn btn-primary btn-block sendButton">
-                <div>
-                  <i class="fa fa-undo fa-5x"></i>
-                  <p>Geri Al</p>
-                </div>
-              </button>
-              <button data-toggle="modal" data-target="#cancelProduct"
-                [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 2 || !permissions()?.cancelProduct"
-                class="btn btn-danger btn-block sendButton">
-                <div>
-                  <i class="fa fa-times fa-5x"></i>
-                  <p>İptal Et</p>
-                </div>
-              </button>
-              <button data-toggle="modal" (click)="onProductChange.set(true)"
-                [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 2"
-                data-target="#splitTable" class="btn btn-info btn-block sendButton">
-                <div>
-                  <i class="fa fa-exchange fa-5x"></i>
-                  <p>Ürün Taşı</p>
-                </div>
-              </button>
-              <button data-toggle="modal" data-target="#printersModal" oneShot
-                [disabled]="(check().products?.length ?? 0) === 0 || check().status === 0"
-                class="btn dark-bg btn-block sendButton">
-                <div>
-                  <i style="color:lightgray !important;" class="fa fa-print fa-5x"></i>
-                  <p style="color:lightgray !important;">Yazdır</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="modal" id="noteModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title" id="modelTitleId">Not Ekle ( {{selectedProduct()?.name ?? 'Ürün'}} )
-          </h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <form #noteForm="ngForm" (ngSubmit)="addNote(noteForm)">
-          <div class="modal-body">
-            <div class="form-group">
-              <input #noteInput type="text" placeholder="Notunuz..." name="description"
-                class="form-control form-control-lg" ngModel>
-            </div>
-            @if (readyNotes().length > 0) {
-            <div class="row pr-0 pl-0">
-              @for (note of readyNotes(); track note) {
-              <div class="col-lg-4 mb-2">
-                <button type="button" class="btn bg-teal btn-lg btn-block" (click)="addReadyNotes(note)">
-                  {{note}}
-                </button>
+          </div>
+
+          <div class="col-xl-1 col-lg-1 pr-0 pl-1 ">
+            <button (click)="sendCheck()" [oneShot]="check().type === 1"
+              [disabled]="(check().products?.length ?? 0) === 0 || newOrders().length === 0"
+              class="btn btn-success btn-block sendButton">
+              <div>
+                <i class="fa fa-paper-plane fa-5x"></i>
+                <p>Gönder</p>
               </div>
-              }
-            </div>
-            }
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-            <button type="button" (click)="dontGive()" class="btn btn-warning btn-lg">Verme</button>
-            @if (permissions()?.discount) {
-            <button type="button" (click)="makeGift()" class="btn btn-danger btn-lg">İkram</button>
-            }
-            <button type="submit" class="btn btn-primary btn-lg">Not Ekle</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="specsModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">{{selectedProduct()?.name ?? 'Ürün'}}
-          </h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        @if (productSpecs().length > 0) {
-        <div class="modal-body">
-          <div class="row">
-            @for (spec of productSpecs(); track spec.spec_name) {
-            <div class="col pr-2 pl-2 mb-2">
-              <button class="btn btn-warning btn-lg btn-block btn-specs" (click)="changeSpecs(spec)">
-                {{spec.spec_name}}
-                <b class="spec-price">{{spec.spec_price | price }} </b>
-              </button>
-            </div>
-            }
-          </div>
-        </div>
-        }
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="printersModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Yazıcı Seç
-          </h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        @if (printers().length > 0) {
-        <div class="modal-body">
-          <div class="row">
-            @for (printer of printers(); track printer.name) {
-            @if (printer.mission === 'Adisyon') {
-            <div class="col pr-2 pl-2 mb-2">
-              <button class="btn btn-warning btn-lg btn-block btn-specs"
-                (click)="printCheck(printer)">{{printer?.name}}</button>
-            </div>
-            }
-            }
-          </div>
-        </div>
-        }
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="qrPrintersModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Yazıcı Seç
-          </h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        @if (printers().length > 0) {
-        <div class="modal-body">
-          <div class="row">
-            @for (printer of printers(); track printer.name) {
-            @if (printer.mission === 'Adisyon') {
-            <div class="col pr-2 pl-2 mb-2">
-              <button class="btn btn-warning btn-lg btn-block btn-specs"
-                (click)="qrCode(printer)">{{printer?.name}}</button>
-            </div>
-            }
-            }
-          </div>
-        </div>
-        }
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="checkNote" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title" id="modelTitleId">Hesaba Not Ekle</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <form #checkNoteForm="ngForm" (ngSubmit)="addCheckNote(checkNoteForm)">
-          <div class="modal-body">
-            <div class="form-group">
-              <input type="text" placeholder="Notunuz..." name="description" class="form-control form-control-lg"
-                ngModel>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-            <button type="submit" class="btn btn-danger btn-lg">Not Ekle</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="cancelProduct" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title" id="modelTitleId">İptal Nedeni</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            @for (reason of cancelReasons; track reason) {
-            <div class="col pl-2 pr-2">
-              <button type="button" class="btn btn-lg btn-danger btn-block sellButton text-white"
-                (click)="cancelProduct(reason)">{{reason}}</button>
-            </div>
-            }
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="splitTable" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-big" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title" id="modelTitleId">Masalar</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-lg-10 tFlow pl-1 pr-1">
-              <div class="row pr-3 pl-3">
-                @for (item of tablesView(); track item._id) {
-                <div class="col-lg-2 pl-1 pr-1 mb-2">
-                  <div
-                    [ngClass]="{'bg-success': item.status === 2 ,'bg-danger': item.status === 3, 'bg-warning text-dark' : item.status === 1 && item._id !== selectedTableId() , 'bg-info': item._id === selectedTableId()}"
-                    (click)="selectTable(item._id!)" class="card tableCard">
-                    <div class="card-body p-3">
-                      <h4 class="card-title" style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">
-                        {{item?.name}}</h4>
-                      <p class="card-text">
-                        <i class="fa fa-user" aria-hidden="true"></i> {{item.capacity}}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                }
-              </div>
-            </div>
-            <div class="col-lg-2 pl-2 pr-2 tFlow">
-              <div (click)="selectedFloorId.set(undefined)"
-                [ngClass]="{'bg-danger text-white':selectedFloorId() === undefined}" class="card mb-2 dark-bg">
-                <div class="card-body p-2 pt-3">
-                  <h2 style="font-size:1.7vw; font-weight:bold;">Tüm Masalar</h2>
-                </div>
-              </div>
-              @for (floor of floors(); track floor._id) {
-              <div [ngClass]="{'bg-danger text-white':selectedFloorId() === floor?._id}"
-                (click)="filterTables(floor?._id!)" class="card mb-2 dark-bg">
-                <div class="card-body p-2 pt-3">
-                  <h2 style="font-size:1.7vw; font-weight:bold;">{{floor?.name}}</h2>
-                </div>
-              </div>
-              }
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-          @if (onProductChange()) {
-          <button oneShot type="button" class="btn btn-danger btn-lg" (click)="splitProduct()"
-            [disabled]="selectedTableId() === undefined">Ürün
-            Taşı
-          </button>
-          } @else {
-          <button oneShot type="button" class="btn btn-danger btn-lg" (click)="splitTable()"
-            [disabled]="selectedTableId() === undefined">Masa
-            Değiştir
-          </button>
-          }
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="productSpecs" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">{{productWithSpecs()?.name}}</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body p-0">
-          <div class="card">
-            <!-- <div class="card-header">Miktar</div> -->
-            <div class="card-body p-0" class="tareClass">
-              <div class="input-group">
-                <input #specsInput type="text" readonly class="form-control form-control-lg" [ngModel]="numpad()" />
-                <div class="input-group-append normal">
-                  <div #specsUnit class="input-group-text">{{productStock()?.stock_id | general:'stocks':'unit' |
-                    async}}
-                  </div>
-                </div>
-                <div class="input-group-append normal">
-                  <button type="button" (click)="tareScaler()" class="btn btn-lg btn-danger btn-block">Dara</button>
-                </div>
-              </div>
-            </div>
-            <div class="card-footer">
-              @for (keys of numboard; track $index) {
-              <div class="row mb-1">
-                @for (key of keys; track key) {
-                <div class="col-lg-4 pr-1 pl-1 mb-1">
-                  <button type="button"
-                    [disabled]="key === '◂' && numpad() === '' || key === '.' && numpad() === '' || key === '0' && numpad() === '' || key === '.' && isFirstTime() || key === '.' && specsUnit.innerHTML === 'Adet'"
-                    (click)="pushKey(key)"
-                    class="btn dark-bg btn-outline-primary font-weight-bold btn-lg p-3 btn-block numpad">{{key}}</button>
-                </div>
-                }
-              </div>
-              }
-            </div>
-            <div class="card-footer">
-              <b>
-                <h2 class="mb-0">Tutar:
-                  <span class="pull-right">{{((+(numpad() ?? 0)) * (productWithSpecs()?.price ?? 0)) /
-                    (productStock()?.amount
-                    ?? 1) | price }}
-                  </span>
-                </h2>
-              </b>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-          <button type="button" (click)="numpadToCheck()"
-            [disabled]="((+(numpad() ?? 0)) * (productWithSpecs()?.price ?? 0)) === 0" class="btn btn-primary btn-lg">
-            <i class="fa fa-check" aria-hidden="true"></i> Onayla</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="closeCheck" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title" id="modelTitleId">Hesabı Kapat</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            @for (method of paymentMethods; track method.name) {
-            <div class="col pr-2 pl-2">
-              <button oneShot [ngStyle]="{'color': method.color, 'border': '1px solid', 'border-color': method.color}"
-                (click)="closeCheck(method.name)" class="btn btn-secondary btn-block btn-lg sellButton">
-                <i class="fa {{method.icon}}"></i>
-                <p class="mt-1 mb-1">
-                  <b>{{method?.name}}</b>
-                </p>
-              </button>
-            </div>
-            }
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">İptal</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="checkOptions" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title" id="modelTitleId">Hesap İşlemleri</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col pr-2 pl-2">
-              <button data-toggle="modal" data-dismiss="modal" data-target="#checkNote"
-                class="btn btn-secondary text-warning border-warning btn-block btn-lg sellButton">
-                <i class="fa fa-sticky-note"></i>
-                <p class="mt-1 mb-1">
-                  <b>Hesaba Nok Ekle</b>
-                </p>
-              </button>
-            </div>
-            <div class="col pr-2 pl-2">
-              <button [disabled]="!permissions()?.discount" data-toggle="modal" data-dismiss="modal"
-                data-target="#checkDiscount"
-                class="btn btn-secondary text-danger border-danger btn-block btn-lg sellButton">
-                <i class="fa fa-arrow-down"></i>
-                <p class="mt-1 mb-1">
-                  <b>İndirim Yap</b>
-                </p>
-              </button>
-            </div>
-            <!-- <div class="col pr-2 pl-2">
-            <button data-toggle="modal" [disabled]="!check._id" data-dismiss="modal" (click)="qrCode()" class="btn btn-secondary text-info border-info btn-block btn-lg sellButton">
-              <i class="fa fa-qrcode"></i>
-              <p class="mt-1 mb-1">
-                <b>QR qrCode</b>
-              </p>
             </button>
-          </div> -->
+            <button (click)="openNoteModal()"
+              [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 1"
+              class="btn btn-warning btn-block sendButton">
+              <div>
+                <i class="fa fa-sticky-note fa-5x"></i>
+                <p>Not Ekle</p>
+              </div>
+            </button>
+            <button (click)="undoChanges()" [disabled]="newOrders().length === 0"
+              class="btn btn-primary btn-block sendButton">
+              <div>
+                <i class="fa fa-undo fa-5x"></i>
+                <p>Geri Al</p>
+              </div>
+            </button>
+            <button (click)="openCancelProductModal()"
+              [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 2 || !permissions()?.cancelProduct"
+              class="btn btn-danger btn-block sendButton">
+              <div>
+                <i class="fa fa-times fa-5x"></i>
+                <p>İptal Et</p>
+              </div>
+            </button>
+            <button (click)="openTableMoveModal(true)"
+              [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 2"
+              class="btn btn-info btn-block sendButton">
+              <div>
+                <i class="fa fa-exchange fa-5x"></i>
+                <p>Ürün Taşı</p>
+              </div>
+            </button>
+            <button (click)="openPrintersSelection()" oneShot
+              [disabled]="(check().products?.length ?? 0) === 0 || check().status === 0"
+              class="btn dark-bg btn-block sendButton">
+              <div>
+                <i style="color:lightgray !important;" class="fa fa-print fa-5x"></i>
+                <p style="color:lightgray !important;">Yazdır</p>
+              </div>
+            </button>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">İptal</button>
         </div>
       </div>
     </div>
   </div>
-
-  <div class="modal show" id="occupationModal" tabindex="-1" role="dialog" aria-hidden="false">
-    <div class="modal-dialog modal-md" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Kişi Şayısı</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-lg-12">
-              <div class="input-group input-group-lg">
-                <div class="input-group-prepend normal">
-                  <div class="input-group-text humanIcon"><i class="fa fa-male" aria-hidden="true"></i></div>
-                </div>
-                <input type="number" readonly [value]="check().occupation?.male || 0"
-                  class="form-control form-contol-lg" style="font-weight: bolder; font-size: 20px;">
-                @for (item of [1,2,3,4,5,6,7,8]; track item) {
-                <div class="input-group-append normal">
-                  <button (click)="setMale(item)" class="btn btn-outline-success"
-                    [ngClass]="{'active': (check().occupation?.male ?? 0) === item}">{{item}}</button>
-                </div>
-                }
-              </div>
-            </div>
-          </div>
-          <div class="row mt-4">
-            <div class="col-lg-12">
-              <div class="input-group input-group-lg">
-                <div class="input-group-prepend normal">
-                  <div class="input-group-text humanIcon"><i class="fa fa-female" aria-hidden="true"></i></div>
-                </div>
-                <input type="number" readonly [value]="check().occupation?.female || 0"
-                  class="form-control form-contol-lg" style="font-weight: bolder; font-size: 20px;">
-                @for (item of [1,2,3,4,5,6,7,8]; track item) {
-                <div class="input-group-append normal">
-                  <button (click)="setFemale(item)" class="btn btn-outline-success"
-                    [ngClass]="{'active': (check().occupation?.female ?? 0) === item}">{{item}}</button>
-                </div>
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="checkDiscount" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-md" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">İndirim Yap</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col">
-              <div class="input-group">
-                <input #discountInput type="number" min="0" placeholder="İndirim Tutarı Giriniz"
-                  class="form-control form-control-lg">
-                <div class="input-group-append normal">
-                  <div class="input-group-text"><i class="fa fa-turkish-lira fa-2x" aria-hidden="true"></i></div>
-                </div>
-                <span class="input-group-append">
-                  <button class="btn btn-primary btn-lg"
-                    [disabled]="+discountInput.value >= (check().total_price ?? 0) || +discountInput.value <= 0"
-                    (click)="setDiscount((+discountInput.value*100)/(check().total_price ?? 1))" type="button">
-                    <i class="fa fa-arrow-down" aria-hidden="true"></i> İndirim Yap
-                  </button>
-                </span>
-              </div>
-              <!-- <div class="input-group">
-              <input #discountInput type="number" placeholder="0" class="form-control text-center form-control-lg">
-              <div class="input-group-append normal">
-                <div class="input-group-text"><i class="fa fa-percent fa-2x" aria-hidden="true"></i></div>
-              </div>
-              <span class="input-group-append">
-                <button class="btn btn-primary btn-lg" [disabled]="discountInput.value >= check.total_price || discountInput.value <= 0" (click)="setDiscount((discountInput.value*100)/check.total_price)" type="button">
-                  <i class="fa fa-arrow-down" aria-hidden="true"></i> İndirim Yap
-                </button>
-              </span>
-            </div> -->
-            </div>
-          </div>
-          <div class="row mt-4 pr-2 pl-2">
-            @for (item of discounts; track item) {
-            <div class="col-lg-4 mb-2 pr-1 pl-1">
-              <button type="button" (click)="setDiscount(item)"
-                class="btn btn-primary btn-block btn-lg btn-discount">{{item}}
-                %</button>
-            </div>
-            }
-          </div>
-        </div>
-        <div class="modal-footer">
-          @if (check().discountPercent) {
-          <button type="button" class="btn btn-danger btn-lg" data-dismiss="modal"
-            (click)="setDiscount(undefined)">İndirimi
-            İptal Et</button>
-          }
-          <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal">Kapat</button>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>

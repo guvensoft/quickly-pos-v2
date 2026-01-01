@@ -6,6 +6,7 @@ import { MainService } from '../../../core/services/main.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { ChartType } from 'chart.js';
+import { DialogFacade } from '../../../core/services/dialog.facade';
 @Component({
   standalone: true,
   imports: [CommonModule, BaseChartDirective, GeneralPipe],
@@ -15,6 +16,7 @@ import { ChartType } from 'chart.js';
 })
 export class UserReportsComponent implements OnInit {
   private readonly mainService = inject(MainService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly usersList = signal<Report[]>([]);
   readonly userLogs = signal<Log[]>([]);
@@ -23,16 +25,18 @@ export class UserReportsComponent implements OnInit {
 
   ChartOptions: any = {
     responsive: false,
-    legend: {
-      labels: {
-        fontColor: 'rgb(255, 255, 255)',
-        fontStyle: 'bolder'
-      }
-    },
-    tooltips: {
-      callbacks: {
-        label: function (value: any) {
-          return ' ' + Number(value.yLabel).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+    plugins: {
+      legend: {
+        labels: {
+          color: 'rgb(255, 255, 255)',
+          font: { weight: 'bold' }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context: any) {
+            return ' ' + Number(context.parsed.y).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
+          }
         }
       }
     },
@@ -42,29 +46,29 @@ export class UserReportsComponent implements OnInit {
       }
     },
     scales: {
-      xAxes: [{
+      x: {
         ticks: {
           beginAtZero: true,
-          fontColor: 'rgba(255,255,255)'
+          color: 'rgba(255,255,255)'
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }],
-      yAxes: [{
+      },
+      y: {
         ticks: {
-          fontColor: 'rgba(255,255,255)',
+          color: 'rgba(255,255,255)',
           callback: function (value: any, index: any, values: any) {
             return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₺';
           }
 
         },
-        gridLines: {
+        grid: {
           color: 'rgba(255,255,255)',
           lineWidth: 0.4
         }
-      }]
+      }
     },
   };
   readonly ChartData = signal<any[]>([]);
@@ -74,8 +78,6 @@ export class UserReportsComponent implements OnInit {
   readonly ChartLoaded = signal<boolean>(false);
 
   readonly ItemReport = signal<Report | null>(null);
-  readonly DetailData = signal<any[]>([]);
-  readonly DetailLoaded = signal<boolean>(false);
 
   constructor() {
   }
@@ -109,14 +111,21 @@ export class UserReportsComponent implements OnInit {
   }
 
   getItemReport(report: Report) {
-    this.DetailLoaded.set(false);
     this.ItemReport.set(report);
     this.mainService.getData('reports', report._id!).then(res => {
       res.weekly = this.normalWeekOrder(res.weekly || []);
       res.weekly_count = this.normalWeekOrder(res.weekly_count || []);
-      this.DetailData.set([{ data: res.weekly, label: 'Sipariş Tutarı' }, { data: res.weekly_count, label: 'Sipariş Adedi' }]);
-      this.DetailLoaded.set(true);
-      (window as any).$('#reportDetail').modal('show');
+
+      this.mainService.getData('users', report.connection_id).then(user => {
+        this.dialogFacade.openChartModal({
+          title: user.name || 'Kullanıcı Raporu',
+          datasets: [{ data: res.weekly, label: 'Satış Tutarı' }, { data: res.weekly_count, label: 'Satış Adedi' }],
+          labels: this.ChartLabels(),
+          options: this.ChartOptions,
+          legend: this.ChartLegend(),
+          type: this.ChartType
+        });
+      });
     });
   }
 
@@ -176,7 +185,7 @@ export class UserReportsComponent implements OnInit {
           this.ChartData.update(data => [...data, schema]);
           if (chartTable.length - 1 == index) {
             this.ChartLoaded.set(true);
-          };
+          }
         });
       });
     });

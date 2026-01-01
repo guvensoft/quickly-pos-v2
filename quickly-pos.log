@@ -1,0 +1,13 @@
+[2025-12-29T11:44:35.884Z] [error] [render-process-gone] {"reason":"clean-exit","exitCode":1,"url":"http://localhost:4200/setup"}
+[2025-12-29T21:27:44.956Z] [error] Uncaught (in promise) Error: ENOENT: no such file or directory, open 'data/customer.png' {"source":"renderer","url":"http://localhost:4200/setup","line":1,"sourceId":"http://localhost:4200/main.js"}
+[2025-12-30T01:35:11.479Z] [error] (node:32621) electron: Failed to load URL: http://localhost:4200/ with error: ERR_CONNECTION_REFUSED
+(Use `Electron --trace-warnings ...` to show where the warning was created)
+[2025-12-30T01:36:36.221Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
+[2025-12-30T01:36:38.359Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
+[2025-12-30T01:36:40.269Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
+[2025-12-30T01:36:42.287Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
+[2025-12-30T01:36:44.307Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
+[2025-12-30T01:36:46.322Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
+[2025-12-30T01:38:23.265Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
+[2025-12-30T01:38:25.275Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}
+[2025-12-30T01:38:27.297Z] [error] Internal error opening backing store for indexedDB.open. {"source":"renderer","url":"http://localhost:4200/","line":59,"sourceId":"http://localhost:4200/main.js"}

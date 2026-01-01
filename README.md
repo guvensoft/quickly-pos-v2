@@ -216,3 +216,139 @@ Please refer to [HOW_TO file](./HOW_TO.md)
 [github-star]: https://github.com/maximegris/angular-electron/stargazers
 [twitter]: https://twitter.com/intent/tweet?text=Check%20out%20angular-electron!%20https://github.com/maximegris/angular-electron%20%F0%9F%91%8D
 [twitter-badge]: https://img.shields.io/twitter/url/https/github.com/maximegris/angular-electron.svg?style=social
+
+
+
+
+
+8 Ayrı Skill Başarıyla Oluşturuldu ve Push Edildi
+Skill Özeti
+Skill	Dosya	Amaç
+🎨 Feature Development Advisor	feature-development-advisor/SKILL.md	Yeni özellikler tasarlama ve implementasyon
+🐛 Bug Fix Specialist	bug-fix-specialist/SKILL.md	Bug analizi, root cause, quick vs proper fix
+⚡ Performance Optimizer	performance-optimizer/SKILL.md	Bundle size, runtime perf, memory optimization
+🎯 UI Analyzer	ui-analyzer/SKILL.md	Accessibility audit, usability heuristics, responsive
+⏱️ Async Operations Analyzer	async-operations-analyzer/SKILL.md	Race conditions, promise chains, unhandled rejections
+🔄 Sync Analyzer	sync-analyzer/SKILL.md	Offline/online sync, conflict resolution, data consistency
+🖌️ UI Enhancement Specialist	ui-enhancement-specialist/SKILL.md	Animations, loading states, empty states, dark mode
+🏗️ Architecture Advisor	architecture-advisor/SKILL.md	Mimari analiz, technical debt, SOLID principles
+📚 Her Skill'in İçeriği
+1️⃣ Feature Development Advisor
+✅ Proje mimarisine uyum kontrol
+✅ Asenkron işlem tasarımı
+✅ Database şeması ve model tasarımı
+✅ UI/UX implementasyonu
+✅ Test stratejileri
+Kullanım: "Müşteri not sistemi ekle" gibi özellik isteklerinde
+2️⃣ Bug Fix Specialist
+✅ Triage (ciddiyeti belirleme)
+✅ Reproduction steps
+✅ Root cause analizi
+✅ Quick vs Proper fix karar vermesi
+✅ Regression test yazma
+Kullanım: Bug rapor ettiğinizde ayrıntılar sağlayın
+3️⃣ Performance Optimizer
+✅ Bundle size analizi
+✅ Runtime performance profiling
+✅ Change detection optimization (OnPush)
+✅ Lazy loading stratejileri
+✅ Signal optimization
+Kullanım: "Uygulama yavaş" veya "Bundle çok büyük" dediğinizde
+4️⃣ UI Analyzer
+✅ Responsiveness kontrol (mobile, tablet, desktop)
+✅ Accessibility audit (WCAG 2.1 AA)
+✅ Usability heuristics (Nielsen)
+✅ Color contrast ve readability
+✅ Component consistency
+Kullanım: UI/UX sorunları raporlamak için
+5️⃣ Async Operations Analyzer
+✅ Race condition detection
+✅ Promise chain → async/await optimization
+✅ Unhandled rejection detection
+✅ Timeout management
+✅ Retry strategies
+Kullanım: "API çağrıları karışık" veya "Data fetch yavaş"
+6️⃣ Sync Analyzer
+✅ Offline/online detection
+✅ Data conflict detection
+✅ Consistency checking
+✅ Sync queue management
+✅ Last write wins vs Merge strategies
+✅ Rollback strategies
+Kullanım: Offline senkronizasyon problemleri için
+7️⃣ UI Enhancement Specialist
+✅ Loading states (skeleton loaders)
+✅ Empty states (helpful messaging)
+✅ Error states (recovery paths)
+✅ Success feedback (visual confirmation)
+✅ Animations & transitions
+✅ Dark mode support
+Kullanım: UI iyileştirmeleri ve animasyon isteklerinde
+8️⃣ Architecture Advisor
+✅ Module organization (feature, shared, core)
+✅ Service layer design
+✅ State management architecture
+✅ SOLID principles uygulaması
+✅ Design patterns (Facade, Factory, Observer)
+✅ Technical debt analysis
+Kullanım: Mimari kararlar ve refactoring planlaması
+🚀 Skill'leri Nasıl Kullanır?
+Her skill'i proje içinde komut slash veya Ayarlar bölümünden seçebilirsiniz.
+
+Örnek Kullanımlar:
+
+1. Yeni Özellik:
+   "Müşteri guruplanması özelliği eklemek istiyorum"
+   → feature-development-advisor skill'ini kullanacağım
+
+2. Performance İssue:
+   "Satış ekranı açılması 5 saniye sürüyor"
+   → performance-optimizer skill'ini kullanacağım
+
+3. Bug Raporu:
+   "Ürün seçiminde seçili item görünmüyor"
+   → bug-fix-specialist skill'ini kullanacağım
+
+4. UI Geliştirme:
+   "Ürün listesi açılırken smooth animation ekle"
+   → ui-enhancement-specialist skill'ini kullanacağım
+
+5. Mimari Karar:
+   "State management daha merkezi hale getirmek istiyorum"
+   → architecture-advisor skill'ini kullanacağım
+
+📊 Skill Özellikleri
+Tüm skill'ler:
+
+✅ Proje-spesifik - Angular 21, POS sistem, mevcut mimari uyumlu
+✅ Actionable - Sadece öneriler değil, kod güncellemesi de yapar
+✅ Best practices - Industry standards ve patterns içerir
+✅ Comprehensive - Şablonlar, kontrol listeler, örnek kodlar
+✅ Reusable - Farklı projeler için adapte edilebilir
+✅ Documented - SKILL.md dosyaları .claude/skills/ dizininde
+💡 Sonraki Adımlar
+Şimdi aşağıdakileri yapabilirsiniz:
+
+Yeni Özellik Geliştir
+
+"Rezervasyon sistemi eklemek istiyorum" 
+→ Feature Development Advisor kullan
+
+Build Error'ları Çöz
+
+"131 build error var, hepsini çöz"
+→ Bug Fix Specialist + Architecture Advisor kullan
+
+Performance Iyileştir
+
+"Bundle 1MB civarı, optimize et"
+→ Performance Optimizer kullan
+
+UI Refactor
+
+"Satış ekranı modernleştirilsin"
+→ UI Enhancement + UI Analyzer kullan
+
+Hangi alanda başlamak istersiniz? 🎯
+
+

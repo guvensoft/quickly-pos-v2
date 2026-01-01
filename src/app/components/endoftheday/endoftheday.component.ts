@@ -14,6 +14,7 @@ import { ConflictService } from '../../core/services/conflict.service';
 import { HttpService } from '../../core/services/http.service';
 import { DayDetailComponent } from './day-detail/day-detail.component';
 import { PricePipe } from '../../shared/pipes/price.pipe';
+import { DialogFacade } from '../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -24,6 +25,8 @@ import { PricePipe } from '../../shared/pipes/price.pipe';
 })
 
 export class EndofthedayComponent {
+  private readonly dialogFacade = inject(DialogFacade);
+  private processingDialog?: any;
   readonly isStarted = signal<boolean>(false);
   readonly day = signal<number>(0);
   readonly dateToReport = signal<number>(0);
@@ -91,6 +94,12 @@ export class EndofthedayComponent {
     }, { allowSignalWrites: true });
 
     this.fillData();
+
+    effect(() => {
+      if (this.processingDialog) {
+        this.processingDialog.componentInstance?.message.set(this.progress());
+      }
+    });
   }
 
   getDetail(data: EndDay) {
@@ -138,10 +147,12 @@ export class EndofthedayComponent {
       this.settingsService.setAppSettings('DateSettings', dateData).then((res) => {
         if (res.ok) {
           this.isStarted.set(true);
-          this.messageService.sendAlert('Gün Başlatıldı!', 'Program 5 sn içinde yeniden başlatılacak.', 'success');
+          this.messageService.sendAlert('Gün Başlatıldı!', 'Program 3 saniye içinde yeniden başlatılacak.', 'success');
+          // Program reload işlemi
           setTimeout(() => {
-            this.electronService.reloadProgram();
-          }, 5000)
+            // Reload işlemini yap
+            window.location.reload();
+          }, 3000);
         }
       })
 
@@ -152,7 +163,10 @@ export class EndofthedayComponent {
     if (this.isStarted()) {
       this.mainService.getAllBy('checks', {}).then((res) => {
         if (res.docs.length == 0) {
-          (window as any).$('#endDayModal').modal({ backdrop: 'static', keyboard: false });
+          this.processingDialog = this.dialogFacade.openProcessingModal({
+            title: 'Gün Sonu Yapılıyor...',
+            message: this.progress()
+          });
           clearInterval(this.conflictService.conflictListener());
           setTimeout(() => {
             this.stepChecks();
@@ -219,7 +233,7 @@ export class EndofthedayComponent {
 
   stepChecks() {
     this.mainService.getAllBy('closed_checks', {}).then(res => {
-
+      // Signal updates automatically trigger change detection - no need for zone.run()
       this.progress.set('Kapatılan Hesaplar Yedekleniyor...');
       this.checks.set(res.docs as any);
       const checksBackup = new BackupData('closed_checks', this.checks());
@@ -255,6 +269,7 @@ export class EndofthedayComponent {
     let incomes = 0;
     let outcomes = 0;
     this.mainService.getAllBy('cashbox', {}).then(res => {
+      // Signal updates automatically trigger change detection - no need for zone.run()
       this.progress.set('Kasa Verileri Yedekleniyor...');
       this.cashbox.set(res.docs as any);
       const cashboxBackup = new BackupData('cashbox', this.cashbox());
@@ -292,12 +307,14 @@ export class EndofthedayComponent {
 
   stepReports() {
     this.mainService.getAllBy('reports', {}).then(res => {
+      // Signal updates automatically trigger change detection - no need for zone.run()
       this.progress.set('Raporlar Yedekleniyor...');
       this.reports.set((res.docs.filter((obj: any) => obj.type !== 'Activity')) as any);
       const reportsBackup = new BackupData('reports', res.docs);
       const newBackupData = [...this.backupData()];
       newBackupData.push(reportsBackup);
       this.backupData.set(newBackupData);
+
       const activities = res.docs.filter((obj: any) => obj.type == 'Activity');
 
       this.mainService.localSyncBeforeRemote('reports').on('complete', () => {
@@ -328,12 +345,14 @@ export class EndofthedayComponent {
 
   stepLogs() {
     this.mainService.getAllBy('logs', {}).then(res => {
+      // Signal updates automatically trigger change detection - no need for zone.run()
       this.progress.set('Kayıtlar Yedekleniyor...');
       this.logs.set(res.docs as any);
       const logsBackup = new BackupData('logs', this.logs());
       const newBackupData = [...this.backupData()];
       newBackupData.push(logsBackup);
       this.backupData.set(newBackupData);
+
       this.mainService.removeAll('prints', {}).then(() => {
         this.mainService.removeAll('logs', {}).then(() => {
           this.mainService.removeAll('allData', { db_name: 'logs' }).then(() => {
@@ -349,12 +368,14 @@ export class EndofthedayComponent {
 
   stepOrders() {
     this.mainService.getAllBy('orders', {}).then(res => {
+      // Signal updates automatically trigger change detection - no need for zone.run()
       this.progress.set('Siparişler Yedekleniyor...');
       this.logs.set(res.docs as any);
       const logsBackup = new BackupData('orders', this.logs());
       const newBackupData = [...this.backupData()];
       newBackupData.push(logsBackup);
       this.backupData.set(newBackupData);
+
       this.mainService.removeAll('orders', {}).then(() => {
         this.mainService.removeAll('allData', { db_name: 'orders' }).then(() => {
           this.progress.set('Siparişler Temizlendi...');
@@ -368,12 +389,14 @@ export class EndofthedayComponent {
 
   stepReceipts() {
     this.mainService.getAllBy('receipts', {}).then(res => {
+      // Signal updates automatically trigger change detection - no need for zone.run()
       this.progress.set('Ödemeler Yedekleniyor...');
       this.logs.set(res.docs as any);
       const logsBackup = new BackupData('receipts', this.logs());
       const newBackupData = [...this.backupData()];
       newBackupData.push(logsBackup);
       this.backupData.set(newBackupData);
+
       this.mainService.removeAll('receipts', {}).then(() => {
         this.mainService.removeAll('allData', { db_name: 'receipts' }).then(() => {
           this.progress.set('Ödemeler Temizlendi...');
@@ -400,11 +423,14 @@ export class EndofthedayComponent {
           this.fillData();
           this.isStarted.set(false);
           setTimeout(() => {
-            this.mainService.syncToRemote().cancel();
+            this.mainService.cancelRemoteSync();
             if (this.appType()?.type == 0) {
               if (this.appType()?.status == 1) {
                 this.electronService.ipcRenderer.send('closeServer');
-                this.mainService.syncToServer().cancel();
+                const sync = this.mainService.syncToServer();
+                if (sync && typeof sync.cancel === 'function') {
+                  sync.cancel();
+                }
               }
             }
             this.progress.set('Veritabanı Yedekleniyor!');
@@ -460,7 +486,7 @@ export class EndofthedayComponent {
       }
     }, err => {
       console.log(err);
-      (window as any).$('#endDayModal').modal('hide');
+      this.dialogFacade.closeAll();
       this.messageService.sendAlert('Hata!', 'Sunucudan İzin Alınamadı', 'error');
       setTimeout(() => {
         this.electronService.relaunchProgram();
@@ -485,26 +511,12 @@ export class EndofthedayComponent {
                     })
                     .on('complete', (info: any) => {
                       this.progress.set('Gün Sonu Tamamlanıyor..');
-                      (window as any).$('#endDayModal').modal('hide');
+                      this.dialogFacade.closeAll();
                       this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program Yeniden Başlatılacak', 'success');
                       setTimeout(() => {
                         this.electronService.relaunchProgram();
                       }, 5000);
                     });
-                  // this.mainService.syncToLocal().then(res => {
-                  //   if (res) {
-                  //     delete this.serverSet()._rev;
-                  //     this.mainService.putDoc('settings', this.serverSet()).then(res => {
-                  //       if (res.ok) {
-                  //         $('#endDayModal').modal('hide');
-                  //         this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program 5sn içinde kapatılacak.', 'success');
-                  //         setTimeout(() => {
-                  //           this.electronService.relaunchProgram();
-                  //         }, 5000);
-                  //       }
-                  //     })
-                  //   }
-                  // })
                 }, 3000)
               }, 2000)
             }
@@ -512,38 +524,18 @@ export class EndofthedayComponent {
         }
       }, err => {
         console.log(err);
-        (window as any).$('#endDayModal').modal('hide');
+        this.dialogFacade.closeAll();
         this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program Yeniden Başlatılacak', 'success');
         setTimeout(() => {
           this.electronService.relaunchProgram();
         }, 5000);
-        // const serverSelectedRevs = res.json();
-        // this.electronService.fileSystem.readFile(this.electronService.appRealPath + '/data/db.dat', 'utf-8', (err, data) => {
-        //   if (!err) {
-        //     let appData = JSON.parse(data);
-        //     appData.map(obj => {
-        //       obj._rev = serverSelectedRevs.find(serverRes => serverRes[1] == obj._id)[2];
-        //     });
-        //     this.mainService.putAll('allData', appData).then(res => {
-        //       this.progress.set('Gün Sonu Tamamlanıyor..');
-        //       this.loadAppData().then(res => {
-        //         if (res) {
-        //           $('#endDayModal').modal('hide');
-        //           this.messageService.sendAlert('Gün Sonu Tamamlandı!', 'Program 5sn içinde kapatılacak.', 'success');
-        //           setTimeout(() => {
-        //             this.electronService.relaunchProgram();
-        //           }, 5000);
-        //         }
-        //       })
-        //     });
-        //   }
-        // });
       });
     })
   }
 
   fillData() {
     this.mainService.getAllBy('endday', {}).then((result) => {
+      // Signal updates automatically trigger change detection - no need for zone.run()
       const sortedData = (result.docs as any).sort((a: any, b: any) => b.timestamp - a.timestamp).filter((obj: any) => obj.total_income !== 0);
       this.endDayData.set(sortedData);
     });

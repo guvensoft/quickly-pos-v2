@@ -8,7 +8,8 @@ export class Cashbox {
         public coupon: number,
         public user: string,
         public _id?: string,
-        public _rev?: string
+        public _rev?: string,
+        public category?: string
     ) { }
 }
 
@@ -16,4 +17,14 @@ export enum CashboxType {
     PASSIVE,
     INCOME,
     OUTCOME
+}
+
+export type CashboxCategoryType = 'Gelir' | 'Gider';
+
+export class CashboxCategory {
+    constructor(
+        public id: string,
+        public name: string,
+        public type: CashboxCategoryType,
+    ) { }
 }

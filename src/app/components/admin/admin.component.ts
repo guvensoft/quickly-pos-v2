@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import { ServerInfo, Settings } from '../../core/models/settings.model';
 import { Product } from '../../core/models/product.model';
 import { Table } from '../../core/models/table.model';
+import { DialogFacade } from '../../core/services/dialog.facade';
 
 @Component({
   standalone: true,
@@ -20,6 +21,7 @@ import { Table } from '../../core/models/table.model';
 export class AdminComponent {
   private readonly mainService = inject(MainService);
   private readonly httpService = inject(HttpService);
+  private readonly dialogFacade = inject(DialogFacade);
 
   readonly databases = signal<Array<string>>([]);
   readonly documents = signal<any>(undefined);
@@ -60,12 +62,28 @@ export class AdminComponent {
   }
 
   showDocument(doc: any) {
-    // this.editArea.nativeElement.value == '';
     this.selectedDoc.set(doc);
-    (window as any).$('#docModal').modal('show');
+    this.dialogFacade.openJsonEditorModal({ document: doc, onCreate: false }).closed.subscribe((result: any) => {
+      if (result) {
+        if (result.action === 'save') {
+          this.editDocument(result.value);
+        } else if (result.action === 'delete') {
+          this.removeDocument(this.selectedDoc()._id);
+        }
+      }
+    });
   }
 
-  editDocument(document: any) {
+  openCreateModal() {
+    this.onCreate.set(true);
+    this.dialogFacade.openJsonEditorModal({ document: {}, onCreate: true }).closed.subscribe((result: any) => {
+      if (result && result.action === 'save') {
+        this.createDocument(result.value);
+      }
+    });
+  }
+
+  private editDocument(document: any) {
     try {
       const newDocument = JSON.parse(document);
       let db_name: string;
@@ -75,11 +93,7 @@ export class AdminComponent {
         db_name = this.selectedDB();
       }
       this.mainService.updateData(db_name as any, newDocument._id, newDocument).then((res: any) => {
-        (window as any).$('#docModal').modal('hide');
         console.log('Döküman Güncellendi');
-        if (this.editArea()) {
-          this.editArea()!.nativeElement.value = '';
-        }
         this.selectedDoc.set(undefined);
         this.showDatabase(this.selectedDB());
       }).catch(err => {
@@ -93,16 +107,12 @@ export class AdminComponent {
   }
 
 
-  createDocument(document: any) {
+  private createDocument(document: any) {
     try {
       const newDocument = JSON.parse(document);
       this.mainService.addData(this.selectedDB() as any, newDocument).then((res: any) => {
         if (res.ok) {
-          (window as any).$('#docModal').modal('hide');
           console.log('Döküman Oluşturuldu');
-          if (this.editArea()) {
-            this.editArea()!.nativeElement.value = '';
-          }
           this.selectedDoc.set(undefined);
           this.showDatabase(this.selectedDB());
         }
@@ -133,9 +143,8 @@ export class AdminComponent {
     }
   }
 
-  removeDocument(id: string) {
+  private removeDocument(id: string) {
     this.mainService.removeData(this.selectedDB() as any, id).then((res: any) => {
-      (window as any).$('#docModal').modal('hide');
       console.log('Döküman Silindi');
       this.selectedDoc.set(undefined);
       this.showDatabase(this.selectedDB());
