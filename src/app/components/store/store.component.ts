@@ -117,7 +117,7 @@ export class StoreComponent implements OnDestroy {
 
   async fetchClosedDelivery() {
     const res = await this.mainService.getAllBy('closed_checks', { type: CheckType.ORDER });
-    const delivery = (res.docs as Check[]).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    const delivery = (res.docs as any[]).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     // Combine with current delivery checks
     const deliveryChecks = this.checks().filter(obj => obj.type === CheckType.ORDER);
     deliveryChecks.forEach(check => {
@@ -275,7 +275,7 @@ export class StoreComponent implements OnDestroy {
     try {
       const allDB = this.mainService.LocalDB['allData'];
       const dateSettingsRes = await allDB.find({ selector: { key: 'DateSettings' } });
-      const StoreDayInfo: DayInfo = dateSettingsRes.docs[0].value;
+      const StoreDayInfo: DayInfo = (dateSettingsRes.docs[0] as any).value;
       const Month = new Date(StoreDayInfo.time).getMonth();
 
       for (const obj of count_data) {

@@ -301,10 +301,15 @@ export interface StockDocument extends PouchDBDocument {
     cat_id: string;
     unit: string;
     amount: number;
+    left_total: number;
+    total: number;
+    quantity: number;
+    warning_limit: number;
     min_amount: number;
     price: number;
     status: number;
     timestamp: number;
+    db_name?: string;
 }
 
 /** EndDay Document */

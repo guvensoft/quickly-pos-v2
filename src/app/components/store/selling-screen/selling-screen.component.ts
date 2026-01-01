@@ -22,6 +22,7 @@ import { Subscription } from 'rxjs';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { ReportDocument, StockDocument } from '../../../core/models/database.types';
 import { DialogFacade } from '../../../core/services/dialog.facade';
 
 @Component({
@@ -418,6 +419,7 @@ export class SellingScreenComponent implements OnDestroy {
   confirmCheck() {
     this.router.navigate(['/store']);
     const currentCheck = { ...this.check() };
+    const timestamp = Date.now();
 
     currentCheck.products.forEach((element: CheckProduct) => {
       if (element.status === 1) {
@@ -602,7 +604,8 @@ export class SellingScreenComponent implements OnDestroy {
       currentCheck.payment_flow.push(lastPayment);
       currentCheck.products = [];
       method = 'Parçalı';
-      total_discounts = currentCheck.payment_flow.map((obj: any) => obj.discount).reduce((a: number, b: number) => a + b);
+      const payedProds = currentCheck.payment_flow.map((obj: PaymentStatus) => obj.payed_products);
+      total_discounts = currentCheck.payment_flow.map((obj: PaymentStatus) => obj.discount).reduce((a: number, b: number) => a + b);
     } else {
       if (currentCheck.discountPercent) {
         general_discount = (currentCheck.total_price * currentCheck.discountPercent) / 100;
@@ -978,7 +981,7 @@ export class SellingScreenComponent implements OnDestroy {
           this.message.sendMessage('Hesap İptal Edildi');
           this.logService.createLog(logType.CHECK_CANCELED, currentCheck._id!, `${this.table().name}'de kalan bütün ürünler iptal edildi. Hesap Kapatıldı.`);
         });
-        this.mainService.removeData('checks', currentCheck._id);
+        this.mainService.removeData('checks', currentCheck._id!);
         if (currentCheck.type == CheckType.NORMAL) {
           this.mainService.updateData('tables', currentCheck.table_id, { status: 1 });
         }
@@ -1097,9 +1100,9 @@ export class SellingScreenComponent implements OnDestroy {
       const ownerName = this.owner();
       const pricesTotal = this.newOrders().map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0);
       if (currentCheck.type == CheckType.NORMAL) {
-        this.logService.createLog(logType.ORDER_CREATED, currentCheck._id, `'${ownerName}' ${this.table().name} masasına ${pricesTotal} TL tutarında sipariş girdi.`);
+        this.logService.createLog(logType.ORDER_CREATED, currentCheck._id!, `'${ownerName}' ${this.table().name} masasına ${pricesTotal} TL tutarında sipariş girdi.`);
       } else {
-        this.logService.createLog(logType.ORDER_CREATED, currentCheck._id, `'${ownerName}' Hızlı Satış - ${currentCheck.note} hesabına ${pricesTotal} TL tutarında sipariş girdi.`);
+        this.logService.createLog(logType.ORDER_CREATED, currentCheck._id!, `'${ownerName}' Hızlı Satış - ${currentCheck.note} hesabına ${pricesTotal} TL tutarında sipariş girdi.`);
       }
       this.mainService.getAllBy('reports', { connection_id: this.ownerId() }).then((res) => {
         if (res.docs.length > 0) {

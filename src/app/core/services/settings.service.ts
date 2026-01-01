@@ -159,7 +159,7 @@ export class SettingsService {
         const doc = res.docs[0];
         doc.value = categories;
         doc.timestamp = Date.now();
-        this.mainService.updateData('settings', doc._id, doc);
+        this.mainService.updateData('settings', doc._id!, doc);
         this.CashboxCategories.next(doc);
       } else {
         const cashboxSettings = new Settings('CashboxCategories', categories, 'Kasa Kategorileri', Date.now());

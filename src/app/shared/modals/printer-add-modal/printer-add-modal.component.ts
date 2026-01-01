@@ -177,7 +177,7 @@ export class PrinterAddModalComponent extends BaseModalComponent<any> {
       case 'SERIAL':
         this.printerProcess.set('SERIAL');
         const serialPrinters = this.printerService.getSerialPrinters('/dev/ttyS0');
-        this.printersFound.set(serialPrinters || []);
+        this.printersFound.set(serialPrinters ? [serialPrinters] : []);
         this.selectedPrinter.set({});
         break;
       case 'BLUETOOTH':

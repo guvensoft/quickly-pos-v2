@@ -5,7 +5,7 @@ import { SettingsService } from './settings.service';
 import { Order, OrderItem } from '../models/order.model';
 import { PrintOut, PrintOutStatus } from '../models/print.model';
 import { MainService } from './main.service';
-import { Check, CheckProduct, PaymentFlow } from '../models/check.model';
+import { Check, CheckProduct, PaymentStatus } from '../models/check.model';
 import { Table } from '../models/table.model';
 import { EndDayDocument } from '../models/database.types';
 
@@ -142,8 +142,8 @@ export class PrinterService {
     if (check.payment_flow && check.payment_flow.length > 0) {
       let payed: any[] = [];
       if (check.payment_flow.length > 1) {
-        const things = check.payment_flow.map((obj: PaymentFlow) => obj.payed_products);
-        things.forEach((element: any) => {
+        const payedProds = check.payment_flow.map((obj: PaymentStatus) => obj.payed_products);
+        payedProds.forEach((element: any) => {
           if (element) {
             payed = payed.concat(element);
           }
