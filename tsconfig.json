@@ -32,7 +32,10 @@
     }
   },
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "quickly-desktop-master",
+    "dist",
+    ".angular"
   ],
   "angularCompilerOptions": {
     "strictTemplates": true,
