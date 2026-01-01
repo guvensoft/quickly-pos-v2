@@ -15,13 +15,23 @@ export class PrinterService {
   private messageService = inject(MessageService);
   private settings = inject(SettingsService);
 
-  storeLogo!: string;
-  quicklyLogo!: string;
+  storeLogo: string;
+  quicklyLogo: string;
   storeInfo: any;
 
   constructor() {
-    this.storeLogo = this.electron.appRealPath + '/data/customer.png';
-    this.quicklyLogo = this.electron.appPath + '/assets/quickly.png';
+    // Use absolute path or assets folder based on environment
+    if (this.electron.isElectron()) {
+      const basePath = this.electron.appRealPath.endsWith('/')
+        ? this.electron.appRealPath
+        : this.electron.appRealPath + '/';
+      this.storeLogo = basePath + 'data/customer.png';
+      this.quicklyLogo = basePath + 'assets/quickly.png';
+    } else {
+      // Development mode - use assets folder
+      this.storeLogo = 'assets/data/customer.png';
+      this.quicklyLogo = 'assets/quickly.png';
+    }
 
     // Error handling - İş mantığı AYNEN
     this.electron.on('error', (message: string, check: any, device: any) => {

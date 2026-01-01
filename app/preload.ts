@@ -40,13 +40,51 @@ window.addEventListener('unhandledrejection', (event) => {
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
-  writeFile: async (path: string, data: string) => {
+  writeFile: async (filePath: string, data: string) => {
     const fs = require('fs');
-    return fs.promises.writeFile(path, data);
+    const path = require('path');
+    const { app } = require('electron').remote || require('electron');
+
+    // Resolve path to userData directory if relative
+    let fullPath = filePath;
+    if (!path.isAbsolute(filePath)) {
+      const userDataPath = app?.getPath('userData') || process.cwd();
+      fullPath = path.join(userDataPath, filePath);
+    }
+
+    // Create directory if it doesn't exist
+    const dir = path.dirname(fullPath);
+    await fs.promises.mkdir(dir, { recursive: true });
+
+    // Write file with base64 handling if needed
+    if (data.startsWith('data:') && data.includes('base64,')) {
+      const base64Data = data.replace(/^data:[^;]+;base64,/, '');
+      await fs.promises.writeFile(fullPath, Buffer.from(base64Data, 'base64'));
+    } else {
+      await fs.promises.writeFile(fullPath, data);
+    }
   },
-  readFile: async (path: string) => {
+  readFile: async (filePath: string) => {
     const fs = require('fs');
-    return fs.promises.readFile(path, 'utf8');
+    const path = require('path');
+    const { app } = require('electron').remote || require('electron');
+
+    // Resolve path to userData directory if relative
+    let fullPath = filePath;
+    if (!path.isAbsolute(filePath)) {
+      const userDataPath = app?.getPath('userData') || process.cwd();
+      fullPath = path.join(userDataPath, filePath);
+    }
+
+    try {
+      return await fs.promises.readFile(fullPath, 'utf8');
+    } catch (error) {
+      // Return empty string if file not found instead of throwing
+      if ((error as any).code === 'ENOENT') {
+        return '';
+      }
+      throw error;
+    }
   },
   send: (channel: string, ...args: any[]) => {
     const validChannels = [

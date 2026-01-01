@@ -40,10 +40,17 @@ export class SettingsComponent {
 
   constructor() {
     // Initialize logo path after DI is ready
-    const basePath = this.electron.appRealPath.endsWith('/')
-      ? this.electron.appRealPath
-      : this.electron.appRealPath + '/';
-    this.logo.set(basePath + 'data/customer.png');
+    // Use assets/data folder in development, userData in production
+    if (this.electron.isElectron()) {
+      // Production: use userData directory
+      const basePath = this.electron.appRealPath.endsWith('/')
+        ? this.electron.appRealPath
+        : this.electron.appRealPath + '/';
+      this.logo.set(basePath + 'data/customer.png');
+    } else {
+      // Development: use assets folder
+      this.logo.set('assets/data/customer.png');
+    }
 
     // Subscribe to RestaurantInfo outside of effect to avoid subscription issues
     this.settingsService.RestaurantInfo.subscribe(res => {
