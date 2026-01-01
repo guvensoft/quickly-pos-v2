@@ -1,0 +1,50 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "strict": true,
+    "strictNullChecks": true,
+    "outDir": "./dist/out-tsc",
+    "module": "es2022",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "bundler",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowJs": true,
+    "target": "ES2022",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "useDefineForClassFields": false,
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "paths": {
+      "stream": [
+        "./node_modules/stream-browserify"
+      ],
+      "crypto": [
+        "./node_modules/crypto-browserify"
+      ],
+      "pouchdb": [
+        "./node_modules/pouchdb-browser"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "quickly-desktop-master",
+    "dist",
+    ".angular"
+  ],
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "fullTemplateTypeCheck": true,
+    "annotateForClosureCompiler": true,
+    "strictInjectionParameters": true,
+    "skipTemplateCodegen": false,
+    "preserveWhitespaces": true,
+    "skipMetadataEmit": false,
+    "disableTypeScriptVersionCheck": true
+  }
+}

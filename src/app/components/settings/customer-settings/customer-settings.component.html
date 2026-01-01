@@ -1,0 +1,203 @@
+<ul class="nav nav-tabs nav-justified" id="reportTab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" data-toggle="tab" href="#customers" role="tab">
+      <i class="fa fa-user-circle" aria-hidden="true"></i> Müşteriler</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#accounts" role="tab">
+      <i class="fa fa-address-card" aria-hidden="true"></i> Hesaplar</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#credits" role="tab">
+      <i class="fa fa-envelope-open" aria-hidden="true"></i> Krediler</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#cards" role="tab">
+      <i class="fa fa-credit-card" aria-hidden="true"></i> Kartlar</a>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="customers" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <div class="row">
+          <div class="col-lg-8">
+            <h5 class="mt-2">Müşteriler</h5>
+          </div>
+          <div class="col-lg-4 pr-2 pl-0">
+            <button class="btn btn-danger btn-md btn-block" (click)="setDefault()">
+              <i class="fa fa-plus"></i> Müşteri Ekle
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body tab-height p-0 flow">
+        <table class="table table-sm table-bordered table-striped table-hover">
+          <thead class="thead-dark">
+            <tr>
+              <th class="text-center" width="8%">#</th>
+              <th class="text-center" width="62%">Müşteri</th>
+              <th class="text-right" width="30%">Telefon</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of customers(); track item._id; let i = $index) {
+            <tr (click)="updateCustomer(item._id!)">
+              <td class="text-center">{{i+1}}</td>
+              <td style="text-transform:capitalize;">
+                {{item.name}} {{item.surname}}
+                <br>
+                <strong class="text-success">{{item.address }}</strong>
+              </td>
+              <td class="text-right">
+                0{{item.phone_number | mask: ' (000) 000 00 00' }}
+                <br>
+                <small class="pull-right"><i class="fa fa-clock-o"></i> {{item.timestamp | timeAgo }}</small>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="accounts" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <div class="row">
+          <div class="col-lg-8">
+            <h5 class="mt-2">Hesaplar</h5>
+          </div>
+          <div class="col-lg-4 pr-2 pl-0">
+          </div>
+        </div>
+      </div>
+      <div class="card-body tab-height p-0">
+        <div class="row">
+          <div class="col-lg-3 pr-0">
+            <div class="card tab-inside-height">
+              <div class="card-header">
+                Müşteriler
+              </div>
+              <div class="card-body p-0 flow">
+                <div class="list-group">
+                  @for (customer of customers(); track customer._id) {
+                  <div class="btn-group btn-group-justify">
+                    <button (click)="filterChecks(customer._id!)" type="button"
+                      class="list-group-item list-group-item-action">{{customer.name}}</button>
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-9 pl-0">
+            <div class="card tab-inside-height">
+              <div class="card-header">
+                Hesaplar
+              </div>
+              <div class="card-body p-0 flow">
+                <table class="table table-sm table-bordered table-striped table-hover">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th class="text-center" width="8%">#</th>
+                      <th class="text-left" width="62%">Müşteri</th>
+                      <th class="text-right" width="30%">Tutar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of creditsView(); track item._id; let i = $index) {
+                    <tr (click)="getDetail(item)">
+                      <td class="text-center">
+                        {{i+1}}
+                      </td>
+                      <td style="text-transform:capitalize;">
+                        {{item.table_id | general: 'customers' | async }}
+                        <br>
+                        <strong class="text-muted">
+                          Açıklama: {{item.note}}
+                        </strong>
+                      </td>
+                      <td class="text-right text-success">
+                        {{item.total_price | price }}
+                        <br>
+                        <small class="pull-right"><i class="fa fa-clock-o"></i>
+                          {{item.timestamp | timeAgo }}
+                        </small>
+                      </td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="credits" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <h5 class="mt-2">Müşteri Kredileri</h5>
+      </div>
+      <div class="card-body tab-height flow p-0">
+        <table class="table table-sm table-bordered table-striped table-hover">
+          <thead class="thead-dark">
+            <tr>
+              <th class="text-center" width="8%">#</th>
+              <th class="text-center" width="42%">Müşteri</th>
+              <th class="text-center" width="20%">Telefon</th>
+              <th class="text-center" width="30%">Kredi Tutarı</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of customers(); track item._id; let i = $index) {
+            <tr>
+              <td class="text-center">{{i+1}}</td>
+              <td style="text-transform:capitalize;">
+                {{item.name}} {{item.surname}}
+                <br>
+                <strong class="text-success">{{item.address }}</strong>
+              </td>
+              <td class="text-center">
+                0{{item.phone_number | mask: ' (000) 000 00 00' }}
+              </td>
+              <td class="text-center text-success">
+                <h3>
+                  <strong>
+                    {{ customerCredit(item._id!) | price }}
+                  </strong>
+                </h3>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="cards" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <h5 class="mt-2">Müşteri Kartları</h5>
+      </div>
+      <div class="card-body tab-height flow">
+
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+</div>

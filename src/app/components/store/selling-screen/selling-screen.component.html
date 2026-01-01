@@ -1,0 +1,387 @@
+<div class="row">
+  <div class="col-xl-12">
+    <div class="card full-height">
+      <div class="card-header border-bottom-0">
+        <div class="row">
+          <div class="col-xl-8 col-lg-7">
+            <div class="row">
+              <div class="col-lg-5">
+                <div class="table-name">
+                  <b>{{check().table_id | general:'tables' | async}}</b>
+                  @if ((check().note ?? '') !== '' && (check().note ?? null) !== null) {
+                  <span class="text-warning">
+                    ({{check().note}})
+                  </span>
+                  }
+                </div>
+              </div>
+              <div class="col-lg-3 humanIcon pr-2 pl-0 text-right">
+                <i class="fa fa-clock-o"></i>
+                {{(check().timestamp ?? 0) | timeAgo}}
+              </div>
+              <div class="col-lg-4 pl-1 pr-1">
+                <div class="input-group input-group-sm">
+                  <div class="input-group-prepend normal">
+                    <div class="input-group-text humanIcon"><i class="fa fa-search" aria-hidden="true"></i></div>
+                  </div>
+                  <input #productName type="text" style="font-size: 17px;" placeholder="Ürün Adı Giriniz.."
+                    (input)="filterProducts(productName.value)" class="form-control form-contol-sm">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-4 col-lg-5">
+            <div class="row">
+              <div class="col-lg-4 pr-1 pl-1">
+                <button (click)="openTableMoveModal(false)"
+                  [disabled]="tablesView().length === 0 || (check().products?.length ?? 0) === 0 || (check().status ?? 0) === 0"
+                  class="btn btn-danger btn-block btn-sm">
+                  <strong>Masa Değiştir</strong>
+                </button>
+              </div>
+              <div class="col-lg-4 pr-1 pl-1">
+                <button (click)="openCheckOptions()" [disabled]="(check().products?.length ?? 0) === 0"
+                  class="btn btn-danger btn-block btn-sm">
+                  <strong>Hesap İşlemleri</strong>
+                </button>
+              </div>
+              <div class="col-lg-4 pr-1 pl-1">
+                <button (click)="openQRPrintersSelection()"
+                  class="btn btn-secondary text-info border-info btn-block btn-sm "
+                  [disabled]="tablesView().length === 0 || check().type === 2">
+                  <i class="fa fa-qrcode"></i>
+                  <strong>QR Yazdır</strong>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body pt-2">
+        <div class="row align-items-start">
+          <div class="col-xl-8 col-lg-7">
+            <div class="row">
+              @if (selectedCatId() === undefined) {
+              <div class="col-xl-11 col-lg-11  pr-0 pl-0">
+                <div class="card inside-height">
+                  <div id="categoryHolder" class="card-body pt-0 pb-0 flow">
+                    <div class="row">
+                      @for (cat of categories(); track cat._id) {
+                      <div (click)="getProductsBy(cat._id!)" class="col-xl-3 col-lg-4 col-card">
+                        <div class="card mb-1 mt-1 catCard">
+                          <div class="card-body">
+                            <h2 class="card-title text-center">{{cat?.name}}</h2>
+                          </div>
+                        </div>
+                      </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+              } @else {
+              <div class="col-xl-11 col-lg-11  pr-0 pl-0">
+                <div class="card inside-height">
+                  <div>
+                    <div class="card-header pt-1 pb-1 pr-1 pl-1">
+                      <div class="row ml-0 mr-0">
+                        <div class="col-xl-3 col-lg-4 p-0 pr-1 pl-1 mb-0">
+                          <button (click)="selectedCatId.set(undefined)"
+                            class="btn btn-md btn-danger text-dark btn-block">
+                            <b><i class="fa fa-chevron-left" aria-hidden="true"></i> Geri</b>
+                          </button>
+                        </div>
+                        @if (subCatsView().length > 0) {
+                        @for (item of subCatsView(); track item._id) {
+                        <div class="col p-0 pr-1 pl-1 mb-1">
+                          <button (click)="getProductsBySubCat(item._id!)"
+                            class="btn btn-md btn-warning text-dark btn-block">
+                            <b>{{item?.name}}</b>
+                          </button>
+                        </div>
+                        }
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  <div id="productHolder" class="card-body pt-0 pb-0 flow">
+                    <div class="row">
+                      @for (product of productsView(); track product._id) {
+                      <div (click)="addToCheck(product)" class="col-xl-3 col-lg-4 col-card">
+                        <div class="card mb-1 mt-1 proCard">
+                          <div class="card-body">
+                            <h2 class="card-title" [ngClass]="{'long-name': (product?.name?.length ?? 0) > 12 }">
+                              {{product?.name}}
+                            </h2>
+                            <p class="card-text text-danger">
+                              <span class="price">
+                                <b> {{product?.price | price }} </b>
+                              </span>
+                              <small class="category mt-1 text-white">
+                                {{catName(product?.cat_id ?? "")}}
+                              </small>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      }
+                    </div>
+                    @if (productsView().length === 0) {
+                    <div class="row mt-5">
+                      <div class="col-xl-12 mt-5">
+                        <h2 class="text-center mt-3">Eşleşen Ürün Bulunamadı</h2>
+                      </div>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </div>
+              }
+              <div class="col-lg-1 col-xl-1">
+                <div class="row">
+                  @for (item of [0.5,1,1.5,2,3,4,5,6,7,8]; track item) {
+                  <div class="col pr-0 pl-1">
+                    <button (click)="selectedQuantity.set(item)"
+                      class="btn btn-block {{ selectedQuantity() === item ? 'btn-warning' : 'btn-outline-warning'}}"
+                      style="height: 60.6px; font-weight: bold; font-size:1.5vw;"><strong>{{item}}</strong></button>
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-3 col-lg-4 pr-0 pl-1">
+            <div class="card inside-height">
+              <div class="card-header pt-1 pb-1">
+                <div class="row">
+                  <div class="col-lg-6 pl-0 pr-1">
+                    <div class="input-group input-group-sm">
+                      <div class="input-group-prepend normal">
+                        <div class="input-group-text humanIcon"><i class="fa fa-male" aria-hidden="true"></i></div>
+                      </div>
+                      <input type="number" readonly [value]="check().occupation?.male || 0"
+                        class="form-control form-contol-sm" style="font-weight: bolder; font-size: 20px;">
+                      <div class="input-group-append normal">
+                        <button (click)="incrementMale()" class="btn btn-success"><i class="fa fa-plus"></i></button>
+                      </div>
+                      <div class="input-group-append normal">
+                        <button [disabled]="(check().occupation?.male ?? 0) === 0" (click)="decrementMale()"
+                          class="btn btn-danger"><i class="fa fa-minus"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-6 pl-1 pr-2">
+                    <div class="input-group input-group-sm">
+                      <div class="input-group-prepend normal">
+                        <div class="input-group-text humanIcon"><i class="fa fa-female" aria-hidden="true"></i></div>
+                      </div>
+                      <input type="number" readonly [value]="check().occupation?.female || 0"
+                        class="form-control form-contol-sm" style="font-weight: bolder; font-size: 20px;">
+                      <div class="input-group-append normal">
+                        <button (click)="incrementFemale()" class="btn btn-success"><i class="fa fa-plus"></i></button>
+                      </div>
+                      <div class="input-group-append normal">
+                        <button [disabled]="(check().occupation?.female ?? 0) === 0" (click)="decrementFemale()"
+                          class="btn btn-danger"><i class="fa fa-minus"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="check-products" class="card-body check-flow p-2 dark-bg">
+                @for (item of check().products; track $index) {
+                <div [ngClass]="{'animated slideInLeft':item.status === 1}">
+                  <div
+                    [ngClass]="{'text-danger': item.status === 2 && selectedIndex() !== $index, 'text-warning':selectedIndex() === $index}"
+                    style="cursor:pointer" (click)="selectProduct($index)" class="check-product">
+                    <div class="product-name">
+                      @if (item.status === 3) {
+                      <i class="fa fa-times-rectangle text-danger" aria-hidden="true"></i>
+                      }
+                      {{item?.name}}
+                      @if (item.note !== '' && item.note !== undefined) {
+                      <small>({{item.note}})</small>
+                      }
+                    </div>
+                    <div class="product-price">{{item?.price | price }} </div>
+                    @if (selectedIndex() === $index && item.status !== 1) {
+                    <div style="font-size: 13px; padding-bottom: 0.25rem;">
+                      <i class="fa fa-user" aria-hidden="true"></i> {{item.owner | general:'users' | async }}
+                      <span class="pull-right">
+                        <i class="fa fa-clock-o" aria-hidden="true"></i> {{item.timestamp | date:'HH:mm'}}</span>
+                    </div>
+                    }
+                  </div>
+                </div>
+                }
+              </div>
+              @if ((check().discount ?? 0) > 0) {
+              <div class="card-footer p-1">
+                <button (click)="payedShow.set(!payedShow())"
+                  class="btn btn-sm btn-secondary btn-block text-left">{{payedTitle()}}
+                  <i [ngClass]="(payedShow()) ? 'fa-caret-down':'fa-caret-up'" class="fa pull-right"
+                    aria-hidden="true"></i>
+                </button>
+              </div>
+              }
+              @if ((check().discount ?? 0) > 0 && payedShow()) {
+              <div class="card-body check-flow p-2 payed-things">
+                @for (payment of check().payment_flow; track $index) {
+                <div class="mb-2 payedLayer">
+                  <p class="mb-0">
+                    <strong>{{payment.method}}</strong>
+                    <small>( {{payment.owner}} - {{payment.timestamp | date:'HH:mm'}} )</small>
+                    <span class="pull-right">{{payment.amount + payment.discount | price}} </span>
+                  </p>
+                  @for (product of payment.payed_products; track $index) {
+                  <p class="text-warning m-0 pl-3" style="text-transform: capitalize;">
+                    <small>
+                      <strong>
+                        {{product?.name}}
+                        <span class="pull-right">{{product.price | price}} </span>
+                      </strong>
+                    </small>
+                  </p>
+                  }
+                  @if (payment.discount > 0) {
+                  <p class="text-danger m-0">
+                    <small>
+                      <i class="fa fa-arrow-down" aria-hidden="true"></i> İndirim Miktarı
+                      <span class="pull-right">{{payment.discount | price}} </span>
+                    </small>
+                  </p>
+                  }
+                  <p class="m-0 font-weight-bold">
+                    <small>
+                      <i class="fa fa-arrow-right" aria-hidden="true"></i> Alınan Ödeme
+                      <span class="pull-right">{{payment.amount | price}} </span>
+                    </small>
+                  </p>
+                </div>
+                }
+              </div>
+              }
+              <div class="card-footer p-2">
+                <p class="text-primary mb-0">
+                  <strong style="font-size: large;">Hesap Toplamı:
+                    <span class="pull-right">{{(check().total_price ?? 0) + (check().discount ?? 0) | price}} </span>
+                  </strong>
+                </p>
+                @if ((check().discount ?? 0) > 0) {
+                <p class="text-warning mb-0">
+                  <strong style="font-size: medium;">
+                    Ödenen Miktar:
+                    <span class="pull-right">{{check().discount | price }} </span>
+                  </strong>
+                </p>
+                }
+                @if ((check().discountPercent ?? 0) > 0) {
+                <p class="text-danger mb-0">
+                  <strong>İndirim Tutarı:</strong>
+                  <span class="pull-right">{{ check().discountPercent?.toFixed(2) }}% -
+                    {{((check().total_price ?? 0) * (check().discountPercent ?? 0))/100 | price}} </span>
+                </p>
+                }
+                @if ((check().discount ?? 0) > 0 || check().discountPercent !== undefined) {
+                <p class="mb-0">
+                  <strong style="font-size: larger;">Kalan Toplam:
+                    <span class="pull-right">
+                      {{(check().total_price ?? 0) - ((check().total_price ?? 0) * (check().discountPercent ?? 0)) / 100
+                      |
+                      price}} </span>
+                  </strong>
+                </p>
+                }
+                <p class="text-muted mb-0">
+                  <strong>Adisyon No:
+                    <span class="pull-right">#{{check().check_no}}</span>
+                  </strong>
+                </p>
+                <div class="btn-group btn-group-justify btn-block mt-2" data-toggle="buttons">
+                  @if (check().type === 1 || check().type === 2) {
+                  <button (click)="goPayment()"
+                    [disabled]="(check().products?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
+                    class="btn btn-danger btn-lg btn-block"><strong>Ödeme Al</strong></button>
+                  <button
+                    [disabled]="(check().products?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
+                    (click)="goPaymentMethodSelection()" class="btn btn-lg btn-primary"><strong>Kapat</strong></button>
+                  }
+
+                  @if (check().type === 1 && check().payment_flow && check().total_price === 0) {
+                  <button (click)="endCheck()"
+                    [disabled]="(check().payment_flow?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
+                    class="btn btn-lg btn-success"><strong><i style="font-size: 1.5em;"
+                        class="fa fa-check-square animated tada slow infinite"></i></strong></button>
+                  }
+
+                  @if (check().type === 5) {
+                  <button [routerLink]="['/store']" class="btn btn-secondary btn-lg btn-block"><strong><i
+                        class="fa fa-backward" aria-hidden="true"></i>
+                      Geri Dön</strong></button>
+                  @if (check().status !== 2) {
+                  <button
+                    [disabled]="(check().products?.length ?? 0) === 0 || check().type === 1 && check().products?.[0]?.status === 1 || !permissions()?.payment"
+                    (click)="goPaymentMethodSelection()" class="btn btn-lg btn-primary"><strong>Kapat</strong></button>
+                  }
+                  }
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="col-xl-1 col-lg-1 pr-0 pl-1 ">
+            <button (click)="sendCheck()" [oneShot]="check().type === 1"
+              [disabled]="(check().products?.length ?? 0) === 0 || newOrders().length === 0"
+              class="btn btn-success btn-block sendButton">
+              <div>
+                <i class="fa fa-paper-plane fa-5x"></i>
+                <p>Gönder</p>
+              </div>
+            </button>
+            <button (click)="openNoteModal()"
+              [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 1"
+              class="btn btn-warning btn-block sendButton">
+              <div>
+                <i class="fa fa-sticky-note fa-5x"></i>
+                <p>Not Ekle</p>
+              </div>
+            </button>
+            <button (click)="undoChanges()" [disabled]="newOrders().length === 0"
+              class="btn btn-primary btn-block sendButton">
+              <div>
+                <i class="fa fa-undo fa-5x"></i>
+                <p>Geri Al</p>
+              </div>
+            </button>
+            <button (click)="openCancelProductModal()"
+              [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 2 || !permissions()?.cancelProduct"
+              class="btn btn-danger btn-block sendButton">
+              <div>
+                <i class="fa fa-times fa-5x"></i>
+                <p>İptal Et</p>
+              </div>
+            </button>
+            <button (click)="openTableMoveModal(true)"
+              [disabled]="(check().products?.length ?? 0) === 0 || selectedProduct() === undefined || selectedProduct()?.status !== 2"
+              class="btn btn-info btn-block sendButton">
+              <div>
+                <i class="fa fa-exchange fa-5x"></i>
+                <p>Ürün Taşı</p>
+              </div>
+            </button>
+            <button (click)="openPrintersSelection()" oneShot
+              [disabled]="(check().products?.length ?? 0) === 0 || check().status === 0"
+              class="btn dark-bg btn-block sendButton">
+              <div>
+                <i style="color:lightgray !important;" class="fa fa-print fa-5x"></i>
+                <p style="color:lightgray !important;">Yazdır</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

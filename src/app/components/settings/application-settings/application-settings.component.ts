@@ -1,0 +1,351 @@
+import { Component, OnInit, inject, signal, viewChild, computed, effect, input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NgForm } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Printer } from '../../../core/models/settings.model';
+import { ElectronService } from '../../../core/services/electron/electron.service';
+import { MainService } from '../../../core/services/main.service';
+import { MessageService } from '../../../core/services/message.service';
+import { PrinterService } from '../../../core/services/printer.service';
+import { SettingsService } from '../../../core/services/settings.service';
+import { SignalValidatorService } from '../../../core/services/signal-validator.service';
+import { DialogFacade } from '../../../core/services/dialog.facade';
+
+@Component({
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  selector: 'app-application-settings',
+  templateUrl: './application-settings.component.html',
+  styleUrls: ['./application-settings.component.scss'],
+})
+export class ApplicationSettingsComponent implements OnInit {
+  private readonly settings = inject(SettingsService);
+  private readonly router = inject(Router);
+  private readonly printerService = inject(PrinterService);
+  private readonly electronService = inject(ElectronService);
+  private readonly message = inject(MessageService);
+  private readonly validatorService = inject(SignalValidatorService);
+  private readonly mainService = inject(MainService);
+  private readonly dialogFacade = inject(DialogFacade);
+
+  readonly restInfo = signal<any>(undefined);
+  readonly restMap = signal<string | null>(null);
+  readonly appSettings = signal<any>(undefined);
+  readonly appLogo = signal<string>('');
+  readonly printers = signal<Array<any>>([]);
+  readonly printerProcess = signal<string | undefined>(undefined);
+  readonly printersFound = signal<Array<any>>([]);
+  readonly selectedPrinter = signal<any>(undefined);
+  readonly choosenPrinter = signal<any>(undefined);
+  readonly currentSection = signal<string>('AppSettings');
+
+  // Input to trigger component recreation when parent selection changes
+  readonly key = input<number | undefined>(undefined);
+
+  // Server settings validation signals
+  readonly serverUrl = signal<string>('');
+  readonly serverPort = signal<number>(3000);
+  readonly urlError = signal<string | null>(null);
+  readonly portError = signal<string | null>(null);
+
+  // Computed properties for reactive state
+  readonly isPrinterSelected = computed(() => {
+    const selected = this.selectedPrinter();
+    return selected !== undefined && Object.keys(selected).length > 0;
+  });
+
+  readonly isAnyPrinterFound = computed(() => {
+    return this.printersFound().length > 0;
+  });
+
+  readonly hasChosenPrinter = computed(() => {
+    return this.choosenPrinter() !== undefined;
+  });
+
+  readonly currentSectionLabel = computed(() => {
+    const section = this.currentSection();
+    const labels: Record<string, string> = {
+      'AppSettings': 'Uygulama Ayarları',
+      'Restaurant': 'Restoran Bilgileri',
+      'Server': 'Sunucu Ayarları',
+      'Printers': 'Yazıcılar'
+    };
+    return labels[section] || section;
+  });
+
+  readonly canAddPrinter = computed(() => {
+    const process = this.printerProcess();
+    return process !== undefined && process !== null;
+  });
+
+  readonly isServerSettingsValid = computed(() => {
+    return !this.urlError() && !this.portError();
+  });
+
+  // Form references using Signal-based viewChild API
+  settingsForm = viewChild<NgForm>('settingsForm');
+  appServerForm = viewChild<NgForm>('appServerForm');
+  restaurantForm = viewChild<NgForm>('restaurantForm');
+  printerForm = viewChild<NgForm>('printerForm');
+  printerDetailForm = viewChild<NgForm>('printerDetailForm');
+  serverSettingsForm = viewChild<NgForm>('serverSettingsForm');
+
+  constructor() {
+    this.fillData();
+
+    // Set up reactive effect for AppSettings changes
+    effect(() => {
+      this.settings.AppSettings.subscribe((res: any) => {
+        if (res && res.value) {
+          this.appSettings.set(res.value);
+          if (this.settingsForm() && res.value) {
+            this.settingsForm()!.form.patchValue(res.value);
+          }
+        }
+      });
+    }, { allowSignalWrites: true });
+
+    // Set up reactive effect for RestaurantInfo changes
+    effect(() => {
+      this.settings.RestaurantInfo.subscribe((res: any) => {
+        if (res && res.value) {
+          const info = { ...res.value };
+          delete info.auth;
+          delete info.remote;
+          delete info.settings;
+          this.restInfo.set(info);
+          this.restMap.set(info.geolocation);
+          this.appLogo.set(info.logo);
+        }
+      });
+    }, { allowSignalWrites: true });
+
+    // Set up reactive effect for ServerSettings changes
+    effect(() => {
+      this.settings.ServerSettings.subscribe((res: any) => {
+        if (res && res.value && this.serverSettingsForm()) {
+          this.serverSettingsForm()!.form.patchValue(res.value);
+        }
+      });
+    }, { allowSignalWrites: true });
+
+    // Set up reactive effect for Printers changes
+    effect(() => {
+      this.settings.getPrinters().subscribe((res: any) => {
+        if (res && res.value) {
+          this.printers.set(res.value);
+        } else {
+          this.printers.set([]);
+        }
+      });
+    }, { allowSignalWrites: true });
+
+    // Validate server URL
+    effect(() => {
+      const url = this.serverUrl();
+      if (!url) {
+        this.urlError.set('Sunucu URL Belirtmelisiniz');
+      } else if (!this.isValidUrl(url)) {
+        this.urlError.set('Geçersiz URL formatı (örn: http://localhost:3000)');
+      } else {
+        this.urlError.set(null);
+      }
+    });
+
+    // Validate server port
+    effect(() => {
+      const port = this.serverPort();
+      if (port < 1 || port > 65535) {
+        this.portError.set('Port 1 ile 65535 arasında olmalıdır');
+      } else {
+        this.portError.set(null);
+      }
+    });
+  }
+
+  ngOnInit() {
+    this.currentSection.set('AppSettings');
+  }
+
+  private isValidUrl(url: string): boolean {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  getSettingsDetail(section: string) {
+    this.currentSection.set(section);
+  }
+
+  saveSettings(Form: NgForm) {
+    this.settings.setAppSettings('AppSettings', Form.value);
+    this.message.sendMessage('Ayarlar Kaydediliyor.. Program Yeniden Başlatılıyor.');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500)
+  }
+
+  saveRestSettings(Form: NgForm) {
+    this.settings.setAppSettings('RestaurantInfo', Form.value);
+    this.message.sendMessage('Ayarlar Kaydediliyor.. Program Yeniden Başlatılıyor.');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500)
+  }
+
+  saveServerSettings(Form: NgForm) {
+    // Update validation signals from form
+    this.serverUrl.set(Form.value.url || '');
+    this.serverPort.set(Form.value.port || 3000);
+
+    // Check if server settings are valid
+    if (!this.isServerSettingsValid()) {
+      this.message.sendMessage('Lütfen sunucu ayarlarını kontrol ediniz.');
+      return false;
+    }
+
+    this.settings.setAppSettings('ServerSettings', Form.value);
+    this.message.sendMessage('Sunucu Ayarları Kaydediliyor.. Makina Yeniden Başlatılıyor.');
+    setTimeout(() => {
+      this.electronService.ipcRenderer.send('closeServer');
+      window.location.reload();
+    }, 1500)
+  }
+
+  generateKey(Form: NgForm) {
+    const newKey = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    Form.form.patchValue({
+      key: newKey,
+      ip_address: this.electronService.getLocalIP()
+    });
+  }
+
+  getPrinterDetail(printer: Printer) {
+    this.choosenPrinter.set(printer);
+    if (this.printerDetailForm()) {
+      this.printerDetailForm()!.form.patchValue(printer);
+    }
+  }
+
+  openPrinterAddModal() {
+    this.dialogFacade.openPrinterAddModal().closed.subscribe((printer: any) => {
+      if (printer) {
+        const currentPrinters = this.printers();
+        const printersData = currentPrinters.filter(obj => obj.name === printer.name);
+        if (printersData.length === 0) {
+          this.settings.addPrinter(printer);
+          this.message.sendMessage('Yazıcı Oluşturuldu.');
+          this.fillData();
+        } else {
+          this.message.sendMessage('Farklı Bir İsim Girmek Zorundasınız');
+        }
+      }
+    });
+  }
+
+  printTest(Device: any) {
+    this.printerService.printTest(Device);
+  }
+
+  openAdminLogin() {
+    this.dialogFacade.openPasswordModal({
+      title: 'Uygulama Konsolu',
+      message: 'Lütfen yetkili şifresini giriniz.'
+    }).closed.subscribe(pass => {
+      if (pass) {
+        if (pass === 'asdtd155+1' || pass === "1551903") {
+          this.router.navigate(['/admin']);
+          this.electronService.openDevTools();
+        } else {
+          alert('Yanlış Şifre');
+        }
+      }
+    });
+  }
+
+  setDefaultAdmin() {
+    this.dialogFacade.openAdminModal(this.appSettings()).closed.subscribe((formData: any) => {
+      if (formData) {
+        // Admin modal is mainly for viewing/validating settings
+        // Business logic handled via makeAdmin password validation
+      }
+    });
+  }
+
+  setDefault() {
+    if (this.printerForm()) this.printerForm()!.reset();
+    this.choosenPrinter.set(undefined);
+    this.printerProcess.set(undefined);
+    this.selectedPrinter.set(undefined);
+    // Clear server settings validation signals
+    this.serverUrl.set('');
+    this.serverPort.set(3000);
+    this.urlError.set(null);
+    this.portError.set(null);
+  }
+
+  removePrinter(printer: any) {
+    if (confirm('Bu yazıcıyı silmek istediğinize emin misiniz?')) {
+      this.settings.removePrinter(printer);
+      this.message.sendMessage('Yazıcı Silindi.');
+      this.choosenPrinter.set(undefined);
+    }
+  }
+
+  updatePrinter(form: NgForm) {
+    if (form.invalid) return;
+    const newPrinter = { ...this.choosenPrinter(), ...form.value };
+    this.settings.updatePrinter(newPrinter, this.choosenPrinter());
+    this.message.sendMessage('Yazıcı Güncellendi.');
+    this.choosenPrinter.set(newPrinter);
+  }
+
+  fillData() {
+    // Reload all settings from database and emit through SettingsService subjects
+    this.mainService.getAllBy('settings', {}).then((res) => {
+      if (!res || !res.docs) {
+        return;
+      }
+
+      const settings = res.docs;
+
+      // Find and emit AppSettings
+      const appSettings = settings.find((setting: any) => setting.key === 'AppSettings');
+      if (appSettings) {
+        this.settings.AppSettings.next(appSettings);
+      }
+
+      // Find and emit RestaurantInfo
+      const restaurantInfo = settings.find((setting: any) => setting.key === 'RestaurantInfo');
+      if (restaurantInfo) {
+        this.settings.RestaurantInfo.next(restaurantInfo);
+      }
+
+      // Find and emit ServerSettings based on AppType
+      const appType = localStorage.getItem('AppType');
+      if (appType === 'Primary') {
+        const serverSettings = settings.find((setting: any) => setting.key === 'ServerSettings' && setting.value.type === 0);
+        if (serverSettings) {
+          this.settings.ServerSettings.next(serverSettings);
+        }
+      } else if (appType === 'Secondary') {
+        const serverSettings = settings.find((setting: any) => setting.key === 'ServerSettings' && setting.value.type === 1);
+        if (serverSettings) {
+          this.settings.ServerSettings.next(serverSettings);
+        }
+      }
+
+      // Find and emit Printers
+      const printers = settings.find((setting: any) => setting.key === 'Printers');
+      if (printers) {
+        this.settings.Printers.next(printers);
+      }
+    }).catch(err => {
+      console.error('ApplicationSettingsComponent: Error loading settings:', err);
+    });
+  }
+}

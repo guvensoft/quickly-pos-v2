@@ -1,0 +1,351 @@
+<ul class="nav nav-tabs nav-justified" id="reportTab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" data-toggle="tab" href="#general" role="tab">
+      <i class="fa fa-cog" aria-hidden="true"></i> Program</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#printer" role="tab">
+      <i class="fa fa-print" aria-hidden="true"></i> Yazıcılar</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#store" role="tab">
+      <i class="fa fa-briefcase" aria-hidden="true"></i> İşletme</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#account" role="tab">
+      <i class="fa fa-asterisk" aria-hidden="true"></i> Hesap</a>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="general" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <div class="row">
+          <div class="col-lg-8">
+            <h5 class="mt-2">Genel Ayarlar</h5>
+          </div>
+          <div class="col-lg-4 pr-2 pl-0">
+            <button (click)="openAdminLogin()" class="btn btn-danger btn-block">Uygulama
+              Konsolu</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body tab-height p-0">
+        <div class="row">
+          <div class="col-lg-3 pr-0">
+            <div class="card tab-inside-height">
+              <div class="card-header">
+                Ayarlar
+              </div>
+              <div class="card-body p-0 flow">
+                <div class="list-group">
+                  <button (click)="getSettingsDetail('AppSettings')"
+                    [ngClass]="{'list-group-item-warning' : currentSection() === 'AppSettings'}" type="button"
+                    class="list-group-item list-group-item-action">
+                    Uygulama Ayarları
+                  </button>
+                  <button (click)="getSettingsDetail('ServerSettings')"
+                    [ngClass]="{'list-group-item-warning' : currentSection() === 'ServerSettings'}" type="button"
+                    class="list-group-item list-group-item-action">
+                    Sunucu Ayarları
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-9 pl-0">
+            <section [hidden]="currentSection() !== 'AppSettings'">
+              <form #settingsForm="ngForm" (ngSubmit)="saveSettings(settingsForm)">
+                <div class="card tab-inside-height">
+                  <div class="card-header">Uygulama Ayarları</div>
+                  <div class="card-body flow p-2">
+                    <div class="form-group mb-2">
+                      <div class="input-group text-center">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Zaman Aşımı</div>
+                        </div>
+                        <input name="timeout" type="number" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.timeout" />
+                        <div class="input-group-append">
+                          <div class="input-group-text">Saniye</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Ekran Klavyesi</div>
+                        </div>
+                        <select name="keyboard" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.keyboard">
+                          <option>Açık</option>
+                          <option>Kapalı</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text"> Parakende Satış</div>
+                        </div>
+                        <select name="takeaway" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.takeaway">
+                          <option>Açık</option>
+                          <option>Kapalı</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Sipariş Fişi İçin</div>
+                        </div>
+                        <select name="ask_print_order" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.ask_print_order">
+                          <option>Sor</option>
+                          <option>Sorma</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Hesap Fişi İçin</div>
+                        </div>
+                        <select name="ask_print_check" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.ask_print_check">
+                          <option>Sor</option>
+                          <option>Sorma</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-0">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Son Gün</div>
+                        </div>
+                        <select name="last_day" class="form-control form-control-lg"
+                          [ngModel]="appSettings()?.last_day">
+                          <option value="1">Pazartesi</option>
+                          <option value="2">Salı</option>
+                          <option value="3">Çarşamba</option>
+                          <option value="4">Perşembe</option>
+                          <option value="5">Cuma</option>
+                          <option value="6">Cumartesi</option>
+                          <option value="0">Pazar</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-footer">
+                    <button type="submit" class="btn btn-success btn-md btn-block">
+                      <i class="fa fa-check" aria-hidden="true"></i> Ayarları Kaydet</button>
+                  </div>
+                </div>
+              </form>
+            </section>
+            <section [hidden]="currentSection() !== 'ServerSettings'">
+              <form #serverSettingsForm="ngForm" (ngSubmit)="saveServerSettings(serverSettingsForm)">
+                <div class="card tab-inside-height">
+                  <div class="card-header">Sunucu Ayarları</div>
+                  <div class="card-body p-2 flow">
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Sunucu Modu</div>
+                        </div>
+                        <select name="type" class="form-control form-control-lg" ngModel>
+                          <option value="0">Birincil</option>
+                          <option value="1">İkincil</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Sunucu Durumu</div>
+                        </div>
+                        <select name="status" class="form-control form-control-lg" ngModel>
+                          <option value="0">Kapalı</option>
+                          <option value="1">Açık</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Sunucu Adresi</div>
+                        </div>
+                        <input type="text" name="ip_address" class="form-control form-control-lg" ngModel />
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Sunucu Portu</div>
+                        </div>
+                        <input type="text" name="ip_port" class="form-control form-control-lg" ngModel />
+                      </div>
+                    </div>
+                    <div class="form-group mb-0">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Sunucu Anahtarı</div>
+                        </div>
+                        <textarea rows="3" name="key" class="form-control form-control-lg" ngModel></textarea>
+                        <div class="input-group-append">
+                          <button type="button" (click)="generateKey(serverSettingsForm)" class="btn btn-primary">
+                            <i class="fa fa-key"></i>
+                            <br> Anahtar Üret</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-footer">
+                    <button type="submit" class="btn btn-success btn-md btn-block">
+                      <i class="fa fa-check" aria-hidden="true"></i> Ayarları Kaydet</button>
+                  </div>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="printer" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <div class="row">
+          <div class="col-lg-8">
+            <h5 class="mt-2">Yazıcı Ayarları</h5>
+          </div>
+          <div class="col-lg-4 pr-2 pl-0">
+            <button class="btn btn-danger btn-md btn-block" (click)="openPrinterAddModal()">
+              <i class="fa fa-plus"></i> Yazıcı Ekle
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body tab-height p-0">
+        <div class="row">
+          <div class="col-lg-3 pr-0">
+            <div class="card tab-inside-height">
+              <div class="card-header">
+                Yazıcılar
+              </div>
+              <div class="card-body p-0 flow">
+                <div class="list-group">
+                  @for (item of printers(); track item.name) {
+                  <button (click)="getPrinterDetail(item)" type="button" class="list-group-item list-group-item-action"
+                    [class.active]="choosenPrinter()?.name === item.name">
+                    {{item.name}} ({{item.type}} Yazıcı)
+                  </button>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-9 pl-0">
+            <form #printerDetailForm="ngForm" (ngSubmit)="updatePrinter(printerDetailForm)">
+              <div class="card tab-inside-height">
+                <div class="card-header">
+                  Detaylar
+                </div>
+                <div class="card-body flow p-2">
+                  @if (choosenPrinter()) {
+                  <section id="detailForm">
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Yazıcı Adı</div>
+                        </div>
+                        <input type="text" name="name" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.name">
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Açıklama</div>
+                        </div>
+                        <textarea name="note" rows="3" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.note"></textarea>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Tip</div>
+                        </div>
+                        <input type="text" readonly name="type" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.type">
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Adres</div>
+                        </div>
+                        <input type="text" readonly name="device_port" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.device_port">
+                      </div>
+                    </div>
+                    <div class="form-group mb-0">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Tür</div>
+                        </div>
+                        <select name="mission" class="form-control form-control-lg"
+                          [ngModel]="choosenPrinter()?.mission">
+                          <option value="Adisyon">Hesap Yazıcısı</option>
+                          <option value="Sipariş">Sipariş Yazıcısı</option>
+                        </select>
+                      </div>
+                    </div>
+                  </section>
+                  } @else {
+                  <h1 class="text-center mt-5">Listeden Yazıcı Seçiniz</h1>
+                  }
+                </div>
+                <div class="card-footer" [hidden]="!choosenPrinter()">
+                  <div class="row">
+                    <div class="col-lg-4 pr-1">
+                      <button type="button" (click)="removePrinter(choosenPrinter())"
+                        class="btn btn-md btn-danger btn-block ">
+                        <i class="fa fa-times" aria-hidden="true"></i> Yazıcıyı Kaldır
+                      </button>
+                    </div>
+                    <div class="col-lg-4 pr-1 pl-1">
+                      <button type="button" (click)="printTest(choosenPrinter())"
+                        class="btn btn-md btn-warning btn-block ">
+                        <i class="fa fa-print" aria-hidden="true"></i> Sınama Yazdır
+                      </button>
+                    </div>
+                    <div class="col-lg-4 pl-1">
+                      <button type="submit" class="btn btn-md btn-success btn-block">
+                        <i class="fa fa-check" aria-hidden="true"></i> Kaydet
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="account" role="tabpanel">
+    <!-- Account settings section removed as it was commented out in original -->
+  </div>
+</div>

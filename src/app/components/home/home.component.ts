@@ -1,0 +1,37 @@
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
+import { ElectronService } from '../../core/services/electron/electron.service';
+
+@Component({
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  selector: 'app-home',
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.scss'],
+})
+
+export class HomeComponent {
+  private readonly router = inject(Router);
+  private readonly electronService = inject(ElectronService);
+
+  readonly menus = signal<Array<any>>([
+    { name: 'Satış', color: 'danger', icon: 'fa-glass', link: 'store' },
+    { name: 'Kasa', color: 'success', icon: 'fa-money', link: 'cashbox' },
+    { name: 'Gün Sonu', color: 'warning', icon: 'fa-clock-o', link: 'endoftheday' },
+    { name: 'Raporlar', color: 'info', icon: 'fa-pie-chart', link: 'reports' },
+    { name: 'Ayarlar', color: 'primary', icon: 'fa-cogs', link: 'settings' }
+  ]);
+
+  closeProgram() {
+    localStorage.removeItem('userType');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userAuth');
+    localStorage.removeItem('AccessToken');
+    localStorage.removeItem('userPermissions');
+
+    // Electron app'ta uygulamayı kapat
+    this.electronService.exitProgram();
+  }
+}

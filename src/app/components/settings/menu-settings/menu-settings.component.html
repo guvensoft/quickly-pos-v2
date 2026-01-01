@@ -1,0 +1,303 @@
+<ul class="nav nav-tabs nav-justified" id="reportTab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" data-toggle="tab" href="#menu" role="tab">
+      <i class="fa fa-book" aria-hidden="true"></i> Kategoriler</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#products" role="tab">
+      <i class="fa fa-glass" aria-hidden="true"></i> Ürünler</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link disabled" data-toggle="tab" href="#occations" role="tab">
+      <i class="fa fa-cutlery" aria-hidden="true"></i> Kampanya</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link disabled" data-toggle="tab" href="#occations" role="tab">
+      <i class="fa fa-clock-o" aria-hidden="true"></i> Tarifeler</a>
+  </li>
+</ul>
+
+
+<div class="tab-content">
+  <div class="tab-pane active" id="menu" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <div class="row">
+          <div class="col-lg-8">
+            <h5 class="mt-2">Menu ve Kategori Ayarları</h5>
+          </div>
+          <div class="col-lg-4 pr-2 pl-0">
+            <button class="btn btn-danger btn-md btn-block" (click)="setDefaultCategory()">
+              <i class="fa fa-plus"></i> Kategori Ekle
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body tab-height p-0">
+        <div class="row">
+          <div class="col-lg-3 pr-0">
+            <div class="card tab-inside-height">
+              <div class="card-header">
+                Kategoriler
+              </div>
+              <div class="card-body p-0 flow">
+                <div class="list-group">
+                  @for (cat of categories(); track cat._id) {
+                  <div class="btn-group btn-group-justify">
+                    <button (click)="getCategory(cat)" [ngClass]="{'list-group-item-warning' : selectedCat() === cat}"
+                      type="button" class="list-group-item list-group-item-action">{{cat.name}}</button>
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-9 pl-0">
+            <form #catDetails="ngForm" (ngSubmit)="updateCategory(catDetails)">
+              <div class="card tab-inside-height">
+                <div class="card-header">
+                  Ayrıntılar
+                </div>
+                <div class="card-body p-2 flow">
+                  @if (selectedCat() === undefined) {
+                  <h1 class="text-center mt-5">Listeden Kategori Seçiniz</h1>
+                  }
+                  <div [hidden]="selectedCat() === undefined">
+                    <input type="hidden" name="_id" ngModel>
+                    <input type="hidden" name="_rev" ngModel>
+                    <input type="hidden" name="order" ngModel>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">
+                            Kategori Adı
+                          </div>
+                        </div>
+                        <input type="text" name="name" class="form-control form-control-lg" ngModel>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">Durum</div>
+                        </div>
+                        <select name="status" class="form-control form-control-lg" ngModel>
+                          <option value="1">Herkese Açık</option>
+                          <option value="2">Özel Kategori</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">
+                            Açıklama
+                          </div>
+                        </div>
+                        <input type="text" name="description" class="form-control form-control-lg" ngModel>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">
+                            Yazıcı
+                          </div>
+                        </div>
+                        <select [disabled]="printers().length === 0" name="printer" class="form-control form-control-lg"
+                          ngModel>
+                          @for (item of printers(); track item.name) {
+                          <option>{{item.name}}</option>
+                          }
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">
+                            Etiketler
+                          </div>
+                        </div>
+                        <input type="text" name="tags" class="form-control form-control-lg" ngModel />
+                      </div>
+                    </div>
+                    <div class="form-group mb-0">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text">
+                            Alt Kategoriler
+                          </div>
+                        </div>
+                        <div class="img-thumbnail pl-2 subCatInput">
+                          @for (sub of subCats(); track sub._id) {
+                          <span (click)="updateSubCategory(sub);"
+                            class="badge badge-warning text-dark mr-1 subCat">{{sub.name}}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer" [hidden]="selectedCat() === undefined">
+                  <div class="row">
+                    <div class="col pr-1 pl-2">
+                      @if (selectedCat()) {
+                        <button type="button" (click)="removeCategory(selectedCat()?._id!)"
+                          class="btn btn-md btn-block btn-danger">
+                          <i class="fa fa-remove" aria-hidden="true"></i> Kategoriyi Sil
+                        </button>
+                      }
+                    </div>
+                    <div class="col pr-1 pl-1">
+                      @if (selectedCat() !== undefined) {
+                        <button type="button" [disabled]="subCats().length === 4"
+                          (click)="setDefaultSubCategory()" class="btn btn-warning btn-block btn-md">
+                          <i class="fa fa-plus"></i> Alt Kategori Ekle
+                        </button>
+                      }
+                    </div>
+                    <div class="col pl-1">
+                      <button type="submit" class="btn btn-md btn-block btn-success">
+                        <i class="fa fa-check" aria-hidden="true"></i> Kaydet</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="products" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <div class="row">
+          <div class="col-lg-8">
+            <h5 class="mt-2">Ürün Ayarları</h5>
+          </div>
+          <div class="col-lg-4 pr-2 pl-0">
+            <button [disabled]="categories() === undefined || categories().length === 0"
+              class="btn btn-danger btn-md btn-block" (click)="setDefaultProduct()">
+              <i class="fa fa-plus"></i> Ürün Ekle
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body tab-height p-0">
+        <div class="row">
+          <div class="col-lg-3 pr-0">
+            <div class="card tab-inside-height">
+              <div class="card-header">
+                Kategoriler
+              </div>
+              <div class="card-body p-0 flow">
+                <div class="list-group">
+                  <button (click)="getProductsByCategory(null)" type="button"
+                    class="list-group-item list-group-item-action">Bütün
+                    Ürünler</button>
+                  @for (cat of categories(); track cat._id) {
+                  <button (click)="getProductsByCategory(cat._id!)" type="button"
+                    class="list-group-item list-group-item-action">{{cat.name}}</button>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-9 pl-0">
+            <div class="card tab-inside-height">
+              <div class="card-header pt-2 pb-2">
+                <div class="row">
+                  <div class="col-lg-6 pt-1">
+                    Ürünler
+                  </div>
+                  <div class="col-lg-6 pl-0 pr-2">
+                    <div class="input-group input-group-sm">
+                      <div class="input-group-prepend normal">
+                        <div class="input-group-text">
+                          <i class="fa fa-search" aria-hidden="true"></i>
+                        </div>
+                      </div>
+                      <input #productName type="text" placeholder="Ürün Adı Giriniz.."
+                        (focus)="getProductsByCategory(null)" (click)="productName.value = '';"
+                        (keydown)="filterProducts(productName.value)" class="form-control form-contol-sm">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              @if (sub_categories() !== undefined && sub_categories().length > 0) {
+              <div class="card-header pt-1 pb-1">
+                <div class="row">
+                  @for (item of sub_categories(); track item._id) {
+                  <div class="col p-0 pr-1 pl-1">
+                    <button (click)="getProductsBySubCat(item._id!)" class="btn btn-md btn-warning btn-block">
+                      <b>{{item.name}}</b>
+                    </button>
+                  </div>
+                  }
+                </div>
+              </div>
+              }
+              <div id="productHolder" class="card-body p-0 flow">
+                @if (products() !== undefined && products().length > 0) {
+                <div>
+                  <table class="table table-dark  table-bordered table-hover table-striped mb-0">
+                    <thead class="thead-dark">
+                      <tr>
+                        <th width="7%">#</th>
+                        <th width="43%">Ürün Adı</th>
+                        <th width="17%">Fiyatı</th>
+                        <th width="13%">Kdv</th>
+                        <th width="20%">Kategori</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (product of products(); track product._id; let i = $index) {
+                      <tr (click)="updateProduct(product._id!)">
+                        <td>{{i+1}}</td>
+                        <td>{{product.name}}</td>
+                        <td class="font-weight-bold">{{product.price}} TL</td>
+                        <td>{{product.tax_value}} %</td>
+                        <td>{{product.cat_id | general:'categories':'name' | async}}</td>
+                      </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                }
+                @if (products() === undefined || products().length === 0) {
+                <div class="row mt-5">
+                  <div class="col-lg-12 mt-5">
+                    <h2 class="text-center mt-3">Eşleşen Ürün Bulunamadı</h2>
+                  </div>
+                </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="occations" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <h5 class="mt-2">Tarife Ayarları</h5>
+      </div>
+      <div class="card-body tab-height flow">
+
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+</div>
+

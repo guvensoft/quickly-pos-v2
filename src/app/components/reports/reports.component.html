@@ -1,0 +1,290 @@
+<div class="row">
+  <div id="settings-holder" class="col-lg-2">
+    <div class="card">
+      <div class="card-body" [ngClass]="{'bg-danger text-white': !selected()}" (click)="selected.set(0)">
+        <h2>
+          <i class="fa fa-try"></i>
+          <span>Satışlar</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 1}" (click)="selected.set(1)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-sticky-note"></i>
+          <span>Hesaplar</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 2}" (click)="selected.set(2)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-glass"></i>
+          <span>Ürünler</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 3}" (click)="selected.set(3)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-square"></i>
+          <span>Masalar</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 4}" (click)="selected.set(4)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-truck"></i>
+          <span>Stoklar</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 5}" (click)="selected.set(5)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-users"></i>
+          <span>Kullanıcılar</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 6}" (click)="selected.set(6)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-money"></i>
+          <span>Kasa</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 7}" (click)="selected.set(7)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-area-chart"></i>
+          <span>Aktivite</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 8}" (click)="selected.set(8)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-bell"></i>
+          <span>Bildirimler</span>
+        </h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-10 pl-0">
+    <div class="card full-height">
+      <div class="card-body">
+        @if (!selected()) {
+        <div>
+          <ul class="nav nav-tabs nav-justified" id="reportTab" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" data-toggle="tab" href="#daily" role="tab">
+                <i class="fa fa-pie-chart" aria-hidden="true"></i> Günlük</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#weekly" role="tab">
+                <i class="fa fa-bar-chart" aria-hidden="true"></i> Haftalık</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#monthly" role="tab">
+                <i class="fa fa-table" aria-hidden="true"></i> Aylık</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#activity" role="tab">
+                <i class="fa fa-area-chart" aria-hidden="true"></i> Aktivite</a>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            <div class="tab-pane active" id="daily" role="tabpanel">
+              <div class="card ntb">
+                <div class="card-header">
+                  <h5 class="mt-2">Günlük Satış Raporu</h5>
+                </div>
+                <div class="card-body tab-height">
+                  <div class="row">
+                    <div class="col-lg-6">
+                      @if (ChartLoaded()) {
+                      <canvas baseChart style="height: 430px; width:37vw; margin:auto;"
+                        [datasets]="[{data: pieData(), backgroundColor: ['#5cb85c', '#f0ad4e', '#5bc0de', '#d9534f']}]"
+                        [labels]="pieLabels()" [legend]="true" [type]="'pie'" [options]="pieOptions"></canvas>
+                      }
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="card" style="height:56vh;">
+                        <div class="card-header">
+                          Ayrıntılar
+                        </div>
+                        <div class="card-body dark-bg">
+                          <strong>
+                            <h5 class="text-success mt-1">
+                              <i class="fa fa-money"></i>
+                              Nakit Toplam:
+                              <span class="pull-right">{{salesReport()?.cash | price }}</span>
+                            </h5>
+                            <h5 class="text-warning mt-2">
+                              <i class="fa fa-credit-card"></i>
+                              Kart Toplam:
+                              <span class="pull-right">{{salesReport()?.card| price}}</span>
+                            </h5>
+                            <h5 class="text-info mt-2">
+                              <i class="fa fa-bookmark"></i>
+                              Kupon Toplam:
+                              <span class="pull-right">{{salesReport()?.coupon| price}}</span>
+                            </h5>
+                            <h5 class="text-danger mt-2">
+                              <i class="fa fa-handshake-o"></i>
+                              İkram Toplam:
+                              <span class="pull-right">{{salesReport()?.free | price}}</span>
+                            </h5>
+                            <h5 class="color-light-gray mt-2">
+                              <i class="fa fa-percent"></i>
+                              İndirim Toplam:
+                              <span class="pull-right">{{salesReport()?.discount | price}}</span>
+                            </h5>
+                            <h5 class="text-primary mt-2 mb-0">
+                              <i class="fa fa-times"></i>
+                              İptal Toplam:
+                              <span class="pull-right">{{canceledTotal() | price}}</span>
+                            </h5>
+                          </strong>
+                        </div>
+                        <div class="card-footer">
+                          <p style="font-size: larger;">
+                            <strong>Açık Hesaplar:
+                              <span class="pull-right">{{activeTotal() | price}}</span>
+                            </strong>
+                          </p>
+                          <p class="mb-0" style="font-size: larger;">
+                            <strong>Kapalı Hesaplar:
+                              <span class="pull-right">{{closedTotal() | price}}</span>
+                            </strong>
+                          </p>
+                        </div>
+                        <div class="card-footer">
+                          <strong>
+                            <p class="mb-0" style="font-size: larger;">
+                              <strong>Genel Toplam:
+                                <span class="pull-right">{{ closedTotal() + activeTotal() | price }}</span>
+                              </strong>
+                            </p>
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane" id="weekly" role="tabpanel">
+              <div class="card ntb">
+                <div class="card-header">
+                  <h5 class="mt-2">Haftalık Satış Raporu</h5>
+                </div>
+                <div class="card-body tab-height p-0">
+                  @if (ChartLoaded()) {
+                  <canvas baseChart style="height: 468px; width:77vw; margin:auto;" [datasets]="ChartData()"
+                    [labels]="ChartLabels()" [options]="ChartOptions" [legend]="ChartLegend()"
+                    [type]="ChartType"></canvas>
+                  }
+                </div>
+                <div class="card-footer">
+                  <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane" id="monthly" role="tabpanel">
+              <div class="card ntb">
+                <div class="card-header">
+                  <div class="row">
+                    <div class="col-lg-9">
+                      <h5 class="mt-2">Aylık Satış Raporu</h5>
+                    </div>
+                    <div class="col-lg-3 pr-2 pl-0">
+                      <div class="input-group">
+                        <div class="input-group-prepend normal">
+                          <div class="input-group-text">Yıl</div>
+                        </div>
+                        <select class="form-control" (change)="getMonthlyReport(+$any($event.target).value)">
+                          <option>2018</option>
+                          <option>2019</option>
+                          <option>2020</option>
+                          <option>2021</option>
+                          <option selected>2022</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body tab-height p-0">
+                  @if (monthlyData().length === 0) {
+                  <h1>Yıla Ait Veri Bulunamadı</h1>
+                  }
+                  @if (monthlyLoaded()) {
+                  <canvas baseChart style="height: 468px; width:77vw; margin:auto;" [datasets]="monthlyData()"
+                    [labels]="monthlyLabels()" [options]="ChartOptions" [legend]="monthlyLegends()"
+                    [type]="ChartType"></canvas>
+                  }
+                </div>
+                <div class="card-footer">
+                  <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane" id="activity" role="tabpanel">
+              <div class="card ntb">
+                <div class="card-header">
+                  <h5 class="mt-2">Zaman Bazlı Satış Aktivitesi</h5>
+                </div>
+                <div class="card-body tab-height p-0">
+                  @if (ChartLoaded()) {
+                  <canvas baseChart style="height: 468px; width:77vw; margin:auto;" [datasets]="activityData()"
+                    [labels]="activityLabels()" [options]="ChartOptions" [legend]="activityLegend()"
+                    [type]="'line'"></canvas>
+                  }
+                </div>
+                <div class="card-footer">
+                  <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
+        @if (selected() === 1) {
+        <app-store-reports></app-store-reports>
+        }
+        @if (selected() === 2) {
+        <app-product-reports></app-product-reports>
+        }
+        @if (selected() === 3) {
+        <app-table-reports></app-table-reports>
+        }
+        @if (selected() === 4) {
+        <app-stock-reports></app-stock-reports>
+        }
+        @if (selected() === 5) {
+        <app-user-reports></app-user-reports>
+        }
+        @if (selected() === 6) {
+        <app-cashbox-reports></app-cashbox-reports>
+        }
+        @if (selected() === 7) {
+        <app-activity-reports></app-activity-reports>
+        }
+        @if (selected() === 8) {
+        <app-notifications-reports></app-notifications-reports>
+        }
+      </div>
+    </div>
+  </div>
+</div>

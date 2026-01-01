@@ -1,0 +1,130 @@
+<div class="row">
+  <div id="settings-holder" class="col-lg-2">
+    <div class="card">
+      <div class="card-body" [ngClass]="{'bg-danger text-white':selected() === 1}" (click)="selected.set(1)">
+        <h2>
+          <i class="fa fa-users"></i>
+          <span>Kullanıcılar</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 2}" (click)="selected.set(2)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-glass"></i>
+          <span>Ürünler</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 3}" (click)="selected.set(3)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-square"></i>
+          <span>Masalar</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 4}" (click)="selected.set(4)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-truck"></i>
+          <span>Stoklar</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 5}" (click)="selected.set(5)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-file"></i>
+          <span>Reçeteler</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 6}" (click)="selected.set(6)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-address-card"></i>
+          <span>Müşteriler</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 7}" (click)="selected.set(7)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-print"></i>
+          <span>Yazıcılar</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 10}" (click)="selected.set(10)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-tags"></i>
+          <span>Kasa Kategorileri</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 8}" (click)="selected.set(8)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-server"></i>
+          <span>Sunucular</span>
+        </h2>
+      </div>
+    </div>
+    <div class="card" [ngClass]="{'bg-danger text-white':selected() === 9}" (click)="selected.set(9)">
+      <div class="card-body">
+        <h2>
+          <i class="fa fa-cogs"></i>
+          <span>Ayarlar</span>
+        </h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-10 pl-0">
+    <div class="card full-height">
+      <div class="card-body">
+        @if (selected() === undefined) {
+        <div class="container text-center">
+          <div class="jumbotron m-0 p-0">
+            <img src="../../../assets/logo.svg" height="200px" style="margin-top:15px; margin-bottom:15px;" alt="">
+            <p><strong>Quickly Yazılım Kurumsal Hizmetler Sanayii ve Dış Tic. Ltd. Şti.</strong></p>
+            <hr class="my-4">
+          </div>
+          @if (logo()) {
+          <img [src]="logo()" class="logo" alt="">
+          }
+          <p>{{storeInfo()?.name}}</p>
+        </div>
+        }
+        @if (selected() === 1) {
+        <app-user-settings [key]="selected()"></app-user-settings>
+        }
+        @if (selected() === 2) {
+        <app-menu-settings [key]="selected()"></app-menu-settings>
+        }
+        @if (selected() === 3) {
+        <app-restaurant-settings [key]="selected()"></app-restaurant-settings>
+        }
+        @if (selected() === 4) {
+        <app-stock-settings [key]="selected()"></app-stock-settings>
+        }
+        @if (selected() === 5) {
+        <app-recipe-settings [key]="selected()"></app-recipe-settings>
+        }
+        @if (selected() === 6) {
+        <app-customer-settings [key]="selected()"></app-customer-settings>
+        }
+        @if (selected() === 7) {
+        <app-printer-settings [key]="selected()"></app-printer-settings>
+        }
+        @if (selected() === 10) {
+        <app-cashbox-settings [key]="selected()"></app-cashbox-settings>
+        }
+        @if (selected() === 9) {
+        <app-application-settings [key]="selected()"></app-application-settings>
+        }
+      </div>
+    </div>
+  </div>
+</div>

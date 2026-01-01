@@ -1,0 +1,377 @@
+<ul class="nav nav-tabs nav-justified" id="reportTab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" data-toggle="tab" href="#normal" role="tab">
+      <i class="fa fa-th" aria-hidden="true"></i> Normal Satış</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#fast" role="tab">
+      <i class="fa fa-clock-o" aria-hidden="true"></i> Hızlı Satış</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#delivery" role="tab">
+      <i class="fa fa-motorcycle" aria-hidden="true"></i> Paket Servis
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#canceled" role="tab">
+      <i class="fa fa-trash-o" aria-hidden="true"></i> İptal</a>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="normal" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <h5 class="mt-2">Normal Satış</h5>
+      </div>
+      <div class="card-body tab-height p-0">
+        <div class="row">
+          <div class="col-lg-3 pr-0">
+            <div class="card tab-inside-height">
+              <div class="card-header">Filtreleme</div>
+              <div class="card-body p-0">
+                <div class="list-group">
+                  <button type="button" (click)="fillData()"
+                    class="list-group-item list-group-item-action list-eq">Bütün
+                    Masalar</button>
+                  <button type="button" (click)="getNormalChecksBy('Parçalı')"
+                    class="list-group-item list-group-item-action bg-primary text-white list-eq">Parçalı</button>
+                  <button type="button" (click)="getNormalChecksBy('Nakit')"
+                    class="list-group-item list-group-item-action list-group-item-success list-eq">Nakit</button>
+                  <button type="button" (click)="getNormalChecksBy('Kart')"
+                    class="list-group-item list-group-item-action list-group-item-warning list-eq">Kart</button>
+                  <button type="button" (click)="getNormalChecksBy('Kupon')"
+                    class="list-group-item list-group-item-action list-group-item-info list-eq">Kupon</button>
+                  <button type="button" (click)="getNormalChecksBy('İkram')"
+                    class="list-group-item list-group-item-action list-group-item-danger list-eq">İkram</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-9 pl-0">
+            <div class="card tab-inside-height">
+              <div class="card-header pb-2 pt-2">
+                <div class="row">
+                  <div class="col-lg-6 pt-1">
+                    Masalar
+                  </div>
+                  <div class="col-lg-6 pr-2">
+                    <div class="input-group input-group-sm">
+                      <div class="input-group-prepend normal">
+                        <div class="input-group-text">
+                          <i class="fa fa-search" aria-hidden="true"></i>
+                        </div>
+                      </div>
+                      <input #tableName type="text" placeholder="Masa Adı Giriniz.."
+                        (click)="fillData(); tableName.value = '';" (keyup)="filterTables(tableName.value)"
+                        class="form-control form-contol-sm">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body p-0 flow">
+                <table class="table  table-bordered table-striped table-hover">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th width="7%">#</th>
+                      <th width="25%">Masa</th>
+                      <th width="27%">Tutar</th>
+                      <th width="13%">Saat</th>
+                      <th width="17%">Ödeme</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (check of NormalChecks(); track check._id; let i = $index) {
+                    <tr (click)="getDetail(check)">
+                      <td>{{i+1}}</td>
+                      <td>{{check.table_id | general:'tables' | async}}
+                        @if (check.note !== '' && check.note !== undefined) {
+                        <small class="text-muted">({{check.note}})</small>
+                        }
+                      </td>
+                      <td>{{check.total_price + check.discount | price}}
+                        @if (check.discount > 0) {
+                        <small class="pull-right text-danger">
+                          <strong>
+                            <i class="fa fa-arrow-down" aria-hidden="true"></i> {{check.discount | price}}
+                          </strong>
+                        </small>
+                        }
+                      </td>
+                      <td>{{check.timestamp | date:"HH:mm" }}</td>
+                      <td>{{check.payment_method}}</td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
+                @if (NormalChecks().length === 0) {
+                <h3 class="text-center mt-5">Eşleşen Hesap Bulunamadı</h3>
+                }
+              </div>
+              <div class="card-footer">
+                <strong>
+                  Normal Hesap Toplamı:
+                  <span class="pull-right">{{NormalTotal() | price }} </span>
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="fast" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <h5 class="mt-2">Hızlı Satış</h5>
+      </div>
+      <div class="card-body tab-height p-0">
+        <div class="row">
+          <div class="col-lg-3 pr-0">
+            <div class="card tab-inside-height">
+              <div class="card-header">Filtreleme</div>
+              <div class="card-body p-0">
+                <div class="list-group">
+                  <button type="button" (click)="fillData()"
+                    class="list-group-item list-group-item-action list-eq">Bütün
+                    Hesaplar</button>
+                  <button type="button" (click)="getFastChecksBy('Parçalı')"
+                    class="list-group-item list-group-item-action bg-primary text-white list-eq">Parçalı</button>
+                  <button type="button" (click)="getFastChecksBy('Nakit')"
+                    class="list-group-item list-group-item-action list-group-item-success list-eq">Nakit</button>
+                  <button type="button" (click)="getFastChecksBy('Kart')"
+                    class="list-group-item list-group-item-action list-group-item-warning list-eq">Kart</button>
+                  <button type="button" (click)="getFastChecksBy('Kupon')"
+                    class="list-group-item list-group-item-action list-group-item-info list-eq">Kupon</button>
+                  <button type="button" (click)="getFastChecksBy('İkram')"
+                    class="list-group-item list-group-item-action list-group-item-danger list-eq">İkram</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-9 pl-0">
+            <div class="card tab-inside-height">
+              <div class="card-header pt-2 pb-2">
+                <div class="row">
+                  <div class="col-lg-6 pt-1">
+                    Hesaplar
+                  </div>
+                  <div class="col-lg-6 pr-2">
+                    <div class="input-group input-group-sm">
+                      <div class="input-group-prepend normal">
+                        <div class="input-group-text">
+                          <i class="fa fa-search" aria-hidden="true"></i>
+                        </div>
+                      </div>
+                      <input #ownerName type="text" placeholder="Kullanıcı Adı Giriniz.."
+                        (click)="fillData(); ownerName.value = '';" (keyup)="filterChecks(ownerName.value)"
+                        class="form-control form-contol-sm">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body p-0 flow">
+                <table class="table  table-bordered table-striped table-hover">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th width="7%">#</th>
+                      <th width="33%">Hesap Türü</th>
+                      <th width="20%">Tutar</th>
+                      <th width="13%">Saat</th>
+                      <th width="17%">Kullanıcı</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (check of FastChecks(); track check._id; let i = $index) {
+                    <tr (click)="getDetail(check)">
+                      <td>{{i+1}}</td>
+                      <td>{{check.table_id}}
+                        @if (check.note !== '' && check.note !== undefined) {
+                        <small class="text-muted">({{check.note}})</small>
+                        }
+                      </td>
+                      <td>{{check.total_price + check.discount | price}}
+                        @if (check.discount > 0) {
+                        <small class="pull-right text-danger">
+                          <i class="fa fa-arrow-down" aria-hidden="true"></i> {{check.discount | price}}
+                        </small>
+                        }
+                      </td>
+                      <td>{{check.timestamp | date:"HH:mm" }}</td>
+                      <td>{{check.owner}}</td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
+                @if (FastChecks().length === 0) {
+                <h3 class="text-center mt-5">Eşleşen Hesap Bulunamadı</h3>
+                }
+              </div>
+              <div class="card-footer">
+                <strong>
+                  Hızlı Hesap Toplamı:
+                  <span class="pull-right">{{FastTotal() | price }} </span>
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="canceled" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <h5 class="mt-2">İptal Edilen Hesaplar</h5>
+      </div>
+      <div class="card-body p-0 tab-height flow">
+        <div class="row">
+          <div class="col-lg-12">
+            <table class="table  table-bordered table-striped table-hover">
+              <thead>
+                <tr class="thead-dark">
+                  <th width="6%">#</th>
+                  <th width="14%">Masa</th>
+                  <th width="25%">Açıklama</th>
+                  <th width="10%">Tür</th>
+                  <th width="10%">Tutar</th>
+                  <th width="10%">Saat</th>
+                  <th width="10%">Kullanıcı</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (check of NotPayedChecks(); track check._id; let i = $index) {
+                <tr (click)="getDetail(check)">
+                  <td>{{i+1}}</td>
+                  <td>{{check.table_id | general:'tables' | async}}
+                    @if (check.note !== '' && check.note !== undefined) {
+                    <small class="text-muted">({{check.note}})</small>
+                    }
+                  </td>
+                  <td>{{check.description}}</td>
+                  <td>{{check.payment_method}}</td>
+                  <td>{{check.total_price | price }} </td>
+                  <td>{{check.timestamp | date:"HH:mm" }}</td>
+                  <td>{{check.owner}}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="delivery" role="tabpanel">
+    <div class="card ntb">
+      <div class="card-header">
+        <h5 class="mt-2">Paket Servis</h5>
+      </div>
+      <div class="card-body tab-height p-0">
+        <div class="row">
+          <div class="col-lg-3 pr-0">
+            <div class="card tab-inside-height">
+              <div class="card-header">Filtreleme</div>
+              <div class="card-body p-0">
+                <div class="list-group">
+                  <button type="button" (click)="fillData()"
+                    class="list-group-item list-group-item-action list-eq">Bütün
+                    Hesaplar</button>
+                  <button type="button" (click)="getDeliveryChecksBy('Parçalı')"
+                    class="list-group-item list-group-item-action bg-primary text-white list-eq">Parçalı</button>
+                  <button type="button" (click)="getDeliveryChecksBy('Nakit')"
+                    class="list-group-item list-group-item-action list-group-item-success list-eq">Nakit</button>
+                  <button type="button" (click)="getDeliveryChecksBy('Kart')"
+                    class="list-group-item list-group-item-action list-group-item-warning list-eq">Kart</button>
+                  <button type="button" (click)="getDeliveryChecksBy('Kupon')"
+                    class="list-group-item list-group-item-action list-group-item-info list-eq">Kupon</button>
+                  <button type="button" (click)="getDeliveryChecksBy('İkram')"
+                    class="list-group-item list-group-item-action list-group-item-danger list-eq">İkram</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-9 pl-0">
+            <div class="card tab-inside-height">
+              <div class="card-header pt-2 pb-2">
+                <div class="row">
+                  <div class="col-lg-6 pt-1">
+                    Hesaplar
+                  </div>
+                  <div class="col-lg-6 pr-2">
+                    <div class="input-group input-group-sm">
+                      <div class="input-group-prepend normal">
+                        <div class="input-group-text">
+                          <i class="fa fa-search" aria-hidden="true"></i>
+                        </div>
+                      </div>
+                      <input #ownerName type="text" placeholder="Kullanıcı Adı Giriniz.."
+                        (click)="fillData(); ownerName.value = '';" (keyup)="filterChecks(ownerName.value)"
+                        class="form-control form-contol-sm">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body p-0 flow">
+                <table class="table  table-bordered table-striped table-hover">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th width="7%">#</th>
+                      <th width="33%">Hesap Türü</th>
+                      <th width="20%">Tutar</th>
+                      <th width="13%">Saat</th>
+                      <th width="17%">Kullanıcı</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (check of DeliveryChecks(); track check._id; let i = $index) {
+                    <tr (click)="getDetail(check)">
+                      <td>{{i+1}}</td>
+                      <td>{{check.table_id}}
+                        @if (check.note !== '' && check.note !== undefined) {
+                        <small class="text-muted">({{check.note}})</small>
+                        }
+                      </td>
+                      <td>{{check.total_price + check.discount | price}}
+                        @if (check.discount > 0) {
+                        <small class="pull-right text-danger">
+                          <i class="fa fa-arrow-down" aria-hidden="true"></i> {{check.discount | price}}
+                        </small>
+                        }
+                      </td>
+                      <td>{{check.timestamp | date:"HH:mm" }}</td>
+                      <td>{{check.owner}}</td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
+                @if (DeliveryChecks().length === 0) {
+                <h3 class="text-center mt-5">Eşleşen Hesap Bulunamadı</h3>
+                }
+              </div>
+              <div class="card-footer">
+                <strong>
+                  Paket Servis Toplamı:
+                  <span class="pull-right">{{DeliveryTotal() | price }} </span>
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <i class="fa fa-question-circle" aria-hidden="true"></i> Yardım
+      </div>
+    </div>
+  </div>
+</div>
+
