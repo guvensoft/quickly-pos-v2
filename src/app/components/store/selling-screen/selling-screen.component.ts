@@ -57,7 +57,7 @@ export class SellingScreenComponent implements OnDestroy {
   readonly floors = this.db.floors;
   readonly tables = this.db.tables;
 
-  readonly check = signal<any>({});
+  readonly check = signal<Check>(new Check('', 0, 0, '', '', CheckStatus.PASSIVE, [], Date.now(), CheckType.NORMAL, CheckNo()));
   readonly check_id = signal<string>('');
   readonly selectedCatId = signal<string | undefined>(undefined);
   readonly selectedSubCatId = signal<string | undefined>(undefined);
@@ -66,7 +66,7 @@ export class SellingScreenComponent implements OnDestroy {
   readonly subCatsView = computed(() => {
     const catId = this.selectedCatId();
     if (!catId) return [];
-    return this.sub_categories().filter((s: any) => s.cat_id === catId);
+    return this.sub_categories().filter((s: SubCategory) => s.cat_id === catId);
   });
 
   readonly productsView = computed(() => {
@@ -91,7 +91,7 @@ export class SellingScreenComponent implements OnDestroy {
   });
 
   readonly table = computed(() => {
-    return this.tables().find(t => t._id === this.id()) || {} as any;
+    return this.tables().find(t => t._id === this.id()) || {} as Table;
   });
 
   readonly tablesView = computed(() => {
@@ -116,12 +116,12 @@ export class SellingScreenComponent implements OnDestroy {
   readonly ownerRole = signal<string>('');
   readonly ownerId = signal<string>('');
   readonly newOrders = signal<Array<CheckProduct>>([]);
-  readonly countData = signal<Array<any>>([]);
+  readonly countData = signal<Array<{ id: string, amount: number, price: number }>>([]);
   readonly payedShow = signal<boolean>(false);
   readonly payedTitle = computed(() => this.payedShow() ? 'Alınan Ödemeleri Gizle' : 'Alınan Ödemeleri Görüntüle');
-  readonly permissions = signal<any>({});
-  readonly readyNotes = signal<any[]>([]);
-  readonly productSpecs = signal<any[]>([]);
+  readonly permissions = signal<any>({}); // Will define interface if exists
+  readonly readyNotes = signal<string[]>([]);
+  readonly productSpecs = signal<any[]>([]); // To be defined
   readonly printers = signal<any[]>([]);
   readonly scalerValue = signal<number>(0);
   readonly cancelReasons: Array<string> = [
@@ -131,7 +131,7 @@ export class SellingScreenComponent implements OnDestroy {
     'Müşteri İstemedi',
   ];
   readonly discounts: Array<number> = [5, 10, 15, 20, 25, 40];
-  readonly paymentMethods: Array<any> = [
+  readonly paymentMethods: Array<PaymentMethod> = [
     new PaymentMethod('Nakit', 'Nakit Ödeme', '#5cb85c', 'fa-money', 1, 1),
     new PaymentMethod('Kart', 'Kredi veya Banka Kartı', '#f0ad4e', 'fa-credit-card', 2, 1),
     new PaymentMethod('Kupon', 'İndirim Kuponu veya Yemek Çeki', '#5bc0de', 'fa-bookmark', 3, 1),
@@ -163,7 +163,7 @@ export class SellingScreenComponent implements OnDestroy {
 
     // route.params subscription wrapped in effect
     effect(() => {
-      this.route.params.subscribe((params: any) => {
+      this.route.params.subscribe((params) => {
         this.id.set(params['id']);
         this.type.set(params['type']);
         const currentId = this.id();
@@ -300,13 +300,13 @@ export class SellingScreenComponent implements OnDestroy {
     }
   }
 
-  getCheck(filter: object) {
-    return this.mainService.getAllBy('checks', filter).then((result: any) => {
+  getCheck(filter: object): Promise<void> {
+    return this.mainService.getAllBy('checks', filter).then((result) => {
       if (result.docs.length > 0) {
         this.check.set(result.docs[0]);
-        this.check_id.set(result.docs[0]._id);
+        this.check_id.set(result.docs[0]._id!);
       }
-    }).catch((err: any) => {
+    }).catch((err: Error) => {
       console.error('getCheck error:', err);
     });
   }
@@ -326,7 +326,7 @@ export class SellingScreenComponent implements OnDestroy {
           onTare: (val: number) => {
             // Logic for tare if needed, maybe just clear or set offset
           }
-        }).closed.subscribe(val => {
+        }).closed.subscribe((val: number | undefined) => {
           if (val) {
             this.handleNumpadResult(val, product, ps);
           }
@@ -417,10 +417,9 @@ export class SellingScreenComponent implements OnDestroy {
 
   confirmCheck() {
     this.router.navigate(['/store']);
-    const timestamp = Date.now();
     const currentCheck = { ...this.check() };
 
-    currentCheck.products.forEach((element: any) => {
+    currentCheck.products.forEach((element: CheckProduct) => {
       if (element.status === 1) {
         element.status = 2;
         element.timestamp = timestamp;
@@ -429,9 +428,9 @@ export class SellingScreenComponent implements OnDestroy {
 
     if (currentCheck.status !== CheckStatus.PASSIVE) {
       if (currentCheck.type == CheckType.NORMAL) {
-        this.mainService.updateData('tables', this.id() as string, { status: 2 });
+        this.mainService.updateData('tables', this.id(), { status: 2 });
       }
-      this.mainService.updateData('checks', this.check_id(), currentCheck).then((res: any) => {
+      this.mainService.updateData('checks', this.check_id(), currentCheck).then((res: PouchDB.Core.Response) => {
         if (res.ok) {
           const newOrder = new Order(currentCheck._id, { id: this.ownerId(), name: this.owner() + ' ( Personel )' }, [], OrderStatus.APPROVED, OrderType.EMPLOOYEE, timestamp);
           this.newOrders().forEach(order => {
@@ -520,7 +519,7 @@ export class SellingScreenComponent implements OnDestroy {
           });
         } else {
           if (this.askForPrint()) {
-            this.message.sendConfirm('Fiş Yazdırılsın mı ?').then((isOk: any) => {
+            this.message.sendConfirm('Fiş Yazdırılsın mı ?').then((isOk) => {
               if (isOk) {
                 this.printOrder();
                 this.confirmCheck();
@@ -535,7 +534,7 @@ export class SellingScreenComponent implements OnDestroy {
         }
         break;
       case CheckType.ORDER:
-        currentCheck.products.map((element: any) => {
+        currentCheck.products.map((element: CheckProduct) => {
           if (element.status === 1) {
             element.status = 2;
           }
@@ -811,14 +810,14 @@ export class SellingScreenComponent implements OnDestroy {
 
   recalculateTotal() {
     const currentCheck = { ...this.check() };
-    const activeProducts = currentCheck.products.filter((obj: any) => obj.status != 3);
+    const activeProducts = currentCheck.products.filter((obj: CheckProduct) => obj.status != 3);
     currentCheck.total_price = activeProducts.length > 0
-      ? activeProducts.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+      ? activeProducts.map((obj: CheckProduct) => obj.price).reduce((a: number, b: number) => a + b, 0)
       : 0;
     this.check.set(currentCheck);
   }
 
-  changeSpecs(spec: any) {
+  changeSpecs(spec: { spec_name: string, spec_price: number }) {
     const selected = this.selectedProduct();
     if (!selected) return;
     if (![0.5, 1.5].includes(this.selectedQuantity())) {
@@ -908,7 +907,7 @@ export class SellingScreenComponent implements OnDestroy {
     const currentCheck = { ...this.check() };
     currentCheck.note = note;
     if (currentCheck.status !== CheckStatus.PASSIVE) {
-      this.mainService.updateData('checks', this.check_id(), { note: note }).then((res: any) => {
+      this.mainService.updateData('checks', this.check_id(), { note: note }).then((res) => {
         currentCheck._rev = res.rev;
         this.check.set(currentCheck);
       });
@@ -940,15 +939,15 @@ export class SellingScreenComponent implements OnDestroy {
       currentCheck.products[idx].timestamp = Date.now();
       currentCheck.total_price -= this.selectedProduct()!.price;
 
-      const productAfterCancel = currentCheck.products.filter((obj: any) => obj.status == 1);
-      currentCheck.products = currentCheck.products.filter((obj: any) => obj.status !== 1);
-      const analyzeCheck = currentCheck.products.some((obj: any) => obj.status !== 3);
+      const productAfterCancel = currentCheck.products.filter((obj: CheckProduct) => obj.status == 1);
+      currentCheck.products = currentCheck.products.filter((obj: CheckProduct) => obj.status !== 1);
+      const analyzeCheck = currentCheck.products.some((obj: CheckProduct) => obj.status !== 3);
 
       if (analyzeCheck) {
-        this.mainService.updateData(currentCheck.type == CheckType.ORDER ? 'closed_checks' : 'checks', this.check_id(), currentCheck).then((res: any) => {
+        this.mainService.updateData(currentCheck.type == CheckType.ORDER ? 'closed_checks' : 'checks', this.check_id(), currentCheck).then((res) => {
           if (res.ok) {
             if (currentCheck.type == CheckType.NORMAL) {
-              const pCat = this.categories().find((obj: any) => obj._id == currentCheck.products[idx].cat_id);
+              const pCat = this.categories().find((obj: Category) => obj._id == currentCheck.products[idx].cat_id);
               if (pCat) {
                 const device = this.printers().find((obj: any) => obj.name == pCat.printer);
                 if (device) {
@@ -963,7 +962,7 @@ export class SellingScreenComponent implements OnDestroy {
             this.message.sendMessage('Ürün İptal Edildi');
             this.selectedProduct.set(undefined);
             this.selectedIndex.set(undefined);
-            productAfterCancel.forEach((element: any) => {
+            productAfterCancel.forEach((element: CheckProduct) => {
               currentCheck.products.push(element);
             });
             this.check.set(currentCheck);
@@ -971,13 +970,13 @@ export class SellingScreenComponent implements OnDestroy {
         });
       } else {
         const canceledTotalPrice = currentCheck.products.length > 0
-          ? currentCheck.products.map((obj: any) => obj.price).reduce((a: number, b: number) => a + b, 0)
+          ? currentCheck.products.map((obj: CheckProduct) => obj.price).reduce((a: number, b: number) => a + b, 0)
           : 0;
         const checkToCancel = new ClosedCheck(currentCheck.table_id, canceledTotalPrice, 0, ownerName, currentCheck.note, 3, currentCheck.products, Date.now(), 3, 'İkram', [], undefined, currentCheck.occupation);
         checkToCancel.description = 'Bütün Ürünler İptal Edildi';
-        this.mainService.addData('closed_checks', checkToCancel).then((res: any) => {
+        this.mainService.addData('closed_checks', checkToCancel).then((res) => {
           this.message.sendMessage('Hesap İptal Edildi');
-          this.logService.createLog(logType.CHECK_CANCELED, currentCheck._id, `${this.table().name}'de kalan bütün ürünler iptal edildi. Hesap Kapatıldı.`);
+          this.logService.createLog(logType.CHECK_CANCELED, currentCheck._id!, `${this.table().name}'de kalan bütün ürünler iptal edildi. Hesap Kapatıldı.`);
         });
         this.mainService.removeData('checks', currentCheck._id);
         if (currentCheck.type == CheckType.NORMAL) {
@@ -1057,12 +1056,12 @@ export class SellingScreenComponent implements OnDestroy {
 
   decountProductsData(deProduct: CheckProduct) {
     this.countData.update(data => {
-      const index = data.findIndex((obj: any) => obj.product === deProduct.id);
+      const index = data.findIndex((obj) => obj.id === deProduct.id);
       if (index > -1) {
-        data[index].count--;
-        data[index].total -= deProduct.price;
-        if (data[index].count == 0) {
-          return data.filter((obj: any) => obj.product !== deProduct.id);
+        data[index].amount--;
+        data[index].price -= deProduct.price;
+        if (data[index].amount == 0) {
+          return data.filter((obj) => obj.id !== deProduct.id);
         }
       }
       return [...data];
@@ -1071,20 +1070,20 @@ export class SellingScreenComponent implements OnDestroy {
 
   countProductsData(id: string, price: number, manuelCount?: number) {
     this.countData.update(data => {
-      const index = data.findIndex(obj => obj.product === id);
+      const index = data.findIndex(obj => obj.id === id);
       if (index > -1) {
         if (manuelCount) {
-          data[index].count += manuelCount;
+          data[index].amount += manuelCount;
         } else {
-          data[index].count++;
+          data[index].amount++;
         }
-        data[index].total += price;
+        data[index].price += price;
       } else {
         let countObj;
         if (manuelCount) {
-          countObj = { product: id, count: manuelCount, total: price };
+          countObj = { id: id, amount: manuelCount, price: price };
         } else {
-          countObj = { product: id, count: 1, total: price };
+          countObj = { id: id, amount: 1, price: price };
         }
         data.push(countObj);
       }
@@ -1102,40 +1101,46 @@ export class SellingScreenComponent implements OnDestroy {
       } else {
         this.logService.createLog(logType.ORDER_CREATED, currentCheck._id, `'${ownerName}' Hızlı Satış - ${currentCheck.note} hesabına ${pricesTotal} TL tutarında sipariş girdi.`);
       }
-      this.mainService.getAllBy('reports', { connection_id: this.ownerId() }).then((res: any) => {
+      this.mainService.getAllBy('reports', { connection_id: this.ownerId() }).then((res) => {
         if (res.docs.length > 0) {
           const doc = res.docs[0];
           const currentDay = this.day();
-          doc.amount += pricesTotal;
-          doc.count++;
-          doc.weekly[currentDay] += pricesTotal;
-          doc.weekly_count[currentDay]++;
-          doc.monthly[new Date().getMonth()] += pricesTotal;
-          doc.monthly_count[new Date().getMonth()]++;
-          if (doc.weekly_count[currentDay] == 100) {
+          if (doc.amount !== undefined) doc.amount += pricesTotal;
+          if (doc.count !== undefined) doc.count++;
+          if (doc.weekly && doc.weekly[currentDay] !== undefined) doc.weekly[currentDay] += pricesTotal;
+          if (doc.weekly_count && doc.weekly_count[currentDay] !== undefined) doc.weekly_count[currentDay]++;
+
+          const currentMonth = new Date().getMonth();
+          if (doc.monthly && doc.monthly[currentMonth] !== undefined) doc.monthly[currentMonth] += pricesTotal;
+          if (doc.monthly_count && doc.monthly_count[currentMonth] !== undefined) doc.monthly_count[currentMonth]++;
+
+          if (doc.weekly_count && doc.weekly_count[currentDay] == 100) {
             this.logService.createLog(logType.USER_CHECKPOINT, this.ownerId(), `'${ownerName}' günün 100. siparişini girdi.`);
           }
           doc.timestamp = Date.now();
-          this.mainService.updateData('reports', doc._id, doc).then();
+          this.mainService.updateData('reports', doc._id!, doc).then();
         }
       });
     }
   }
 
-  updateProductReport(data: any) {
+  updateProductReport(data: Array<{ id: string, price: number, amount: number }>) {
     const currentDay = this.day();
-    data.forEach((obj: any, index: number) => {
-      this.mainService.getAllBy('reports', { connection_id: obj.product }).then((res: any) => {
+    data.forEach((obj, index: number) => {
+      this.mainService.getAllBy('reports', { connection_id: obj.id }).then((res) => {
         if (res.docs.length > 0) {
           const report = res.docs[0];
-          this.mainService.changeData('reports', report._id, (doc: any) => {
-            doc.count += obj.count;
-            doc.amount += obj.total;
+          this.mainService.changeData('reports', report._id!, (doc) => {
+            if (doc.count !== undefined) doc.count += obj.amount;
+            if (doc.amount !== undefined) doc.amount += obj.price;
             doc.timestamp = Date.now();
-            doc.weekly[currentDay] += obj.total;
-            doc.weekly_count[currentDay] += obj.count;
-            doc.monthly[new Date().getMonth()] += obj.total;
-            doc.monthly_count[new Date().getMonth()]++;
+
+            if (doc.weekly && doc.weekly[currentDay] !== undefined) doc.weekly[currentDay] += obj.price;
+            if (doc.weekly_count && doc.weekly_count[currentDay] !== undefined) doc.weekly_count[currentDay] += obj.amount;
+
+            const currentMonth = new Date().getMonth();
+            if (doc.monthly && doc.monthly[currentMonth] !== undefined) doc.monthly[currentMonth] += obj.price;
+            if (doc.monthly_count && doc.monthly_count[currentMonth] !== undefined) doc.monthly_count[currentMonth]++;
             return doc;
           });
         }
@@ -1211,10 +1216,10 @@ export class SellingScreenComponent implements OnDestroy {
     const currentPrinters = this.printers();
     const currentCheck = this.check();
     if (currentPrinters.length > 0) {
-      const orders = currentCheck.products.filter((obj: any) => obj.status == 1);
+      const orders = currentCheck.products.filter((obj: CheckProduct) => obj.status == 1);
       if (orders.length > 0) {
-        const splitPrintArray: Array<any> = [];
-        orders.forEach((obj: any, index: number) => {
+        const splitPrintArray: Array<{ printer: any, products: CheckProduct[] }> = [];
+        orders.forEach((obj: CheckProduct, index: number) => {
           const category = this.categories().find(cat => cat._id == obj.cat_id);
           const catPrinter = category?.printer || currentPrinters[0]?.name || 'default';
           const contains = splitPrintArray.some(element => element.printer.name == catPrinter);
@@ -1222,7 +1227,7 @@ export class SellingScreenComponent implements OnDestroy {
             const index = splitPrintArray.findIndex(p_name => p_name.printer.name == catPrinter);
             splitPrintArray[index].products.push(obj);
           } else {
-            const thePrinter = currentPrinters.find((printer: any) => printer.name == catPrinter);
+            const thePrinter = currentPrinters.find((printer) => printer.name == catPrinter);
             if (thePrinter) {
               const splitPrintOrder = { printer: thePrinter, products: [obj] };
               splitPrintArray.push(splitPrintOrder);
@@ -1236,7 +1241,7 @@ export class SellingScreenComponent implements OnDestroy {
               table_name = this.table().name;
             }
             const ownerName = this.owner();
-            splitPrintArray.forEach((order: any) => {
+            splitPrintArray.forEach((order) => {
               this.printerService.printOrder(order.printer, table_name, order.products, ownerName);
             });
           }
@@ -1334,17 +1339,19 @@ export class SellingScreenComponent implements OnDestroy {
                   if (currentCheck.products.length == 0) {
                     if (currentCheck.payment_flow) {
                       let payedDiscounts = 0;
-                      currentCheck.payment_flow.forEach((obj: any, index: number) => {
+                      currentCheck.payment_flow.forEach((obj, index: number) => {
                         payedDiscounts += obj.discount;
-                        this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r: any) => {
+                        this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r) => {
                           const currentDay = this.day();
-                          this.mainService.changeData('reports', (r.docs[0])._id, (doc: any) => {
-                            doc.count++;
-                            doc.weekly_count[currentDay]++;
-                            doc.amount += obj.amount;
-                            doc.weekly[currentDay] += obj.amount;
-                            doc.monthly[new Date().getMonth()] += obj.amount;
-                            doc.monthly_count[new Date().getMonth()]++;
+                          this.mainService.changeData('reports', (r.docs[0])._id!, (doc) => {
+                            if (doc.count !== undefined) doc.count++;
+                            if (doc.weekly_count && doc.weekly_count[currentDay] !== undefined) doc.weekly_count[currentDay]++;
+                            if (doc.amount !== undefined) doc.amount += obj.amount;
+                            if (doc.weekly && doc.weekly[currentDay] !== undefined) doc.weekly[currentDay] += obj.amount;
+
+                            const currentMonth = new Date().getMonth();
+                            if (doc.monthly && doc.monthly[currentMonth] !== undefined) doc.monthly[currentMonth] += obj.amount;
+                            if (doc.monthly_count && doc.monthly_count[currentMonth] !== undefined) doc.monthly_count[currentMonth]++;
                             doc.timestamp = Date.now();
                             return doc;
                           });
@@ -1391,17 +1398,19 @@ export class SellingScreenComponent implements OnDestroy {
               if (currentCheck.products.length == 0) {
                 if (currentCheck.payment_flow) {
                   let payedDiscounts = 0;
-                  currentCheck.payment_flow.forEach((obj: any, index: number) => {
+                  currentCheck.payment_flow.forEach((obj, index: number) => {
                     payedDiscounts += obj.discount;
-                    this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r: any) => {
+                    this.mainService.getAllBy('reports', { connection_id: obj.method }).then((r) => {
                       const currentDay = this.day();
-                      this.mainService.changeData('reports', (r.docs[0])._id, (doc: any) => {
-                        doc.count++;
-                        doc.weekly_count[currentDay]++;
-                        doc.amount += obj.amount;
-                        doc.weekly[currentDay] += obj.amount;
-                        doc.monthly[new Date().getMonth()] += obj.amount;
-                        doc.monthly_count[new Date().getMonth()]++;
+                      this.mainService.changeData('reports', (r.docs[0])._id!, (doc) => {
+                        if (doc.count !== undefined) doc.count++;
+                        if (doc.weekly_count && doc.weekly_count[currentDay] !== undefined) doc.weekly_count[currentDay]++;
+                        if (doc.amount !== undefined) doc.amount += obj.amount;
+                        if (doc.weekly && doc.weekly[currentDay] !== undefined) doc.weekly[currentDay] += obj.amount;
+
+                        const currentMonth = new Date().getMonth();
+                        if (doc.monthly && doc.monthly[currentMonth] !== undefined) doc.monthly[currentMonth] += obj.amount;
+                        if (doc.monthly_count && doc.monthly_count[currentMonth] !== undefined) doc.monthly_count[currentMonth]++;
                         doc.timestamp = Date.now();
                         return doc;
                       });
@@ -1530,8 +1539,8 @@ export class SellingScreenComponent implements OnDestroy {
     }
   }
 
-  catName(id: string) {
-    return this.categories().find((cat: any) => cat._id === id)?.name || '';
+  catName(id: string): string {
+    return this.categories().find((cat) => cat._id === id)?.name || '';
   }
 
   filterProducts(text: string) {

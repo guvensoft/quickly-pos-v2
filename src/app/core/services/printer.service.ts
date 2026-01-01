@@ -2,9 +2,29 @@ import { Injectable, inject } from '@angular/core';
 import { ElectronService } from './electron/electron.service';
 import { MessageService } from './message.service';
 import { SettingsService } from './settings.service';
-import { Order } from '../models/order.model';
+import { Order, OrderItem } from '../models/order.model';
 import { PrintOut, PrintOutStatus } from '../models/print.model';
 import { MainService } from './main.service';
+import { Check, CheckProduct, PaymentFlow } from '../models/check.model';
+import { Table } from '../models/table.model';
+import { EndDayDocument } from '../models/database.types';
+
+export interface PrinterDevice {
+  name: string;
+  type: number; // 0: USB, 1: Network, 2: Serial
+  ip?: string;
+  port?: string;
+  address?: string;
+}
+
+interface PrintItem {
+  name: string;
+  note?: string;
+  price: number;
+  total_price?: number;
+  count: number;
+  status?: number;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -52,12 +72,12 @@ export class PrinterService {
   // İş Mantığı - %100 AYNEN KORUNDU
   // ============================================
 
-  printTest(device: any): void {
+  printTest(device: PrinterDevice): void {
     this.electron.send('printTest', device);
   }
 
-  printOrder(device: any, table: any, orders: any[], owner: string): void {
-    const ordersArray: any[] = [];
+  printOrder(device: PrinterDevice, table: string | Table, orders: Array<OrderItem | CheckProduct>, owner: string): void {
+    const ordersArray: PrintItem[] = [];
     orders.forEach(element => {
       const contains = ordersArray.some(obj => obj.name == element.name && obj.note == element.note);
       if (contains) {
@@ -67,15 +87,15 @@ export class PrinterService {
           ordersArray[index].count++;
         }
       } else {
-        const schema = { name: element.name, note: element.note, price: element.price, count: 1 };
+        const schema: PrintItem = { name: element.name, note: (element as any).note, price: element.price, count: 1 };
         ordersArray.push(schema);
       }
     });
     this.electron.send('printOrder', device, table, ordersArray, owner);
   }
 
-  printTableOrder(device: any, table: any, order: Order): void {
-    const ordersArray: any[] = [];
+  printTableOrder(device: PrinterDevice, table: string | Table, order: Order): void {
+    const ordersArray: PrintItem[] = [];
     order.items.forEach(element => {
       const contains = ordersArray.some(obj => obj.name == element.name && obj.note == element.note);
       if (contains) {
@@ -85,27 +105,29 @@ export class PrinterService {
           ordersArray[index].count++;
         }
       } else {
-        const schema = { name: element.name, note: element.note, price: element.price, count: 1 };
+        const schema: PrintItem = { name: element.name, note: element.note, price: element.price, count: 1 };
         ordersArray.push(schema);
       }
     });
     this.electron.send('printOrder', device, table, ordersArray, order.user.name);
   }
 
-  printCheck(device: any, table: any, check: any): void {
-    const productsArray: any[] = [];
-    const payedArray: any[] = [];
+  printCheck(device: PrinterDevice, table: string | Table, check: Check): void {
+    const productsArray: PrintItem[] = [];
+    const payedArray: PrintItem[] = [];
 
-    check.products.forEach((element: any) => {
+    check.products.forEach((element: CheckProduct) => {
       const contains = productsArray.some(obj => obj.name == element.name && obj.note == element.note && obj.price == element.price);
       if (contains) {
         const index = productsArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
         if (index !== -1) {
-          productsArray[index].total_price += element.price;
+          if (productsArray[index].total_price !== undefined) {
+            productsArray[index].total_price! += element.price;
+          }
           productsArray[index].count++;
         }
       } else {
-        const schema = {
+        const schema: PrintItem = {
           name: element.name,
           note: element.note,
           price: element.price,
@@ -120,7 +142,7 @@ export class PrinterService {
     if (check.payment_flow && check.payment_flow.length > 0) {
       let payed: any[] = [];
       if (check.payment_flow.length > 1) {
-        const things = check.payment_flow.map((obj: any) => obj.payed_products);
+        const things = check.payment_flow.map((obj: PaymentFlow) => obj.payed_products);
         things.forEach((element: any) => {
           if (element) {
             payed = payed.concat(element);
@@ -135,11 +157,13 @@ export class PrinterService {
         if (contains) {
           const index = payedArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
           if (index !== -1) {
-            payedArray[index].total_price += element.price;
+            if (payedArray[index].total_price !== undefined) {
+              payedArray[index].total_price! += element.price;
+            }
             payedArray[index].count++;
           }
         } else {
-          const schema = {
+          const schema: PrintItem = {
             name: element.name,
             note: element.note,
             price: element.price,
@@ -153,23 +177,25 @@ export class PrinterService {
     }
 
     const newCheck = Object.assign({}, check);
-    newCheck.products = productsArray;
-    newCheck.payed_products = payedArray;
+    (newCheck as any).products = productsArray;
+    (newCheck as any).payed_products = payedArray;
     this.electron.send('printCheck', device, newCheck, table, this.storeLogo, '');
   }
 
-  printPayment(device: any, table: any, payment: any): void {
-    const productsArray: any[] = [];
+  printPayment(device: PrinterDevice, table: string | Table, payment: any): void {
+    const productsArray: PrintItem[] = [];
     payment.payed_products.forEach((element: any) => {
       const contains = productsArray.some(obj => obj.name == element.name && obj.note == element.note);
       if (contains) {
         const index = productsArray.findIndex(obj => obj.name == element.name && obj.note == element.note);
         if (index !== -1) {
-          productsArray[index].total_price += element.price;
+          if (productsArray[index].total_price !== undefined) {
+            productsArray[index].total_price! += element.price;
+          }
           productsArray[index].count++;
         }
       } else {
-        const schema = {
+        const schema: PrintItem = {
           name: element.name,
           note: element.note,
           price: element.price,
@@ -184,37 +210,33 @@ export class PrinterService {
     this.electron.send('printPayment', device, payment, table, this.storeLogo);
   }
 
-  printEndDay(device: any, EndDayData: any): void {
+  printEndDay(device: PrinterDevice, EndDayData: EndDayDocument): void {
     this.electron.send('printEndDay', device, EndDayData, this.quicklyLogo);
   }
 
-  printReport(device: any, category: any, reports: any): void {
+  printReport(device: PrinterDevice, category: string, reports: any[]): void {
     this.electron.send('printReport', device, category, reports);
   }
 
-  printCancel(device: any, product: any, reason: any, table: any, owner: any): void {
+  printCancel(device: PrinterDevice, product: any, reason: string, table: string | Table, owner: string): void {
     this.electron.send('printCancel', device, product, reason, table, owner);
   }
 
-  printQRCode(device: any, data: any, table: any, owner: any): void {
+  printQRCode(device: PrinterDevice, data: string, table: string | Table, owner: string): void {
     this.electron.send('printQRcode', device, data, table, owner);
   }
 
-  kickCashdraw(device: any): void {
+  kickCashdraw(device: PrinterDevice): void {
     console.log('kickMustWork', device);
     this.electron.send('kickCashdraw', device);
   }
 
-  // NOT: escpos USB ve Serial printer fonksiyonları Electron tarafında handle edilmeli
-  // Angular 21'de doğrudan native module kullanımı desteklenmiyor
-  getUSBPrinters(): any {
-    // Bu fonksiyon main process'ten IPC ile çağrılmalı
+  getUSBPrinters(): any[] {
     console.warn('getUSBPrinters should be called via IPC from main process');
     return [];
   }
 
-  getSerialPrinters(path: string): any {
-    // Bu fonksiyon main process'ten IPC ile çağrılmalı
+  getSerialPrinters(path: string): PrinterDevice | null {
     console.warn('getSerialPrinters should be called via IPC from main process');
     return null;
   }

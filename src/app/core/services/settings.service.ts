@@ -4,6 +4,7 @@ import { Subject, ReplaySubject } from 'rxjs';
 import { Settings } from '../models/settings.model';
 import { MainService } from './main.service';
 import { CashboxCategory } from '../models/cashbox.model';
+import { PrinterDevice } from './printer.service';
 
 @Injectable({
   providedIn: 'root'
@@ -134,7 +135,7 @@ export class SettingsService {
     });
   }
 
-  setAppSettings(Key: string, SettingsData: any): Promise<any> {
+  setAppSettings(Key: string, SettingsData: unknown): Promise<any> {
     const AppSettings = new Settings(Key, SettingsData, Key, Date.now());
     return this.mainService.getAllBy('settings', { key: Key }).then(res => {
       if (res.docs[0]?._id) {
@@ -155,14 +156,14 @@ export class SettingsService {
   private upsertCashboxCategories(categories: CashboxCategory[]): void {
     this.mainService.getAllBy('settings', { key: 'CashboxCategories' }).then(res => {
       if (res && res.docs && res.docs.length > 0 && res.docs[0]?._id) {
-        const doc: any = res.docs[0];
+        const doc = res.docs[0];
         doc.value = categories;
         doc.timestamp = Date.now();
         this.mainService.updateData('settings', doc._id, doc);
         this.CashboxCategories.next(doc);
       } else {
         const cashboxSettings = new Settings('CashboxCategories', categories, 'Kasa Kategorileri', Date.now());
-        this.mainService.addData('settings', cashboxSettings as any);
+        this.mainService.addData('settings', cashboxSettings);
         this.CashboxCategories.next(cashboxSettings);
       }
     }).catch(err => {
@@ -172,7 +173,7 @@ export class SettingsService {
 
   addCashboxCategory(category: CashboxCategory): void {
     this.mainService.getAllBy('settings', { key: 'CashboxCategories' }).then(res => {
-      const existing = (res?.docs?.[0] as any)?.value as CashboxCategory[] | undefined;
+      const existing = res?.docs?.[0]?.value as CashboxCategory[] | undefined;
       const next = [...(existing || []), category];
       this.upsertCashboxCategories(next);
     }).catch(err => {
@@ -182,7 +183,7 @@ export class SettingsService {
 
   updateCashboxCategory(category: CashboxCategory): void {
     this.mainService.getAllBy('settings', { key: 'CashboxCategories' }).then(res => {
-      const existing = (res?.docs?.[0] as any)?.value as CashboxCategory[] | undefined;
+      const existing = res?.docs?.[0]?.value as CashboxCategory[] | undefined;
       const next = (existing || []).map(c => c.id === category.id ? category : c);
       this.upsertCashboxCategories(next);
     }).catch(err => {
@@ -192,7 +193,7 @@ export class SettingsService {
 
   removeCashboxCategory(id: string): void {
     this.mainService.getAllBy('settings', { key: 'CashboxCategories' }).then(res => {
-      const existing = (res?.docs?.[0] as any)?.value as CashboxCategory[] | undefined;
+      const existing = res?.docs?.[0]?.value as CashboxCategory[] | undefined;
       const next = (existing || []).filter(c => c.id !== id);
       this.upsertCashboxCategories(next);
     }).catch(err => {
@@ -200,7 +201,7 @@ export class SettingsService {
     });
   }
 
-  addPrinter(printerData: any): void {
+  addPrinter(printerData: PrinterDevice): void {
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
       if (res && res.docs && res.docs.length > 0 && res.docs[0]._id) {
         res.docs[0].value.push(printerData);
@@ -216,10 +217,10 @@ export class SettingsService {
     });
   }
 
-  updatePrinter(newPrinter: any, oldPrinter: any): void {
+  updatePrinter(newPrinter: PrinterDevice, oldPrinter: PrinterDevice): void {
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
       if (res && res.docs && res.docs[0]?._id) {
-        res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== oldPrinter.name);
+        res.docs[0].value = res.docs[0].value.filter((obj: PrinterDevice) => obj.name !== oldPrinter.name);
         res.docs[0].value.push(newPrinter);
         this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
         this.Printers.next(res.docs[0]);
@@ -229,10 +230,10 @@ export class SettingsService {
     });
   }
 
-  removePrinter(printer: any): void {
+  removePrinter(printer: PrinterDevice): void {
     this.mainService.getAllBy('settings', { key: 'Printers' }).then(res => {
       if (res && res.docs && res.docs[0]?._id) {
-        res.docs[0].value = res.docs[0].value.filter((obj: any) => obj.name !== printer.name);
+        res.docs[0].value = res.docs[0].value.filter((obj: PrinterDevice) => obj.name !== printer.name);
         this.mainService.updateData('settings', res.docs[0]._id, res.docs[0]);
         this.Printers.next(res.docs[0]);
       }

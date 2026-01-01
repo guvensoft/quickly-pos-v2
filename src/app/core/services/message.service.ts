@@ -4,11 +4,30 @@ import { Observable, Subject } from 'rxjs';
 import swal from 'sweetalert';
 import { ToastService } from './toast.service';
 
+export interface Message {
+    text: string;
+}
+
+export interface SwalOptions {
+    title: string;
+    text?: string;
+    icon?: 'warning' | 'error' | 'success' | 'info';
+    buttons: {
+        [key: string]: {
+            text: string;
+            value: boolean;
+            visible: boolean;
+            className: string;
+            closeModal: boolean;
+        } | boolean;
+    };
+}
+
 @Injectable({
     providedIn: 'root'
 })
 export class MessageService {
-    private subject = new Subject<any>();
+    private subject = new Subject<Message | null>();
     private readonly toastService = inject(ToastService);
 
     sendMessage(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') {
@@ -19,19 +38,19 @@ export class MessageService {
         this.subject.next({ text: message });
         setTimeout(
             () => {
-                this.subject.next(null); // Changed to null to be clearer than undefined
+                this.subject.next(null);
             }, 2000);
     }
 
-    getMessage(): Observable<any> {
+    getMessage(): Observable<Message | null> {
         return this.subject.asObservable();
     }
 
     sendAlert(header: string, message: string, type: 'warning' | 'error' | 'success' | 'info') {
-        const swalOptions: any = {
+        const swalOptions: SwalOptions = {
             title: header,
             text: message,
-            icon: type,
+            icon: type as any, // Cast for swal compatibility if needed
             buttons: {
                 confirm: {
                     text: "Tamam",
@@ -42,11 +61,11 @@ export class MessageService {
                 }
             }
         };
-        swal(swalOptions);
+        swal(swalOptions as any);
     }
 
-    sendConfirm(message: string): Promise<any> {
-        const swalOptions: any = {
+    sendConfirm(message: string): Promise<boolean> {
+        const swalOptions: SwalOptions = {
             title: message,
             buttons: {
                 cancel: {
@@ -65,6 +84,6 @@ export class MessageService {
                 }
             },
         };
-        return swal(swalOptions);
+        return swal(swalOptions as any) as Promise<boolean>;
     }
 }
