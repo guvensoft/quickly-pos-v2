@@ -326,6 +326,23 @@ export interface EndDayDocument extends PouchDBDocument {
  * Veritabanı isimlerini document tiplerine map eder
  * Bu sayede MainService generic fonksiyonları tip güvenli olur
  */
+// Eksik Doküman Tipleri (Placeholder for stricter types later)
+export interface ReceiptDocument extends PouchDBDocument { [key: string]: any; }
+export interface CallDocument extends PouchDBDocument { [key: string]: any; }
+export interface OccationDocument extends PouchDBDocument { [key: string]: any; }
+export interface StockCategoryDocument extends PouchDBDocument { [key: string]: any; }
+export interface CommandDocument extends PouchDBDocument { [key: string]: any; }
+export interface CommentDocument extends PouchDBDocument { [key: string]: any; }
+export interface PrintDocument extends PouchDBDocument { [key: string]: any; }
+
+// ============================================
+// DATABASE MODEL MAPPING
+// ============================================
+
+/**
+ * Veritabanı isimlerini document tiplerine map eder
+ * Bu sayede MainService generic fonksiyonları tip güvenli olur
+ */
 export interface DatabaseModelMap {
     users: UserDocument;
     users_group: UserGroupDocument;
@@ -334,24 +351,34 @@ export interface DatabaseModelMap {
     credits: CreditDocument;
     customers: CustomerDocument;
     orders: OrderDocument;
-    receipts: any; // TODO: ReceiptDocument tanımlanacak
-    calls: any; // TODO: CallDocument tanımlanacak
+    receipts: ReceiptDocument;
+    calls: CallDocument;
     cashbox: CashboxDocument;
     categories: CategoryDocument;
     sub_categories: SubCategoryDocument;
-    occations: any; // TODO: OccationDocument tanımlanacak
+    occations: OccationDocument;
     products: ProductDocument;
     recipes: RecipeDocument;
     floors: FloorDocument;
     tables: TableDocument;
     stocks: StockDocument;
-    stocks_cat: any; // TODO: StockCategoryDocument tanımlanacak
+    stocks_cat: StockCategoryDocument;
     endday: EndDayDocument;
     reports: ReportDocument;
     logs: LogDocument;
-    commands: any; // TODO: CommandDocument tanımlanacak
-    comments: any; // TODO: CommentDocument tanımlanacak
-    prints: any; // TODO: PrintDocument tanımlanacak
+    commands: CommandDocument;
+    comments: CommentDocument;
+    prints: PrintDocument;
     settings: SettingsDocument;
-    allData: any; // allData tüm doküman tiplerini içerebilir
+    allData: PouchDBDocument; // Genel tip
+}
+
+// Global declaration for PouchDB plugin
+declare global {
+    namespace PouchDB {
+        interface Database {
+            upsert(docId: string, diffFun: (doc: any) => any): Promise<any>;
+            resolveConflicts(doc: any, resolveFun: (a: any, b: any) => any): Promise<any>;
+        }
+    }
 }

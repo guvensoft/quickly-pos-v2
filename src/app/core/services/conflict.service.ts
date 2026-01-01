@@ -45,10 +45,11 @@ export class ConflictService {
   }
 
   getConflicts(): Promise<any[]> {
-    if (!this.mainService.ServerDB) {
+    const serverDB = this.mainService.ServerDB;
+    if (!serverDB) {
       return Promise.resolve([]);
     }
-    return this.mainService.ServerDB.allDocs({ include_docs: true, conflicts: true, revs: true }).then((res: any) => {
+    return serverDB.allDocs({ include_docs: true, conflicts: true, revs: true } as any).then((res: any) => {
       if (!res || !res.rows) {
         return [];
       }
@@ -60,19 +61,22 @@ export class ConflictService {
   }
 
   getPreRevision(conflicted_document: any): Promise<any> {
-    if (!this.mainService.ServerDB) {
+    const serverDB = this.mainService.ServerDB;
+    if (!serverDB) {
       return Promise.reject('ServerDB not initialized');
     }
-    return this.mainService.ServerDB.get(conflicted_document._id, { revs: true }).then((res: any) => {
+    return serverDB.get(conflicted_document._id, { revs: true }).then((res: any) => {
       if (!res || !res._revisions || !res._revisions.ids || res._revisions.ids.length < 2) {
         return Promise.reject('Invalid revision data');
       }
       const revToGet = `${res._revisions.start - 1}-${res._revisions.ids[1]}`;
-      return this.mainService.ServerDB.get(res._id, { rev: revToGet });
+      return serverDB.get(res._id, { rev: revToGet });
     });
   }
 
   diffResolver(a: any, b: any, older_document?: any): void {
+    const serverDB = this.mainService.ServerDB;
+    if (!serverDB) return;
     if (older_document !== undefined) {
       if (older_document.db_name == 'reports') {
         const aDiff = this.diffReduce(a, older_document);
@@ -106,12 +110,12 @@ export class ConflictService {
         console.log('B_REV', b);
         console.log('RESOLVED', resolvedDoc);
 
-        this.mainService.ServerDB.remove(a).then((res: any) => {
+        serverDB.remove(a).then((res: any) => {
           if (res.ok) {
-            this.mainService.ServerDB.remove(b).then((res: any) => {
+            serverDB.remove(b).then((res: any) => {
               if (res.ok) {
                 delete resolvedDoc._rev;
-                this.mainService.ServerDB.put(resolvedDoc).then((res: any) => {
+                serverDB.put(resolvedDoc).then((res: any) => {
                   console.log(res);
                 });
               }
@@ -131,6 +135,7 @@ export class ConflictService {
   }
 
   diffRevision(a: any, b: any): void {
+    if (!this.mainService.ServerDB) return;
     const aRev = a._rev.split('-')[0];
     const bRev = b._rev.split('-')[0];
     if (aRev > bRev) this.diffRecreate(a, b);
@@ -138,15 +143,17 @@ export class ConflictService {
   }
 
   diffRecreate(first: any, second: any): void {
+    const serverDB = this.mainService.ServerDB;
+    if (!serverDB) return;
     console.log('Creating Diff', first);
-    this.mainService.ServerDB.remove(first)
+    serverDB.remove(first)
       .then((res: any) => {
         if (res.ok) {
-          this.mainService.ServerDB.remove(second)
+          serverDB.remove(second)
             .then((res: any) => {
               if (res.ok) {
                 delete first._rev;
-                this.mainService.ServerDB.put(first)
+                serverDB.put(first)
                   .then((res: any) => {
                     console.log(res);
                   })

@@ -41,13 +41,18 @@ interface ServerInfo {
   key: string;
 }
 
+interface SyncElement extends PouchDBDocument {
+  db_name?: string;
+  db_seq?: any;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class MainService {
   LocalDB: { [key: string]: PouchDB.Database } = {};
-  RemoteDB: PouchDB.Database | any;
-  ServerDB: PouchDB.Database | any;
+  RemoteDB: PouchDB.Database | null = null;
+  ServerDB: PouchDB.Database | null = null;
 
   authInfo!: AuthInfo;
   serverInfo!: ServerInfo;
@@ -60,7 +65,7 @@ export class MainService {
   private syncInProgress = signal(false);
   private lastSyncError = signal<Error | null>(null);
   readonly remoteDBReady = signal(false);
-  private remoteSync: any = null;
+  private remoteSync: PouchDB.Replication.Sync<{}> | null = null;
   private remoteSyncRequested = false;
 
   // Computed signals for derived state
@@ -107,11 +112,13 @@ export class MainService {
       };
 
       // Suppress IndexedDB backing store errors (cosmetic, doesn't affect functionality)
-      Object.values(this.LocalDB).forEach((db: any) => {
+      Object.values(this.LocalDB).forEach((db: PouchDB.Database) => {
         if (db.constructor.name === 'PouchDB') {
           // Register error handler to suppress "Internal error opening backing store" warnings
-          db.on?.('error', (err: any) => {
-            if (!err?.message?.includes('backing store')) {
+          // PouchDB typings might not explicitly have 'on' for 'error' in all versions without casting or augmentation
+          // sticking to safe access
+          db.on('error', (err: any) => {
+            if (err?.message && !err.message.includes('backing store')) {
               console.error('PouchDB error:', err);
             }
           });
@@ -120,7 +127,7 @@ export class MainService {
     } catch (err) {
       console.error('Failed to initialize local databases:', err);
       // Gracefully handle initialization failure
-      this.LocalDB = {} as any;
+      this.LocalDB = {} as Record<string, PouchDB.Database>;
     }
 
     // Auth bilgilerini yükle
@@ -145,10 +152,10 @@ export class MainService {
         const appType = localStorage.getItem('AppType');
         switch (appType) {
           case 'Primary':
-            this.serverInfo = res.docs.find((obj: any) => obj.key == 'ServerSettings' && obj.value.type == 0)?.value;
+            this.serverInfo = res.docs.find((obj) => obj.key == 'ServerSettings' && obj.value.type == 0)?.value;
             break;
           case 'Secondary':
-            this.serverInfo = res.docs.find((obj: any) => obj.key == 'ServerSettings' && obj.value.type == 1)?.value;
+            this.serverInfo = res.docs.find((obj) => obj.key == 'ServerSettings' && obj.value.type == 1)?.value;
             break;
         }
         if (this.serverInfo && this.serverInfo.type == 0) {
@@ -176,7 +183,7 @@ export class MainService {
     return this.LocalDB[db].allDocs({ include_docs: true }) as Promise<PouchDBAllDocsResult<DatabaseModelMap[K]>>;
   }
 
-  getAllBy<K extends DatabaseName>(db: K, $schema: any): Promise<PouchDBFindResult<DatabaseModelMap[K]>> {
+  getAllBy<K extends DatabaseName>(db: K, $schema: PouchDB.Find.Selector): Promise<PouchDBFindResult<DatabaseModelMap[K]>> {
     if (!this.LocalDB[db]) return Promise.reject(`Database ${db} not found`);
     if (Object.keys($schema || {}).length === 0) {
       return this.LocalDB[db].allDocs({ include_docs: true }).then((res: any) => {
@@ -213,15 +220,16 @@ export class MainService {
   }
 
   getBulk(db: string, docs: Array<string>): Promise<any> {
-    return this.LocalDB[db].bulkGet(docs as any);
+    const bulkDocs = docs.map(id => ({ id, rev: '' }));
+    return this.LocalDB[db].bulkGet({ docs: bulkDocs });
   }
 
   addData<K extends DatabaseName>(db: K, schema: Omit<DatabaseModelMap[K], '_id' | '_rev'>): Promise<PouchDBResponse> {
-    const doc = { ...schema } as any;
+    const doc = { ...schema } as DatabaseModelMap[K]; // Type assertion for schema
     delete doc._rev;
     return this.LocalDB[db].post(doc).then(res => {
       const docWithMeta = Object.assign({}, schema, { _id: res.id, db_name: db, db_seq: 0 });
-      return (this.LocalDB['allData'] as any).upsert(res.id, (existingDoc: any) => docWithMeta).catch((err: any) => {
+      return this.LocalDB['allData'].upsert(res.id, (existingDoc: any) => docWithMeta).catch((err: any) => {
         if (err.status !== 409) console.log('addData-All', err);
         return { ok: true, id: res.id, rev: res.rev };
       });
@@ -229,19 +237,19 @@ export class MainService {
   }
 
   changeData(db: string, id: string, schema: any): Promise<any> {
-    (this.LocalDB['allData'] as any).upsert(id, (doc: any) => Object.assign(doc || {}, schema)).catch((err: any) => {
+    this.LocalDB['allData'].upsert(id, (doc: any) => Object.assign(doc || {}, schema)).catch((err: any) => {
       if (err.status !== 409) console.log('changeData-All', err);
     });
-    return (this.LocalDB[db] as any).upsert(id, (doc: any) => Object.assign(doc || {}, schema)).catch((err: any) => {
+    return this.LocalDB[db].upsert(id, (doc: any) => Object.assign(doc || {}, schema)).catch((err: any) => {
       if (err.status !== 409) console.log('changeData-Local', err);
     });
   }
 
   updateData<K extends DatabaseName>(db: K, id: string, schema: Partial<DatabaseModelMap[K]>): Promise<PouchDBResponse> {
-    (this.LocalDB['allData'] as any).upsert(id, (doc: any) => Object.assign(doc || {}, schema)).catch((err: any) => {
+    this.LocalDB['allData'].upsert(id, (doc: any) => Object.assign(doc || {}, schema)).catch((err: any) => {
       if (err.status !== 409) console.log('updateData-All', err);
     });
-    return (this.LocalDB[db] as any).upsert(id, (doc: any) => Object.assign(doc || {}, schema)).catch((err: any) => {
+    return this.LocalDB[db].upsert(id, (doc: any) => Object.assign(doc || {}, schema)).catch((err: any) => {
       if (err.status !== 409) console.log('updateData-Local', err);
     });
   }
@@ -305,25 +313,31 @@ export class MainService {
       if (change.deleted) {
         this.LocalDB['allData'].get(change.id).then((doc) => this.LocalDB['allData'].remove(doc));
       } else {
-        const cData = Object.assign({ db_name: local_db, db_seq: (change as any).seq }, change.doc);
-        (this.LocalDB['allData'] as any).upsert(change.id, (doc: any) => Object.assign(doc || {}, cData));
+        const cData = Object.assign({ db_name: local_db, db_seq: change.seq }, change.doc);
+        this.LocalDB['allData'].upsert(change.id, (doc: any) => Object.assign(doc || {}, cData));
       }
     });
   }
 
-  handleChanges(sync: any): void {
+  handleChanges(sync: PouchDB.Replication.SyncResult<{}>): void {
     if (!sync || !sync.change || !sync.change.docs) return;
-    sync.change.docs.forEach((element: any) => {
+    sync.change.docs.forEach((element: SyncElement) => {
+      const docId = element._id;
+      if (!docId) return;
+
       if (!element._deleted) {
         const db = element.db_name;
         if (db && this.LocalDB[db]) {
-          delete element._rev; delete element.db_seq; delete element.db_name;
-          (this.LocalDB[db] as any).upsert(element._id, (doc: any) => Object.assign(doc || {}, element));
+          const docData = { ...element };
+          delete docData._rev;
+          delete docData.db_seq;
+          delete docData.db_name;
+          this.LocalDB[db].upsert(docId, (doc: any) => Object.assign(doc || {}, docData));
         }
       } else {
         for (const db in this.LocalDB) {
           if (db !== 'allData') {
-            this.LocalDB[db].get(element._id).then(doc => this.LocalDB[db].remove(doc)).catch(() => { });
+            this.LocalDB[db].get(docId).then((doc: any) => this.LocalDB[db].remove(doc)).catch(() => { });
           }
         }
       }
@@ -334,7 +348,7 @@ export class MainService {
     return from(this.getAllBy('allData', {}).then(res => {
       if (!res?.docs?.length) { this.dataLoaded.set(true); return true; }
       const groups: { [key: string]: any[] } = {};
-      res.docs.forEach((doc: any) => {
+      res.docs.forEach((doc: SyncElement) => {
         if (doc.db_name && doc.db_name !== 'settings' && this.LocalDB[doc.db_name]) {
           const cleanDoc = { ...doc }; delete cleanDoc.db_name; delete cleanDoc.db_seq; delete cleanDoc._rev;
           if (!groups[doc.db_name]) groups[doc.db_name] = [];
@@ -357,7 +371,7 @@ export class MainService {
     return from(this.getAllBy('allData', selector).then(res => {
       if (!res?.docs?.length) return true;
       const groups: { [key: string]: any[] } = {};
-      res.docs.forEach((doc: any) => {
+      res.docs.forEach((doc: SyncElement) => {
         if (doc.db_name && doc.db_name !== 'settings' && this.LocalDB[doc.db_name]) {
           const cleanDoc = { ...doc }; delete cleanDoc.db_name; delete cleanDoc.db_seq; delete cleanDoc._rev;
           if (!groups[doc.db_name]) groups[doc.db_name] = [];
@@ -372,12 +386,12 @@ export class MainService {
     return lastValueFrom(this.syncToLocalObservable(database));
   }
 
-  replicateDB(db_conf: any): any {
+  replicateDB(db_conf: any): PouchDB.Replication.Replication<{}> {
     const db = new PouchDB(`http://${db_conf.ip_address}:${db_conf.ip_port}/${db_conf.key}/appServer`);
     return db.replicate.to(this.LocalDB['allData'], { batch_size: 500, filter: (doc: any) => !doc._deleted });
   }
 
-  replicateFrom(): any {
+  replicateFrom(): PouchDB.Replication.Replication<{}> | { on: () => any, cancel: () => void } {
     if (!this.RemoteDB || !this.RemoteDB.replicate) {
       console.warn('MainService: RemoteDB not ready, skipping replicateFrom');
       return { on: () => ({ on: () => ({ on: () => ({}) }) }), cancel: () => { } };
@@ -385,21 +399,21 @@ export class MainService {
     return this.RemoteDB.replicate.to(this.LocalDB['allData'], { filter: (doc: any) => !doc._deleted });
   }
 
-  syncToServer(): any {
+  syncToServer(): PouchDB.Replication.Sync<{}> | { on: () => any, cancel: () => void } {
     if (!this.ServerDB || typeof this.ServerDB.sync !== 'function') {
       console.warn('MainService: ServerDB is not ready or invalid, skipping syncToServer');
       return { on: () => ({ on: () => ({ on: () => ({}) }) }), cancel: () => { } }; // Return a dummy with on/cancel to prevent crashes
     }
     console.log('MainService: Starting syncToServer');
     return PouchDB.sync(this.LocalDB['allData'], this.ServerDB, { live: true, retry: true, pull: { filter: (doc: any) => !doc._deleted } })
-      .on('change', (sync: any) => this.handleChanges(sync))
+      .on('change', (sync) => this.handleChanges(sync))
       .on('error', (err: any) => {
         console.error('MainService: syncToServer error:', err);
         this.lastSyncError.set(err);
       });
   }
 
-  syncToRemote(): any {
+  syncToRemote(): PouchDB.Replication.Sync<{}> | undefined | any {
     this.remoteSyncRequested = true;
     if (this.remoteSync) return this.remoteSync;
     if (!this.RemoteDB) {
@@ -407,8 +421,8 @@ export class MainService {
       return;
     }
     this.syncInProgress.set(true);
-    this.remoteSync = PouchDB.sync(this.LocalDB['allData'], this.RemoteDB, { live: true, retry: true, pull: { filter: (doc: any) => !doc._deleted } })
-      .on('change', (sync: any) => this.handleChanges(sync))
+    this.remoteSync = PouchDB.sync(this.LocalDB['allData'], this.RemoteDB, { live: true, retry: true, pull: { filter: (doc: PouchDBDocument) => !doc._deleted } })
+      .on('change', (sync) => this.handleChanges(sync))
       .on('error', (err: any) => {
         console.error('MainService: syncToRemote error:', err);
         this.lastSyncError.set(err);
@@ -435,7 +449,7 @@ export class MainService {
     }
   }
 
-  formatPrice(value: any): string {
+  formatPrice(value: number | string): string {
     if (!value) value = 0;
     return '₺ ' + Number(value).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
   }

@@ -321,6 +321,11 @@ export class AppComponent implements OnInit {
       if (day.started) {
         this.messageService.sendAlert('Dikkat!', 'Gün Sonu Yapılmamış.', 'warning');
       } else {
+        if (!this.mainService.RemoteDB) {
+          console.error('RemoteDB not initialized, skipping dayCheck logic relying on it');
+          this.messageService.sendAlert('Bağlantı Hatası', 'Sunucu Bağlantısı Sağlanamadı!', 'error');
+          return;
+        }
         this.mainService.RemoteDB.find({ selector: { db_name: 'settings', key: 'DateSettings' }, limit: 5000 }).then((res: any) => {
           if (!res.docs || res.docs.length === 0) {
             console.error('No date settings found on remote server');
