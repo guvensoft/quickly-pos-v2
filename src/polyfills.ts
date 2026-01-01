@@ -16,14 +16,29 @@
 // PouchDB ve eski Node modülleri için gerekli Polyfill'ler
 (window as any).global = window;
 
-// Buffer Polyfill
-import * as buffer from 'buffer';
-const Buffer = buffer.Buffer;
-import * as process from 'process';
+// Buffer Polyfill - gracefully handle both Node and Browser environments
+try {
+  import('buffer').then(bufferModule => {
+    (window as any).Buffer = bufferModule.Buffer;
+  }).catch(() => {
+    // Fallback if buffer module is not available
+    // Browser/Electron may not need this polyfill
+  });
+} catch (e) {
+  // Module import failed, continue without polyfill
+}
 
-(window as any).Buffer = Buffer;
+try {
+  import('process').then(processModule => {
+    (window as any).process = processModule;
+  }).catch(() => {
+    // Fallback if process module is not available
+  });
+} catch (e) {
+  // Module import failed, continue without polyfill
+}
+
 (window as any).global = window;
-(window as any).process = process;
 
 // jQuery and Bootstrap are loaded via angular.json scripts section.
 // Do not import them here as it may cause timing issues with Bootstrap plugins.
