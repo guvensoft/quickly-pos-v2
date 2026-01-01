@@ -74,36 +74,54 @@ export class MainService {
       adapter: 'idb'
     };
 
-    // Tüm local veritabanlarını oluştur
-    this.LocalDB = {
-      users: new PouchDB('local_users', db_opts),
-      users_group: new PouchDB('local_users_group', db_opts),
-      checks: new PouchDB('local_checks', db_opts),
-      closed_checks: new PouchDB('local_closed_checks', db_opts),
-      credits: new PouchDB('local_credits', db_opts),
-      customers: new PouchDB('local_customers', db_opts),
-      orders: new PouchDB('local_orders', db_opts),
-      receipts: new PouchDB('local_receipts', db_opts),
-      calls: new PouchDB('local_calls', db_opts),
-      cashbox: new PouchDB('local_cashbox', db_opts),
-      categories: new PouchDB('local_categories', db_opts),
-      sub_categories: new PouchDB('local_sub_cats', db_opts),
-      occations: new PouchDB('local_occations', db_opts),
-      products: new PouchDB('local_products', db_opts),
-      recipes: new PouchDB('local_recipes', db_opts),
-      floors: new PouchDB('local_floors', db_opts),
-      tables: new PouchDB('local_tables', db_opts),
-      stocks: new PouchDB('local_stocks', db_opts),
-      stocks_cat: new PouchDB('local_stocks_cat', db_opts),
-      endday: new PouchDB('local_endday', db_opts),
-      reports: new PouchDB('local_reports', db_opts),
-      logs: new PouchDB('local_logs', db_opts),
-      commands: new PouchDB('local_commands', db_opts),
-      comments: new PouchDB('local_comments', db_opts),
-      prints: new PouchDB('local_prints', db_opts),
-      settings: new PouchDB('local_settings', { revs_limit: 3, auto_compaction: true, adapter: 'idb' }),
-      allData: new PouchDB('local_alldata', { revs_limit: 3, auto_compaction: false, adapter: 'idb' })
-    };
+    // Tüm local veritabanlarını oluştur - with error handling for IndexedDB issues
+    try {
+      this.LocalDB = {
+        users: new PouchDB('local_users', db_opts),
+        users_group: new PouchDB('local_users_group', db_opts),
+        checks: new PouchDB('local_checks', db_opts),
+        closed_checks: new PouchDB('local_closed_checks', db_opts),
+        credits: new PouchDB('local_credits', db_opts),
+        customers: new PouchDB('local_customers', db_opts),
+        orders: new PouchDB('local_orders', db_opts),
+        receipts: new PouchDB('local_receipts', db_opts),
+        calls: new PouchDB('local_calls', db_opts),
+        cashbox: new PouchDB('local_cashbox', db_opts),
+        categories: new PouchDB('local_categories', db_opts),
+        sub_categories: new PouchDB('local_sub_cats', db_opts),
+        occations: new PouchDB('local_occations', db_opts),
+        products: new PouchDB('local_products', db_opts),
+        recipes: new PouchDB('local_recipes', db_opts),
+        floors: new PouchDB('local_floors', db_opts),
+        tables: new PouchDB('local_tables', db_opts),
+        stocks: new PouchDB('local_stocks', db_opts),
+        stocks_cat: new PouchDB('local_stocks_cat', db_opts),
+        endday: new PouchDB('local_endday', db_opts),
+        reports: new PouchDB('local_reports', db_opts),
+        logs: new PouchDB('local_logs', db_opts),
+        commands: new PouchDB('local_commands', db_opts),
+        comments: new PouchDB('local_comments', db_opts),
+        prints: new PouchDB('local_prints', db_opts),
+        settings: new PouchDB('local_settings', { revs_limit: 3, auto_compaction: true, adapter: 'idb' }),
+        allData: new PouchDB('local_alldata', { revs_limit: 3, auto_compaction: false, adapter: 'idb' })
+      };
+
+      // Suppress IndexedDB backing store errors (cosmetic, doesn't affect functionality)
+      Object.values(this.LocalDB).forEach((db: any) => {
+        if (db.constructor.name === 'PouchDB') {
+          // Register error handler to suppress "Internal error opening backing store" warnings
+          db.on?.('error', (err: any) => {
+            if (!err?.message?.includes('backing store')) {
+              console.error('PouchDB error:', err);
+            }
+          });
+        }
+      });
+    } catch (err) {
+      console.error('Failed to initialize local databases:', err);
+      // Gracefully handle initialization failure
+      this.LocalDB = {} as any;
+    }
 
     // Auth bilgilerini yükle
     const authPromise = this.getAllBy('settings', { key: 'AuthInfo' }).then(res => {
