@@ -22,8 +22,28 @@ import { Subscription } from 'rxjs';
 import { PricePipe } from '../../../shared/pipes/price.pipe';
 import { GeneralPipe } from '../../../shared/pipes/general.pipe';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
-import { ReportDocument, StockDocument } from '../../../core/models/database.types';
+import { ReportDocument, StockDocument, RecipeDocument } from '../../../core/models/database.types';
 import { DialogFacade } from '../../../core/services/dialog.facade';
+
+// PouchDB response interfaces
+interface PouchDBResponse {
+  ok: boolean;
+  id?: string;
+  rev?: string;
+}
+
+interface PouchDBFindResponse<T> {
+  docs: T[];
+}
+
+interface SettingsResponse<T> {
+  value: T;
+}
+
+interface PouchDBChange {
+  id: string;
+  deleted?: boolean;
+}
 
 @Component({
   standalone: true,
@@ -214,7 +234,7 @@ export class SellingScreenComponent implements OnDestroy {
 
     // getPrinters subscription wrapped in effect
     effect(() => {
-      this.settingsService.getPrinters().subscribe((res: any) => this.printers.set(res.value));
+      this.settingsService.getPrinters().subscribe((res: SettingsResponse<Printer[]>) => this.printers.set(res.value));
     }, { allowSignalWrites: true });
 
     try {
@@ -227,12 +247,12 @@ export class SellingScreenComponent implements OnDestroy {
     }
 
     // DateSettings subscription
-    this.settingsService.DateSettings.subscribe((res: any) => {
+    this.settingsService.DateSettings.subscribe((res: SettingsResponse<{ day: number }>) => {
       this.day.set(res.value.day);
     });
 
     // AppSettings subscription
-    this.settingsService.AppSettings.subscribe((res: any) => {
+    this.settingsService.AppSettings.subscribe((res: SettingsResponse<{ takeaway: boolean }>) => {
       const takeawayValue = res.value.takeaway;
       this.takeaway.set(takeawayValue !== 'Kapalı');
       this.askForPrint.set(res.value.ask_print_order === 'Sor');
@@ -241,10 +261,10 @@ export class SellingScreenComponent implements OnDestroy {
 
     // DB change listener subscription wrapped in effect
     effect(() => {
-      const ch = this.mainService.LocalDB['checks'].changes({ since: 'now', live: true }).on('change', (change: any) => {
+      const ch = this.mainService.LocalDB['checks'].changes({ since: 'now', live: true }).on('change', (change: PouchDBChange) => {
         if (change.id == this.check_id()) {
           if (!change.deleted) {
-            this.mainService.getData('checks', change.id).then((res: any) => {
+            this.mainService.getData('checks', change.id).then((res: Check) => {
               this.check.set(res);
               this.id.set(res.table_id);
               if (res.status == CheckStatus.PROCESSING) {
@@ -286,9 +306,9 @@ export class SellingScreenComponent implements OnDestroy {
       if (currentCheck.status == CheckStatus.PASSIVE) {
         this.updateUserReport();
         this.updateProductReport(this.countData());
-        currentCheck.products.map((obj: any) => obj.status = 2);
+        currentCheck.products.map((obj: CheckProduct) => obj.status = 2);
         currentCheck.status = CheckStatus.OCCUPIED;
-        this.mainService.addData('checks', currentCheck).then((res: any) => {
+        this.mainService.addData('checks', currentCheck).then((res: PouchDBResponse) => {
           if (res.ok) {
             this.router.navigate(['/payment', res.id]);
           }
